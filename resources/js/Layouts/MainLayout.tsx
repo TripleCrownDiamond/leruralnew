@@ -1,7 +1,7 @@
 import { useState, Fragment } from 'react';
 import { Head, usePage, useForm, Link } from '@inertiajs/react';
 import { Menu, Transition } from '@headlessui/react';
-import { User, LogOut, LayoutDashboard, ChevronDown, Search, Globe } from 'lucide-react';
+import { User, LogOut, LayoutDashboard, ChevronDown, Search } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { ModeToggle } from '@/Components/ModeToggle';
 import LiveSearch from '@/Components/LiveSearch';
@@ -56,31 +56,31 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
                 <div className="container relative mx-auto px-4 h-20 flex items-center justify-between">
                     
                     {isSearchOpen ? (
-                        <div className="w-full flex items-center gap-4 animate-in fade-in zoom-in duration-300">
-                            <div className="flex-1">
+                        <div className="w-full flex items-center justify-center animate-in fade-in zoom-in duration-300">
+                            <div className="relative w-full max-w-2xl">
                                 <LiveSearch isOpen={true} onClose={() => setIsSearchOpen(false)} className="w-full" />
-                            </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setIsSearchOpen(false)}
-                                className="text-white hover:bg-white/10 hover:text-white shrink-0"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setIsSearchOpen(false)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-gray-800/80 text-white hover:bg-gray-700/90 hover:text-white shrink-0 border border-gray-600/50 backdrop-blur-sm z-10"
                                 >
-                                    <path d="M18 6 6 18" />
-                                    <path d="m6 6 12 12" />
-                                </svg>
-                            </Button>
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M18 6 6 18" />
+                                        <path d="m6 6 12 12" />
+                                    </svg>
+                                </Button>
+                            </div>
                         </div>
                     ) : (
                         <>
@@ -136,15 +136,6 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
 
                             {/* Right Section: Actions */}
                             <div className="flex items-center gap-2 md:gap-4">
-                                {/* Language Switcher */}
-                                <a
-                                    href={locale === 'en' ? '/' : '/en'}
-                                    className="hidden md:flex items-center gap-1 text-sm font-bold text-white hover:text-white/80 transition-colors"
-                                >
-                                    <Globe className="h-4 w-4" />
-                                    {locale === 'en' ? 'FR' : 'EN'}
-                                </a>
-
                                 {/* Theme Switcher */}
                                 <div className="hidden md:block">
                                     <ModeToggle className="text-white hover:bg-white/10 hover:text-white border-white/20" />
