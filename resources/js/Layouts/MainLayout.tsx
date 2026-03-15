@@ -344,11 +344,11 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
                                 Informations
                             </h5>
                             <ul className="space-y-2 text-sm text-gray-400">
-                                <li><a href="#" className="hover:text-primary transition-colors">Mentions légales</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">CGV</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">Politique de confidentialité</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">Gestion des cookies</a></li>
-                                <li><a href="/a-propos" className="hover:text-primary transition-colors">Qui sommes-nous ?</a></li>
+                                <li key="mentions"><a href="#" className="hover:text-primary transition-colors">Mentions légales</a></li>
+                                <li key="cgv"><a href="#" className="hover:text-primary transition-colors">CGV</a></li>
+                                <li key="privacy"><a href="#" className="hover:text-primary transition-colors">Politique de confidentialité</a></li>
+                                <li key="cookies"><a href="#" className="hover:text-primary transition-colors">Gestion des cookies</a></li>
+                                <li key="about"><a href="/a-propos" className="hover:text-primary transition-colors">Qui sommes-nous ?</a></li>
                             </ul>
                         </div>
                         <div>
@@ -356,13 +356,13 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
                                 Le Groupe
                             </h5>
                             <ul className="space-y-2 text-sm text-gray-400">
-                                <li><a href="#" className="hover:text-primary transition-colors">Entreprise</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">Carrières</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">Opportunités</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">Plurimédia</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">Communication</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">EIMA</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">Fondation Le Rural</a></li>
+                                <li key="entreprise"><a href="#" className="hover:text-primary transition-colors">Entreprise</a></li>
+                                <li key="carrières"><a href="#" className="hover:text-primary transition-colors">Carrières</a></li>
+                                <li key="opportunités"><a href="#" className="hover:text-primary transition-colors">Opportunités</a></li>
+                                <li key="plurimédia"><a href="#" className="hover:text-primary transition-colors">Plurimédia</a></li>
+                                <li key="communication"><a href="#" className="hover:text-primary transition-colors">Communication</a></li>
+                                <li key="eima"><a href="#" className="hover:text-primary transition-colors">EIMA</a></li>
+                                <li key="fondation"><a href="#" className="hover:text-primary transition-colors">Fondation Le Rural</a></li>
                             </ul>
                         </div>
                          <div>

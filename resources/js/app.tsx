@@ -2,6 +2,7 @@ import '../css/app.css';
 import './bootstrap';
 
 import { ThemeProvider } from '@/Components/ThemeProvider';
+import { AdvertisementProvider } from '@/Components/AdSpace';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot, hydrateRoot } from 'react-dom/client';
@@ -20,7 +21,9 @@ createInertiaApp({
             hydrateRoot(
                 el,
                 <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-                    <App {...props} />
+                    <AdvertisementProvider>
+                        <App {...props} />
+                    </AdvertisementProvider>
                 </ThemeProvider>,
             );
             return;
@@ -28,7 +31,9 @@ createInertiaApp({
 
         createRoot(el).render(
             <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-                <App {...props} />
+                <AdvertisementProvider>
+                    <App {...props} />
+                </AdvertisementProvider>
             </ThemeProvider>,
         );
     },
