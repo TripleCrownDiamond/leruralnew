@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ArticleImageResolver;
 use Illuminate\Database\Eloquent\Model;
 
 class Article extends Model
@@ -12,6 +13,8 @@ class Article extends Model
         'excerpt_fr', 'excerpt_en',
         'content_fr', 'content_en',
         'featured_image',
+        'featured_image_position_x',
+        'featured_image_position_y',
         'is_premium',
         'price',
         'published_at',
@@ -33,8 +36,36 @@ class Article extends Model
         'is_featured' => 'boolean',
         'published_at' => 'datetime',
         'featured_until' => 'datetime',
+        'featured_image_position_x' => 'integer',
+        'featured_image_position_y' => 'integer',
     ];
+    public function getFeaturedImageAttribute($value): ?string
+    {
+        $image = trim((string) $value);
 
+        if ($image === '') {
+            return null;
+        }
+
+        $looksLegacyWordPress = str_contains($image, '/wp-content/uploads/') || str_starts_with($image, '/wp-content/uploads/');
+
+        if ($looksLegacyWordPress) {
+            $resolved = ArticleImageResolver::resolveLegacy($image, $this->attributes['slug'] ?? null);
+            if ($resolved !== null) {
+                return $resolved;
+            }
+        }
+
+        if (str_starts_with($image, '//')) {
+            return 'https:' . $image;
+        }
+
+        if (preg_match('/^https?:\/\//i', $image) === 1) {
+            return $image;
+        }
+
+        return asset(ltrim($image, '/'));
+    }
     public function author()
     {
         return $this->belongsTo(User::class, 'author_id');
@@ -82,3 +113,6 @@ class Article extends Model
                      });
     }
 }
+
+
+

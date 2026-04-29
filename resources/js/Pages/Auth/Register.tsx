@@ -1,13 +1,12 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
-import React from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
+import { usePendingPurchase } from '@/Hooks/usePendingPurchase';
+import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Lock, Mail, User, X } from 'lucide-react';
 
 export default function Register() {
+    usePendingPurchase();
+
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -15,14 +14,16 @@ export default function Register() {
         password_confirmation: '',
     });
 
-    const [passwordMatch, setPasswordMatch] = React.useState(true);
-    const [strength, setStrength] = React.useState(0);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [passwordMatch, setPasswordMatch] = useState(true);
+    const [strength, setStrength] = useState(0);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (data.password && data.password_confirmation) {
             setPasswordMatch(data.password === data.password_confirmation);
         } else {
-            setPasswordMatch(true); // Don't show error if one is empty
+            setPasswordMatch(true);
         }
     }, [data.password, data.password_confirmation]);
 
@@ -37,160 +38,227 @@ export default function Register() {
         return score;
     };
 
-    const getStrengthColor = (score: number) => {
-        if (score <= 20) return 'bg-red-500';
-        if (score <= 40) return 'bg-orange-500';
-        if (score <= 60) return 'bg-yellow-500';
-        if (score <= 80) return 'bg-lime-500';
-        return 'bg-green-500';
-    };
-
-    const getStrengthText = (score: number) => {
-        if (score === 0) return '';
-        if (score <= 20) return 'Très faible';
-        if (score <= 40) return 'Faible';
-        if (score <= 60) return 'Moyen';
-        if (score <= 80) return 'Fort';
-        return 'Très fort';
+    const getStrengthMeta = (score: number) => {
+        if (score === 0) return { label: '', color: 'bg-gray-200 dark:bg-gray-700', text: 'text-gray-400' };
+        if (score <= 20) return { label: 'Très faible', color: 'bg-red-500', text: 'text-red-500' };
+        if (score <= 40) return { label: 'Faible', color: 'bg-orange-500', text: 'text-orange-500' };
+        if (score <= 60) return { label: 'Moyen', color: 'bg-yellow-500', text: 'text-yellow-600' };
+        if (score <= 80) return { label: 'Fort', color: 'bg-lime-500', text: 'text-lime-600' };
+        return { label: 'Très fort', color: 'bg-primary', text: 'text-primary' };
     };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-
-        if (data.password !== data.password_confirmation) {
-             return; // Prevent submission if mismatch
-        }
-
+        if (data.password !== data.password_confirmation) return;
         post(route('register'), {
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };
 
+    const strengthMeta = getStrengthMeta(strength);
+    const rules = [
+        { ok: data.password.length >= 8, label: '8 caractères' },
+        { ok: /[A-Z]/.test(data.password), label: 'Majuscule' },
+        { ok: /[0-9]/.test(data.password), label: 'Chiffre' },
+        { ok: /[^A-Za-z0-9]/.test(data.password), label: 'Symbole' },
+    ];
+
     return (
-        <GuestLayout>
+        <GuestLayout
+            eyebrow="Inscription"
+            title="Rejoignez LE RURAL"
+            tagline="Créez un compte gratuit pour commenter, voter dans les sondages et débloquer les articles premium."
+        >
             <Head title="Inscription" />
 
-            <form onSubmit={submit}>
+            <form onSubmit={submit} className="space-y-5">
                 <div>
-                    <InputLabel htmlFor="name" value="Nom" />
-
-                    <TextInput
-                        id="name"
-                        name="name"
-                        value={data.name}
-                        className="mt-1 block w-full"
-                        autoComplete="name"
-                        isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.name} className="mt-2" />
+                    <label htmlFor="name" className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400">
+                        <span className="inline-block h-1 w-1 rounded-full bg-primary" />
+                        Nom complet
+                    </label>
+                    <div className="group relative">
+                        <User className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" />
+                        <input
+                            id="name"
+                            name="name"
+                            value={data.name}
+                            autoComplete="name"
+                            autoFocus
+                            required
+                            onChange={(e) => setData('name', e.target.value)}
+                            placeholder="Votre nom"
+                            className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 dark:border-gray-700 dark:bg-gray-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-800"
+                        />
+                    </div>
+                    {errors.name && (
+                        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            {errors.name}
+                        </p>
+                    )}
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
+                <div>
+                    <label htmlFor="email" className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400">
+                        <span className="inline-block h-1 w-1 rounded-full bg-primary" />
+                        Email
+                    </label>
+                    <div className="group relative">
+                        <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" />
+                        <input
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={data.email}
+                            autoComplete="username"
+                            required
+                            onChange={(e) => setData('email', e.target.value)}
+                            placeholder="vous@exemple.com"
+                            className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 dark:border-gray-700 dark:bg-gray-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-800"
+                        />
+                    </div>
+                    {errors.email && (
+                        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            {errors.email}
+                        </p>
+                    )}
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Mot de passe" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) => {
-                            setData('password', e.target.value);
-                            setStrength(calculateStrength(e.target.value));
-                        }}
-                        required
-                    />
+                <div>
+                    <label htmlFor="password" className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400">
+                        <span className="inline-block h-1 w-1 rounded-full bg-primary" />
+                        Mot de passe
+                    </label>
+                    <div className="group relative">
+                        <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" />
+                        <input
+                            id="password"
+                            type={showPassword ? 'text' : 'password'}
+                            name="password"
+                            value={data.password}
+                            autoComplete="new-password"
+                            required
+                            onChange={(e) => {
+                                setData('password', e.target.value);
+                                setStrength(calculateStrength(e.target.value));
+                            }}
+                            placeholder="••••••••"
+                            className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 py-3 pl-11 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 dark:border-gray-700 dark:bg-gray-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-800"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition"
+                            aria-label={showPassword ? 'Cacher' : 'Afficher'}
+                        >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                    </div>
 
                     {data.password && (
-                        <div className="mt-2 space-y-1">
-                            <div className="flex justify-between items-center text-xs">
-                                <span className={`font-medium ${
-                                    strength <= 20 ? 'text-red-500' :
-                                    strength <= 40 ? 'text-orange-500' :
-                                    strength <= 60 ? 'text-yellow-500' :
-                                    strength <= 80 ? 'text-lime-500' :
-                                    'text-green-500'
-                                }`}>
-                                    Force: {getStrengthText(strength)}
+                        <div className="mt-3 space-y-2.5 rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">Robustesse</span>
+                                <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${strengthMeta.text}`}>
+                                    {strengthMeta.label}
                                 </span>
                             </div>
                             <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div 
-                                    className={`h-full transition-all duration-300 ${getStrengthColor(strength)}`} 
+                                <div
+                                    className={`h-full transition-all duration-300 ${strengthMeta.color}`}
                                     style={{ width: `${strength}%` }}
-                                ></div>
+                                />
                             </div>
-                            <ul className="text-xs text-gray-500 dark:text-gray-400 mt-1 list-disc pl-4 space-y-0.5">
-                                <li className={data.password.length >= 8 ? 'text-green-600 dark:text-green-400' : ''}>Au moins 8 caractères</li>
-                                <li className={/[A-Z]/.test(data.password) ? 'text-green-600 dark:text-green-400' : ''}>Une majuscule</li>
-                                <li className={/[0-9]/.test(data.password) ? 'text-green-600 dark:text-green-400' : ''}>Un chiffre</li>
-                                <li className={/[^A-Za-z0-9]/.test(data.password) ? 'text-green-600 dark:text-green-400' : ''}>Un caractère spécial</li>
-                            </ul>
+                            <div className="grid grid-cols-2 gap-1.5">
+                                {rules.map((r) => (
+                                    <div key={r.label} className={`flex items-center gap-1.5 text-[11px] ${r.ok ? 'text-primary' : 'text-gray-400'}`}>
+                                        {r.ok ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                                        <span>{r.label}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
 
-                    <InputError message={errors.password} className="mt-2" />
+                    {errors.password && (
+                        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            {errors.password}
+                        </p>
+                    )}
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirmer le mot de passe"
-                    />
-
-                    <TextInput
-                        id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
-                        value={data.password_confirmation}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                        required
-                    />
-
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
+                <div>
+                    <label htmlFor="password_confirmation" className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400">
+                        <span className="inline-block h-1 w-1 rounded-full bg-primary" />
+                        Confirmer le mot de passe
+                    </label>
+                    <div className="group relative">
+                        <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" />
+                        <input
+                            id="password_confirmation"
+                            type={showConfirm ? 'text' : 'password'}
+                            name="password_confirmation"
+                            value={data.password_confirmation}
+                            autoComplete="new-password"
+                            required
+                            onChange={(e) => setData('password_confirmation', e.target.value)}
+                            placeholder="••••••••"
+                            className={`w-full rounded-2xl border bg-gray-50/50 py-3 pl-11 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition focus:bg-white focus:outline-none focus:ring-4 dark:bg-gray-800/50 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-800 ${
+                                !passwordMatch && data.password_confirmation
+                                    ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10'
+                                    : 'border-gray-200 focus:border-primary focus:ring-primary/10 dark:border-gray-700'
+                            }`}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowConfirm((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition"
+                            aria-label={showConfirm ? 'Cacher' : 'Afficher'}
+                        >
+                            {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                    </div>
+                    {!passwordMatch && data.password && data.password_confirmation && (
+                        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            Les mots de passe ne correspondent pas
+                        </p>
+                    )}
+                    {errors.password_confirmation && (
+                        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            {errors.password_confirmation}
+                        </p>
+                    )}
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    <Link
-                        href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
-                    >
-                        Déjà inscrit ?
-                    </Link>
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        S'inscrire
-                    </PrimaryButton>
-                </div>
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary to-primary/90 px-6 py-3.5 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_12px_30px_-10px_rgba(47,106,17,0.5)] transition hover:shadow-[0_16px_40px_-12px_rgba(47,106,17,0.6)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                >
+                    <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    <span className="relative">{processing ? 'Création…' : 'Créer mon compte'}</span>
+                    <ArrowRight className="relative h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </button>
             </form>
+
+            <div className="mt-6 flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+                <span className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-400">Déjà membre ?</span>
+                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+            </div>
+
+            <Link
+                href={route('login')}
+                className="mt-5 flex items-center justify-center gap-2 rounded-2xl border-2 border-gray-200 bg-white py-3 text-xs font-black uppercase tracking-[0.16em] text-gray-900 hover:border-primary hover:text-primary dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:border-primary transition-all"
+            >
+                Se connecter
+                <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
         </GuestLayout>
     );
 }

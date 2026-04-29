@@ -19,6 +19,7 @@ class UserSubscription extends Model
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'expiry_notice_sent_at' => 'datetime',
         'is_recurring' => 'boolean',
     ];
 

@@ -1,161 +1,358 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/Components/ui/button';
-import { Plus, Edit, Trash2, BarChart2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { Head, router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import {
+    BarChart3,
+    Calendar,
+    Download,
+    Eye,
+    Pencil,
+    Plus,
+    Trash2,
+    Users,
+} from 'lucide-react';
+import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
+import AdminSearchBar from '@/Components/Dashboard/AdminSearchBar';
+import AdminCard, { AdminEmptyState, AdminStatusPill } from '@/Components/Dashboard/AdminCard';
+import AdminPagination from '@/Components/Dashboard/AdminPagination';
+import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
+import Notifications from '@/Components/Notifications';
+
+interface PollOption {
+    id: number;
+    label: string;
+    votes: number;
+}
 
 interface Poll {
     id: number;
     question: string;
     is_active: boolean;
-    expires_at: string | null;
-    options_count: number;
+    expires_at?: string;
     created_at: string;
-    options: {
-        id: number;
-        label: string;
-        votes: number;
-    }[];
+    options_count: number;
+    options: PollOption[];
 }
 
 interface Props {
     polls: {
         data: Poll[];
+        links: any[];
         current_page: number;
         last_page: number;
+        per_page: number;
+        total: number;
+        from: number;
+        to: number;
+    };
+    filters?: {
+        search?: string;
+        status?: string;
     };
 }
 
-export default function Index({ polls }: Props) {
+export default function Index({ polls, filters = {} }: Props) {
+    const [search, setSearch] = useState(filters.search || '');
+    const [status, setStatus] = useState<'all' | 'active' | 'inactive'>(
+        (filters.status as any) || 'all',
+    );
+    const [selected, setSelected] = useState<number[]>([]);
+    const resolvePollResultsHref = (pollId: number) => {
+        try {
+            const routeHelper = route();
+            if (typeof routeHelper?.has === 'function' && routeHelper.has('dashboard.polls.results')) {
+                return route('dashboard.polls.results', pollId);
+            }
+        } catch {
+            // Ignore Ziggy lookup errors and fallback to a static URL.
+        }
+
+        return `/dashboard/polls/${pollId}/results`;
+    };
+
+    const pollExportHref = (() => {
+        try {
+            const routeHelper = route();
+            if (typeof routeHelper?.has === 'function' && routeHelper.has('dashboard.polls.export-all')) {
+                return route('dashboard.polls.export-all', 'csv');
+            }
+        } catch {
+            // Ignore Ziggy errors and fallback to no-link state.
+        }
+
+        return null;
+    })();
+
+
+    useEffect(() => {
+        if (
+            search === (filters.search || '') &&
+            status === ((filters.status as any) || 'all')
+        )
+            return;
+
+        const timeout = setTimeout(() => {
+            router.visit(route('dashboard.polls.index'), {
+                data: {
+                    search: search || undefined,
+                    status: status !== 'all' ? status : undefined,
+                },
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 300);
+
+        return () => clearTimeout(timeout);
+    }, [search, status]);
+
+    const toggle = (id: number) =>
+        setSelected((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+        );
+
+    const toggleAll = () => {
+        setSelected((prev) =>
+            prev.length === polls.data.length ? [] : polls.data.map((p) => p.id),
+        );
+    };
+
     const handleDelete = (id: number) => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer ce sondage ?')) {
-            router.delete(route('dashboard.polls.destroy', id));
+        if (confirm('Supprimer ce sondage ?')) {
+            router.delete(route('dashboard.polls.destroy', id), {
+                preserveScroll: true,
+            });
+        }
+    };
+
+    const handleBulkDelete = () => {
+        if (selected.length === 0) return;
+        if (confirm(`Supprimer ${selected.length} sondage(s) ?`)) {
+            router.post(
+                route('dashboard.polls.bulk-delete'),
+                { poll_ids: selected },
+                { preserveScroll: true, onSuccess: () => setSelected([]) },
+            );
         }
     };
 
     return (
-        <DashboardLayout title="Gestion des Sondages">
-            <Head title="Gestion des Sondages" />
+        <DashboardLayout title="Sondages">
+            <Head title="Sondages" />
 
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            Sondages
-                        </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Gérez les sondages affichés sur le site
-                        </p>
-                    </div>
-                    <Button asChild>
-                        <Link href={route('dashboard.polls.create')}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nouveau Sondage
-                        </Link>
-                    </Button>
-                </div>
+                <AdminPageHeader
+                    eyebrow="Engagement"
+                    title="Sondages"
+                    subtitle="Creez des consultations eclair pour sonder votre audience rurale."
+                    icon={<BarChart3 className="h-6 w-6" />}
+                    meta={`${polls.total} sondages`}
+                    actions={
+                        <div className="flex items-center gap-2">
+                            {selected.length > 0 && (
+                                <AdminButton
+                                    variant="danger"
+                                    icon={<Trash2 className="h-4 w-4" />}
+                                    onClick={handleBulkDelete}
+                                >
+                                    Supprimer ({selected.length})
+                                </AdminButton>
+                            )}
+                            <AdminLinkButton
+                                href={route('dashboard.polls.create')}
+                                variant="primary"
+                                icon={<Plus className="h-4 w-4" />}
+                            >
+                                Nouveau sondage
+                            </AdminLinkButton>
+                        </div>
+                    }
+                />
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-900/50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Question
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Résultats
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Statut
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Expiration
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {polls.data.length > 0 ? (
-                                polls.data.map((poll) => (
-                                    <tr key={poll.id}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                {poll.question}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="space-y-2 min-w-[200px]">
-                                                {poll.options && poll.options.map(option => {
-                                                    const totalVotes = poll.options.reduce((acc, curr) => acc + curr.votes, 0);
-                                                    const percentage = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0;
-                                                    
-                                                    return (
-                                                        <div key={option.id} className="text-xs">
-                                                            <div className="flex justify-between mb-1 text-gray-600 dark:text-gray-400">
-                                                                <span>{option.label}</span>
-                                                                <span className="font-semibold">{option.votes} ({percentage}%)</span>
+                <AdminSearchBar
+                    value={search}
+                    onChange={setSearch}
+                    placeholder="Rechercher une question, une option..."
+                    filters={
+                        <div className="flex gap-1 rounded-full border border-gray-200 bg-gray-50 p-1 text-[10px] font-black uppercase tracking-[0.14em] dark:border-white/10 dark:bg-white/5">
+                            {[
+                                { key: 'all', label: 'Tous' },
+                                { key: 'active', label: 'Actifs' },
+                                { key: 'inactive', label: 'Inactifs' },
+                            ].map((opt) => (
+                                <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => setStatus(opt.key as any)}
+                                    className={`rounded-full px-3 py-1.5 transition-colors ${
+                                        status === opt.key
+                                            ? 'bg-gradient-to-br from-primary to-emerald-700 text-white shadow-sm'
+                                            : 'text-gray-600 hover:bg-white hover:text-primary dark:text-white/60 dark:hover:bg-white/10'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    }
+                    trailing={
+                        pollExportHref ? (
+                            <AdminLinkButton
+                                href={pollExportHref}
+                                variant="ghost"
+                                size="sm"
+                                icon={<Download className="h-3.5 w-3.5" />}
+                            >
+                                CSV
+                            </AdminLinkButton>
+                        ) : (
+                            <AdminButton type="button" variant="ghost" size="sm" icon={<Download className="h-3.5 w-3.5" />} disabled>
+                                CSV indisponible
+                            </AdminButton>
+                        )
+                    }
+                />
+
+                <AdminCard>
+                    {polls.data.length === 0 ? (
+                        <AdminEmptyState
+                            icon={<BarChart3 className="h-7 w-7" />}
+                            title="Aucun sondage"
+                            subtitle="Lancez votre premier sondage pour activer la communaute."
+                            action={
+                                <AdminLinkButton
+                                    href={route('dashboard.polls.create')}
+                                    variant="primary"
+                                    icon={<Plus className="h-4 w-4" />}
+                                >
+                                    Creer un sondage
+                                </AdminLinkButton>
+                            }
+                        />
+                    ) : (
+                        <>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="border-b border-gray-100 bg-gray-50/60 text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:border-white/5 dark:bg-white/[0.02] dark:text-white/50">
+                                        <tr>
+                                            <th className="px-5 py-3 w-10">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={
+                                                        selected.length === polls.data.length &&
+                                                        polls.data.length > 0
+                                                    }
+                                                    onChange={toggleAll}
+                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                />
+                                            </th>
+                                            <th className="px-5 py-3">Question</th>
+                                            <th className="px-5 py-3 hidden md:table-cell">Votes</th>
+                                            <th className="px-5 py-3 hidden lg:table-cell">Statut</th>
+                                            <th className="px-5 py-3 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                                        {polls.data.map((poll) => {
+                                            const totalVotes = poll.options.reduce(
+                                                (sum, o) => sum + o.votes,
+                                                0,
+                                            );
+                                            return (
+                                                <tr
+                                                    key={poll.id}
+                                                    className="transition-colors hover:bg-primary/[0.03] dark:hover:bg-white/[0.02]"
+                                                >
+                                                    <td className="px-5 py-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selected.includes(poll.id)}
+                                                            onChange={() => toggle(poll.id)}
+                                                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                        />
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <div className="min-w-0">
+                                                            <div className="font-heading text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">
+                                                                {poll.question}
                                                             </div>
-                                                            <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
-                                                                <div 
-                                                                    className="bg-blue-600 h-1.5 rounded-full" 
-                                                                    style={{ width: `${percentage}%` }}
-                                                                ></div>
+                                                            <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-gray-500 dark:text-white/50">
+                                                                <span className="inline-flex items-center gap-1">
+                                                                    <Users className="h-3 w-3" />
+                                                                    {poll.options_count} options
+                                                                </span>
+                                                                {poll.expires_at && (
+                                                                    <span className="inline-flex items-center gap-1">
+                                                                        <Calendar className="h-3 w-3" />
+                                                                        {new Date(poll.expires_at).toLocaleDateString('fr-FR')}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                    );
-                                                })}
-                                                <div className="text-xs text-gray-500 mt-1 pt-1 border-t border-gray-100 dark:border-gray-700">
-                                                    Total: {poll.options?.reduce((acc, curr) => acc + curr.votes, 0) || 0} votes
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                poll.is_active 
-                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
-                                                    : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                                            }`}>
-                                                {poll.is_active ? 'Actif' : 'Inactif'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {poll.expires_at 
-                                                ? format(new Date(poll.expires_at), 'dd MMM yyyy', { locale: fr }) 
-                                                : 'Jamais'}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="icon" asChild>
-                                                    <Link href={route('dashboard.polls.edit', poll.id)}>
-                                                        <Edit className="h-4 w-4 text-blue-600" />
-                                                    </Link>
-                                                </Button>
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    onClick={() => handleDelete(poll.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-red-600" />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                        <BarChart2 className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                                        <p>Aucun sondage trouvé</p>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                                    </td>
+                                                    <td className="hidden px-5 py-4 md:table-cell">
+                                                        <span className="tabular-nums font-bold text-gray-900 dark:text-white">
+                                                            {totalVotes}
+                                                        </span>
+                                                        <span className="ml-1 text-[11px] font-medium text-gray-400 dark:text-white/40">
+                                                            votes
+                                                        </span>
+                                                    </td>
+                                                    <td className="hidden px-5 py-4 lg:table-cell">
+                                                        <AdminStatusPill
+                                                            tone={poll.is_active ? 'success' : 'neutral'}
+                                                        >
+                                                            {poll.is_active ? 'Actif' : 'Inactif'}
+                                                        </AdminStatusPill>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <AdminLinkButton
+                                                                href={resolvePollResultsHref(poll.id)}
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                icon={<Eye className="h-3.5 w-3.5" />}
+                                                            >
+                                                                Resultats
+                                                            </AdminLinkButton>
+                                                            <AdminLinkButton
+                                                                href={route('dashboard.polls.edit', poll.id)}
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                icon={<Pencil className="h-3.5 w-3.5" />}
+                                                            >
+                                                                Modifier
+                                                            </AdminLinkButton>
+                                                            <AdminButton
+                                                                variant="danger"
+                                                                size="sm"
+                                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                onClick={() => handleDelete(poll.id)}
+                                                            >
+                                                                Suppr.
+                                                            </AdminButton>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <AdminPagination
+                                links={polls.links}
+                                from={polls.from}
+                                to={polls.to}
+                                total={polls.total}
+                            />
+                        </>
+                    )}
+                </AdminCard>
             </div>
+
+            <Notifications />
         </DashboardLayout>
     );
 }
+

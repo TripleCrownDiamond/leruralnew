@@ -2,45 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Models\Article;
-use Inertia\Inertia;
-use Illuminate\Http\Request;
-
+use App\Models\Category;
+use App\Services\ArticleContentService;
 use App\Services\ArticleService;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
-    protected $articleService;
-
-    public function __construct(ArticleService $articleService)
-    {
-        $this->articleService = $articleService;
+    public function __construct(
+        protected ArticleService $articleService,
+        protected ArticleContentService $articleContentService,
+    ) {
     }
 
     public function show(Request $request, $slug)
     {
         $category = Category::where('slug', $slug)->firstOrFail();
-        
-        $query = Article::where(function($q) use ($category) {
-                $q->where('category_id', $category->id)
-                  ->orWhereHas('categories', function($query) use ($category) {
-                      $query->where('categories.id', $category->id);
-                  });
-            })
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now());
+        $isFollowing = $request->user() ? $request->user()->followedCategories()->where('categories.id', $category->id)->exists() : false;
 
-        // Search
+        $query = Article::where(function ($q) use ($category) {
+            $q->where('category_id', $category->id)
+                ->orWhereHas('categories', function ($query) use ($category) {
+                    $query->where('categories.id', $category->id);
+                });
+        })
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->with(['category', 'categories']);
+
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title_fr', 'like', "%{$search}%")
-                  ->orWhere('excerpt_fr', 'like', "%{$search}%");
+                    ->orWhere('excerpt_fr', 'like', "%{$search}%")
+                    ->orWhere('content_fr', 'like', "%{$search}%");
             });
         }
 
-        // Type Filter (Free/Premium)
         if ($type = $request->input('type')) {
             if ($type === 'premium') {
                 $query->where('is_premium', true);
@@ -49,7 +48,6 @@ class CategoryController extends Controller
             }
         }
 
-        // Price Filter (Min/Max)
         if ($minPrice = $request->input('min_price')) {
             $query->where('price', '>=', $minPrice);
         }
@@ -57,9 +55,10 @@ class CategoryController extends Controller
             $query->where('price', '<=', $maxPrice);
         }
 
-        // Sort
         $sort = $request->input('sort', 'recent');
-        if (is_array($sort)) $sort = 'recent'; // Safety check
+        if (is_array($sort)) {
+            $sort = 'recent';
+        }
 
         if ($sort === 'popular') {
             $query->orderByDesc('read_count');
@@ -79,8 +78,10 @@ class CategoryController extends Controller
                 'id' => $article->id,
                 'slug' => $article->slug,
                 'title' => $article->title_fr,
-                'excerpt' => $article->excerpt_fr,
+                'excerpt' => $this->articleContentService->excerpt($article->excerpt_fr, $article->content_fr, 190),
                 'image' => $article->featured_image,
+                'image_position_x' => $article->featured_image_position_x,
+                'image_position_y' => $article->featured_image_position_y,
                 'author' => $article->author_name,
                 'price' => $article->price,
                 'published_human' => optional($article->published_at)->diffForHumans(),
@@ -91,7 +92,7 @@ class CategoryController extends Controller
                 'is_liked' => $this->articleService->isLiked($article->id),
                 'is_saved' => $this->articleService->isSaved($article->id),
                 'category' => $category->name_fr,
-                'categories' => $article->categories->map(fn($c) => [
+                'categories' => $article->categories->map(fn ($c) => [
                     'name' => $c->name_fr,
                     'slug' => $c->slug,
                 ]),
@@ -102,6 +103,11 @@ class CategoryController extends Controller
                 'name' => $category->name_fr,
                 'slug' => $category->slug,
                 'description' => $category->description_fr,
+                'image' => $category->image,
+                'image_position_x' => $category->image_position_x,
+                'image_position_y' => $category->image_position_y,
+                'is_following' => $isFollowing,
+                'followers_count' => $category->followers()->count(),
             ],
             'articles' => $articles,
             'filters' => (object) $request->only(['search', 'sort', 'type', 'min_price', 'max_price']),

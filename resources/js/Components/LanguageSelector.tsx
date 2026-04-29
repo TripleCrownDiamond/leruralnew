@@ -8,7 +8,8 @@ export function LanguageSelector() {
     // For now, we'll just mock it as the backend locale handling isn't fully set up for dynamic switching via inertia yet
     // Typically you'd visit a route like /language/{locale}
     
-    const currentLocale = 'fr'; // Default to FR as per requirements
+    const { props } = usePage();
+    const currentLocale = (props as any).locale || 'fr';
 
     return (
         <Menu as="div" className="relative inline-block text-left">

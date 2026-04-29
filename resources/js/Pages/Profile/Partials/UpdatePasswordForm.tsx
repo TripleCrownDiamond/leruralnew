@@ -1,7 +1,7 @@
-import InputError from '@/Components/InputError';
+﻿import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import { AdminButton } from '@/Components/Dashboard/AdminButton';
 import { Transition } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef, useState } from 'react';
@@ -51,11 +51,11 @@ export default function UpdatePasswordForm({
 
     const getStrengthText = (score: number) => {
         if (score === 0) return '';
-        if (score <= 20) return 'Très faible';
+        if (score <= 20) return 'Tres faible';
         if (score <= 40) return 'Faible';
         if (score <= 60) return 'Moyen';
         if (score <= 80) return 'Fort';
-        return 'Très fort';
+        return 'Tres fort';
     };
 
     const updatePassword: FormEventHandler = (e) => {
@@ -64,13 +64,13 @@ export default function UpdatePasswordForm({
         put(route('password.update'), {
             preserveScroll: true,
             onSuccess: () => reset(),
-            onError: (errors) => {
-                if (errors.password) {
+            onError: (errorBag) => {
+                if (errorBag.password) {
                     reset('password', 'password_confirmation');
                     passwordInput.current?.focus();
                 }
 
-                if (errors.current_password) {
+                if (errorBag.current_password) {
                     reset('current_password');
                     currentPasswordInput.current?.focus();
                 }
@@ -81,43 +81,31 @@ export default function UpdatePasswordForm({
     return (
         <section className={className}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                    Mettre à jour le mot de passe
+                <h2 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">
+                    Securite
                 </h2>
-
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Assurez-vous que votre compte utilise un mot de passe long et aléatoire pour rester sécurisé.
+                    Utilisez un mot de passe fort et unique.
                 </p>
             </header>
 
             <form onSubmit={updatePassword} className="mt-6 space-y-6">
                 <div>
-                    <InputLabel
-                        htmlFor="current_password"
-                        value="Mot de passe actuel"
-                    />
-
+                    <InputLabel htmlFor="current_password" value="Mot de passe actuel" />
                     <TextInput
                         id="current_password"
                         ref={currentPasswordInput}
                         value={data.current_password}
-                        onChange={(e) =>
-                            setData('current_password', e.target.value)
-                        }
+                        onChange={(e) => setData('current_password', e.target.value)}
                         type="password"
                         className="mt-1 block w-full"
                         autoComplete="current-password"
                     />
-
-                    <InputError
-                        message={errors.current_password}
-                        className="mt-2"
-                    />
+                    <InputError message={errors.current_password} className="mt-2" />
                 </div>
 
                 <div>
                     <InputLabel htmlFor="password" value="Nouveau mot de passe" />
-
                     <TextInput
                         id="password"
                         ref={passwordInput}
@@ -133,29 +121,12 @@ export default function UpdatePasswordForm({
 
                     {data.password && (
                         <div className="mt-2 space-y-1">
-                            <div className="flex justify-between items-center text-xs">
-                                <span className={`font-medium ${
-                                    strength <= 20 ? 'text-red-500' :
-                                    strength <= 40 ? 'text-orange-500' :
-                                    strength <= 60 ? 'text-yellow-500' :
-                                    strength <= 80 ? 'text-lime-500' :
-                                    'text-green-500'
-                                }`}>
-                                    Force: {getStrengthText(strength)}
-                                </span>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-medium">Force: {getStrengthText(strength)}</span>
                             </div>
-                            <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div 
-                                    className={`h-full transition-all duration-300 ${getStrengthColor(strength)}`} 
-                                    style={{ width: `${strength}%` }}
-                                ></div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                                <div className={`h-full transition-all duration-300 ${getStrengthColor(strength)}`} style={{ width: `${strength}%` }} />
                             </div>
-                            <ul className="text-xs text-gray-500 dark:text-gray-400 mt-1 list-disc pl-4 space-y-0.5">
-                                <li className={data.password.length >= 8 ? 'text-green-600 dark:text-green-400' : ''}>Au moins 8 caractères</li>
-                                <li className={/[A-Z]/.test(data.password) ? 'text-green-600 dark:text-green-400' : ''}>Une majuscule</li>
-                                <li className={/[0-9]/.test(data.password) ? 'text-green-600 dark:text-green-400' : ''}>Un chiffre</li>
-                                <li className={/[^A-Za-z0-9]/.test(data.password) ? 'text-green-600 dark:text-green-400' : ''}>Un caractère spécial</li>
-                            </ul>
                         </div>
                     )}
 
@@ -163,31 +134,20 @@ export default function UpdatePasswordForm({
                 </div>
 
                 <div>
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirmer le mot de passe"
-                    />
-
+                    <InputLabel htmlFor="password_confirmation" value="Confirmer le mot de passe" />
                     <TextInput
                         id="password_confirmation"
                         value={data.password_confirmation}
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
+                        onChange={(e) => setData('password_confirmation', e.target.value)}
                         type="password"
                         className="mt-1 block w-full"
                         autoComplete="new-password"
                     />
-
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
+                    <InputError message={errors.password_confirmation} className="mt-2" />
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Enregistrer</PrimaryButton>
-
+                <div className="flex items-center gap-3">
+                    <AdminButton disabled={processing}>Enregistrer</AdminButton>
                     <Transition
                         show={recentlySuccessful}
                         enter="transition ease-in-out"
@@ -195,9 +155,7 @@ export default function UpdatePasswordForm({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Enregistré.
-                        </p>
+                        <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Enregistre.</p>
                     </Transition>
                 </div>
             </form>

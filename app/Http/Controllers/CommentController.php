@@ -9,6 +9,8 @@ use App\Models\CommentLike;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\CommentModerationStatus;
 
 class CommentController extends Controller
 {
@@ -24,8 +26,9 @@ class CommentController extends Controller
             'parent_id' => 'nullable|exists:comments,id',
         ]);
 
-        $moderation = Setting::where('key', 'comment_moderation')->value('value') ?? 'auto';
-        $isApproved = $moderation === 'auto';
+        $moderationSetting = Setting::where('key', 'comments.auto_approve')->first();
+        $autoApprove = $moderationSetting ? (bool) $moderationSetting->value : false;
+        $isApproved = $autoApprove;
 
         $comment = Comment::create([
             'article_id' => $article->id,
@@ -39,10 +42,10 @@ class CommentController extends Controller
         ]);
 
         if ($isApproved) {
-            return back()->with('success', 'Votre commentaire a été publié.');
+            return back()->with('success', 'Votre commentaire a Ã©tÃ© publiÃ©.');
         }
 
-        return back()->with('success', 'Votre commentaire est en attente de modération.');
+        return back()->with('success', 'Votre commentaire est en attente de moderation.');
     }
 
     public function toggleLike(Request $request, Comment $comment)

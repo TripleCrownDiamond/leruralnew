@@ -1,167 +1,158 @@
-import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head, useForm, Link } from '@inertiajs/react';
-import { Button } from '@/Components/ui/button';
+import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
+import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
+import CloudinaryUpload from '@/Components/CloudinaryUpload';
+import CoverPositionControl from '@/Components/CoverPositionControl';
+import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
-import InputError from '@/Components/InputError';
-import Checkbox from '@/Components/Checkbox';
-import PrimaryButton from '@/Components/PrimaryButton';
-import CloudinaryUpload from '@/Components/CloudinaryUpload';
-import { ArrowLeft } from 'lucide-react';
+import DashboardLayout from '@/Layouts/DashboardLayout';
+import { Head, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, Eye, FolderTree, Sparkles, Trash2 } from 'lucide-react';
+import type { FormEventHandler } from 'react';
 
-export default function Edit({ category }: { category: any }) {
-    const { data, setData, post, processing, errors } = useForm({
-        _method: 'put',
+interface CategoryPayload {
+    id: number;
+    slug: string;
+    name_fr: string;
+    description_fr?: string | null;
+    order?: number;
+    published?: boolean;
+    image?: string | null;
+    image_position_x?: number | null;
+    image_position_y?: number | null;
+}
+
+export default function Edit({ category }: { category: CategoryPayload }) {
+    const { data, setData, put, processing, errors } = useForm({
         name_fr: category.name_fr || '',
-        name_en: category.name_en || '',
         description_fr: category.description_fr || '',
-        description_en: category.description_en || '',
         order: category.order || 0,
         published: Boolean(category.published),
-        image: category.image || null,
+        image: category.image || '',
+        image_position_x: category.image_position_x ?? 50,
+        image_position_y: category.image_position_y ?? 50,
     });
 
-    const submit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post(route('dashboard.categories.update', category.id));
+    const submit: FormEventHandler = (event) => {
+        event.preventDefault();
+        put(route('dashboard.categories.update', category.id));
+    };
+
+    const handleDelete = () => {
+        if (confirm('Supprimer cette categorie ?')) {
+            router.delete(route('dashboard.categories.destroy', category.id));
+        }
     };
 
     return (
         <DashboardLayout title={`Modifier ${category.name_fr}`}>
             <Head title={`Modifier ${category.name_fr}`} />
 
-            <form onSubmit={submit}>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            Modifier Catégorie: {category.name_fr}
-                        </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Modifiez les informations de la catégorie
-                        </p>
-                    </div>
-                    <div className="flex gap-3">
-                        <Button variant="outline" asChild>
-                            <Link href={route('dashboard.categories.index')}>Annuler</Link>
-                        </Button>
-                        <PrimaryButton disabled={processing}>
-                            Mettre à jour
-                        </PrimaryButton>
-                    </div>
-                </div>
+            <form onSubmit={submit} className="space-y-8">
+                <AdminPageHeader
+                    eyebrow="Edition"
+                    title="Modifier la categorie"
+                    subtitle="Mettez a jour la rubrique avec le meme layout que les pages Articles."
+                    icon={<FolderTree className="h-6 w-6" />}
+                    actions={
+                        <>
+                            <AdminLinkButton href={route('dashboard.categories.index')} variant="secondary" icon={<ArrowLeft className="h-4 w-4" />}>
+                                Retour a la liste
+                            </AdminLinkButton>
+                            <AdminLinkButton href={route('category.show', category.slug)} as="a" target="_blank" rel="noopener noreferrer" variant="secondary" icon={<Eye className="h-4 w-4" />}>
+                                Voir la page
+                            </AdminLinkButton>
+                            <AdminButton type="button" variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={handleDelete}>
+                                Supprimer
+                            </AdminButton>
+                            <AdminButton type="submit" disabled={processing} icon={<Sparkles className="h-4 w-4" />}>
+                                Mettre a jour
+                            </AdminButton>
+                        </>
+                    }
+                />
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Content (Left Column) */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-6">
-                            <h3 className="font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                                Informations générales
-                            </h3>
-                            
-                            {/* Names */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid gap-8 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)]">
+                    <div className="space-y-8">
+                        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-gray-900 sm:p-7">
+                            <SectionHeader eyebrow="Editorial" title="Informations" />
+
+                            <div className="grid gap-5">
                                 <div>
-                                    <InputLabel htmlFor="name_fr" value="Nom (Français) *" />
+                                    <InputLabel htmlFor="name_fr" value="Nom *" />
                                     <TextInput
                                         id="name_fr"
-                                        className="mt-1 block w-full"
+                                        className="mt-2 block w-full text-lg font-semibold"
                                         value={data.name_fr}
-                                        onChange={(e) => setData('name_fr', e.target.value)}
+                                        onChange={(event) => setData('name_fr', event.target.value)}
                                         required
                                     />
                                     <InputError message={errors.name_fr} className="mt-2" />
                                 </div>
-                                <div>
-                                    <InputLabel htmlFor="name_en" value="Nom (Anglais)" />
-                                    <TextInput
-                                        id="name_en"
-                                        className="mt-1 block w-full"
-                                        value={data.name_en}
-                                        onChange={(e) => setData('name_en', e.target.value)}
-                                    />
-                                    <InputError message={errors.name_en} className="mt-2" />
-                                </div>
-                            </div>
 
-                            {/* Descriptions */}
-                            <div className="space-y-4">
                                 <div>
-                                    <InputLabel htmlFor="description_fr" value="Description (Français)" />
+                                    <InputLabel htmlFor="description_fr" value="Description (FR)" />
                                     <textarea
                                         id="description_fr"
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-                                        rows={4}
+                                        rows={5}
+                                        className="mt-2 block w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-gray-950"
                                         value={data.description_fr}
-                                        onChange={(e) => setData('description_fr', e.target.value)}
+                                        onChange={(event) => setData('description_fr', event.target.value)}
                                     />
                                     <InputError message={errors.description_fr} className="mt-2" />
                                 </div>
-                                <div>
-                                    <InputLabel htmlFor="description_en" value="Description (Anglais)" />
-                                    <textarea
-                                        id="description_en"
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-                                        rows={4}
-                                        value={data.description_en}
-                                        onChange={(e) => setData('description_en', e.target.value)}
-                                    />
-                                    <InputError message={errors.description_en} className="mt-2" />
-                                </div>
                             </div>
-                        </div>
+                        </section>
                     </div>
 
-                    {/* Sidebar (Right Column) */}
-                    <div className="space-y-6">
-                        {/* Status & Visibility */}
-                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
-                            <h3 className="font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                                Configuration
-                            </h3>
-                            
-                            <div>
-                                <InputLabel htmlFor="order" value="Ordre d'affichage" />
-                                <TextInput
-                                    id="order"
-                                    type="number"
-                                    className="mt-1 block w-full"
-                                    value={data.order}
-                                    onChange={(e) => setData('order', parseInt(e.target.value))}
-                                />
-                                <InputError message={errors.order} className="mt-2" />
-                            </div>
+                    <aside className="space-y-8 xl:sticky xl:top-6 xl:self-start">
+                        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-gray-900">
+                            <SectionHeader eyebrow="Publication" title="Parametres" />
 
-                            <div className="pt-2 border-t border-gray-100 dark:border-gray-700 mt-4">
-                                <label className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
-                                    <Checkbox
-                                        name="published"
-                                        checked={data.published}
-                                        onChange={(e) => setData('published', e.target.checked)}
-                                    />
-                                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300 font-medium">Publier la catégorie</span>
+                            <div className="space-y-5">
+                                <div>
+                                    <InputLabel htmlFor="order" value="Ordre d'affichage" />
+                                    <TextInput id="order" type="number" className="mt-2 block w-full" value={String(data.order)} onChange={(event) => setData('order', Number(event.target.value) || 0)} />
+                                    <InputError message={errors.order} className="mt-2" />
+                                </div>
+
+                                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                                    <input type="checkbox" checked={Boolean(data.published)} onChange={(event) => setData('published', event.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Publier la categorie</p>
+                                        <p className="text-xs text-gray-500 dark:text-white/60">Visible immediatement sur le site.</p>
+                                    </div>
                                 </label>
                             </div>
-                        </div>
+                        </section>
 
-                        {/* Featured Image */}
-                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
-                            <h3 className="font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                                Image de bannière
-                            </h3>
-                            
-                            <div>
-                                <CloudinaryUpload
-                                    onUpload={(url) => setData('image', url)}
-                                    defaultImage={data.image as string}
-                                    label=""
-                                    className="w-full"
-                                />
-                                <InputError message={errors.image} className="mt-2" />
-                            </div>
-                        </div>
-                    </div>
+                        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-gray-900">
+                            <SectionHeader eyebrow="Media" title="Image" />
+                            <CloudinaryUpload onUpload={(url) => setData('image', url)} defaultImage={data.image || undefined} label="" className="w-full" />
+                            <CoverPositionControl
+                                imageUrl={data.image || undefined}
+                                x={Number(data.image_position_x ?? 50)}
+                                y={Number(data.image_position_y ?? 50)}
+                                onChangeX={(value) => setData('image_position_x', value)}
+                                onChangeY={(value) => setData('image_position_y', value)}
+                                recommendation="Categorie: bandeau large recommande 1920x540, minimum 1400x500."
+                            />
+                            <InputError message={errors.image} className="mt-2" />
+                            <InputError message={errors.image_position_x} className="mt-2" />
+                            <InputError message={errors.image_position_y} className="mt-2" />
+                        </section>
+                    </aside>
                 </div>
             </form>
         </DashboardLayout>
+    );
+}
+
+function SectionHeader({ eyebrow, title }: { eyebrow: string; title: string }) {
+    return (
+        <div className="mb-6 border-b border-gray-200 pb-4 dark:border-white/10">
+            <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-primary">{eyebrow}</div>
+            <h2 className="font-heading text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">{title}</h2>
+        </div>
     );
 }

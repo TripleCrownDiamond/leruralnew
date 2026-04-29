@@ -2,20 +2,47 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
-class CategoryController extends Controller
+class CategoryController extends AdminController
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::orderBy('order')->paginate(10);
+        $query = Category::query();
+        $columns = $this->categoryColumns();
+
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search, $columns) {
+                $q->where('name_fr', 'like', "%{$search}%");
+
+                if (in_array('description_fr', $columns, true)) {
+                    $q->orWhere('description_fr', 'like', "%{$search}%");
+                }
+
+                if (in_array('description_en', $columns, true)) {
+                    $q->orWhere('description_en', 'like', "%{$search}%");
+                }
+            });
+        }
+
+        if ($request->filled('status') && $request->get('status') !== 'all') {
+            $status = $request->get('status');
+            $query->where('published', $status === 'active');
+        }
+
+        $categories = $query->orderBy('order')->paginate(10);
+
         return Inertia::render('Admin/Categories/Index', [
-            'categories' => $categories
+            'categories' => $categories,
+            'filters' => [
+                'search' => $request->get('search'),
+                'status' => $request->get('status', 'all'),
+            ],
         ]);
     }
 
@@ -26,61 +53,76 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name_fr' => 'required|string|max:255',
-            'name_en' => 'nullable|string|max:255',
-            'description_fr' => 'nullable|string',
-            'description_en' => 'nullable|string',
-            'order' => 'integer|min:0',
-            'published' => 'boolean',
-            'image' => 'nullable|string',
-        ]);
-
+        $validated = $request->validate($this->rules());
         $validated['slug'] = Str::slug($validated['name_fr']);
-
-        // Image is now a URL string from Cloudinary/frontend upload, so we just save it directly
-        // No need to handle file storage here if using CloudinaryUpload component which returns a URL
 
         Category::create($validated);
 
-        return redirect()->route('dashboard.categories.index')->with('success', 'Catégorie créée avec succès');
+        return redirect()->route('dashboard.categories.index')->with('success', 'Categorie creee avec succes');
     }
 
     public function edit(Category $category)
     {
         return Inertia::render('Admin/Categories/Edit', [
-            'category' => $category
+            'category' => $category,
         ]);
     }
 
     public function update(Request $request, Category $category)
     {
-        $validated = $request->validate([
-            'name_fr' => 'required|string|max:255',
-            'name_en' => 'nullable|string|max:255',
-            'description_fr' => 'nullable|string',
-            'description_en' => 'nullable|string',
-            'order' => 'integer|min:0',
-            'published' => 'boolean',
-            'image' => 'nullable|string',
-        ]);
-
+        $validated = $request->validate($this->rules());
         $validated['slug'] = Str::slug($validated['name_fr']);
 
-        // Image is updated directly as string URL
-        
         $category->update($validated);
 
-        return redirect()->route('dashboard.categories.index')->with('success', 'Catégorie mise à jour avec succès');
+        return redirect()->route('dashboard.categories.index')->with('success', 'Categorie mise a jour avec succes');
     }
 
     public function destroy(Category $category)
     {
-        // No local file deletion needed if using Cloudinary URLs or if we want to keep them
-        // If we were deleting from Cloudinary, we'd need a service for that
-        
         $category->delete();
 
-        return redirect()->route('dashboard.categories.index')->with('success', 'Catégorie supprimée avec succès');
+        return redirect()->route('dashboard.categories.index')->with('success', 'Categorie supprimee avec succes');
+    }
+
+    private function rules(): array
+    {
+        $rules = [
+            'name_fr' => 'required|string|max:255',
+            'order' => 'integer|min:0',
+            'published' => 'boolean',
+            'image' => 'nullable|string',
+        ];
+
+        $columns = $this->categoryColumns();
+
+        if (in_array('description_fr', $columns, true)) {
+            $rules['description_fr'] = 'nullable|string';
+        }
+
+        if (in_array('description_en', $columns, true)) {
+            $rules['description_en'] = 'nullable|string';
+        }
+
+        if (in_array('image_position_x', $columns, true)) {
+            $rules['image_position_x'] = 'nullable|integer|min:0|max:100';
+        }
+
+        if (in_array('image_position_y', $columns, true)) {
+            $rules['image_position_y'] = 'nullable|integer|min:0|max:100';
+        }
+
+        return $rules;
+    }
+
+    private function categoryColumns(): array
+    {
+        static $columns = null;
+
+        if ($columns === null) {
+            $columns = Schema::getColumnListing('categories');
+        }
+
+        return $columns;
     }
 }

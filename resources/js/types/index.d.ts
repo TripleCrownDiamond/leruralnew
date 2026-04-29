@@ -13,6 +13,7 @@ export type PageProps<
 > = T & {
     auth: {
         user: User;
+        has_active_subscription?: boolean;
     };
     ziggy: Config & { location: string };
 };

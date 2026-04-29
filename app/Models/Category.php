@@ -16,11 +16,15 @@ class Category extends Model
         'order',
         'published',
         'image',
+        'image_position_x',
+        'image_position_y',
     ];
 
     protected $casts = [
         'published' => 'boolean',
         'order' => 'integer',
+        'image_position_x' => 'integer',
+        'image_position_y' => 'integer',
     ];
 
     public function scopePublished(Builder $query): Builder
@@ -31,5 +35,10 @@ class Category extends Model
     public function articles()
     {
         return $this->hasMany(Article::class);
+    }
+
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'category_user_follows')->withTimestamps();
     }
 }

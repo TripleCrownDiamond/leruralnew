@@ -117,81 +117,102 @@ export default function MarketWidget({
     }, [activeTab]);
 
     return (
-        <div className="overflow-hidden rounded-lg border bg-card">
-            <div className="flex border-b">
+        <div className="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-[0_10px_30px_-15px_rgba(47,106,17,0.15)]">
+            {/* Editorial header — matches WidgetShell pattern */}
+            <div className="px-5 pt-5 pb-4">
+                <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.22em] text-primary mb-3">
+                    <span className="inline-block h-2 w-2 rounded-full bg-primary shadow-[0_0_0_4px_rgba(47,106,17,0.15)]" />
+                    <span>LE RURAL</span>
+                    <span className="h-px w-6 bg-primary/30" />
+                    <span className="text-gray-400 dark:text-gray-500">Marchés</span>
+                </div>
+                <h3 className="font-heading text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white leading-tight border-b-2 border-gray-900 dark:border-white pb-3">
+                    Cours des matières premières
+                </h3>
+            </div>
+
+            {/* Tab switcher — editorial pills */}
+            <div className="flex gap-1.5 p-3 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-800">
                 <button
-                    className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+                    className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] rounded-full transition-all ${
                         activeTab === 'international'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                            ? 'bg-gradient-to-r from-primary to-primary/85 text-white shadow-md shadow-primary/20'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                     onClick={() => setActiveTab('international')}
                 >
                     Cours Mondiaux
                 </button>
                 <button
-                    className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+                    className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] rounded-full transition-all ${
                         activeTab === 'local'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                            ? 'bg-gradient-to-r from-primary to-primary/85 text-white shadow-md shadow-primary/20'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                     onClick={() => setActiveTab('local')}
                 >
-                    Bord Champ (CI)
+                    Bord Champ
                 </button>
             </div>
 
-            <div className="p-4">
+            <div className="p-5">
                 {activeTab === 'international' ? (
                     <div className="min-h-[350px]">
                         <div ref={containerRef} className="tradingview-widget-container h-[350px] w-full">
-                            {/* Widget will be injected here */}
+                            {/* Widget injected */}
                         </div>
-                        <div className="mt-2 text-center text-[10px] text-muted-foreground">
-                            Données live via TradingView
+                        <div className="mt-3 text-center text-[9px] font-black uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">
+                            Live · TradingView
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                         <div className="mb-3 flex items-center gap-2 border-b border-border pb-2">
-                            <div className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">
+                    <div className="space-y-2.5">
+                        <div className="flex items-center gap-2 pb-1">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
                                 Prix Officiels
-                            </h3>
+                            </h4>
+                            <span className="h-px flex-1 bg-gradient-to-r from-primary/30 to-transparent" />
                         </div>
+
                         {localPrices.map((item) => {
                             const { name, country } = formatPriceItem(item.name);
                             const flag = getFlag(country);
-                            
+
                             return (
                                 <div
                                     key={item.name}
-                                    className="flex items-center justify-between rounded bg-muted/30 px-3 py-2"
+                                    className="group flex items-center justify-between rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 px-4 py-3 hover:border-primary/40 hover:bg-primary/5 transition-all"
                                 >
-                                    <div className="flex items-start gap-2">
-                                        {flag && <span className="text-lg">{flag}</span>}
-                                        <div>
-                                            <div className="font-semibold text-foreground">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        {flag && <span className="text-xl shrink-0">{flag}</span>}
+                                        <div className="min-w-0">
+                                            <div className="font-heading text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white truncate">
                                                 {name}
                                             </div>
-                                            <div className="text-[10px] text-muted-foreground">
+                                            <div className="text-[9px] uppercase tracking-[0.14em] font-bold text-gray-400 dark:text-gray-500 truncate">
                                                 {item.note}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="font-bold text-primary">
+                                    <div className="text-right shrink-0 ml-3">
+                                        <div className="font-heading text-lg font-black tabular-nums text-primary leading-none">
                                             {item.price}
                                         </div>
-                                        <div className="text-[10px] font-medium text-muted-foreground">
+                                        <div className="mt-1 text-[9px] uppercase tracking-[0.14em] font-black text-gray-500 dark:text-gray-400">
                                             {item.unit}
                                         </div>
                                     </div>
                                 </div>
                             );
                         })}
-                        <div className="mt-4 rounded bg-amber-500/10 p-2 text-[10px] leading-tight text-amber-700">
-                            <strong>Note:</strong> Ces prix sont fixés par le Conseil Café-Cacao / CCA pour la campagne en cours.
+
+                        <div className="mt-4 flex gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-[10px] leading-relaxed text-amber-800 dark:text-amber-200">
+                            <span className="shrink-0 inline-block h-4 w-4 rounded-full bg-amber-500 text-white text-[9px] font-black flex items-center justify-center">i</span>
+                            <span>
+                                <strong className="font-black uppercase tracking-wider text-[9px] block mb-0.5">Note officielle</strong>
+                                Prix fixés par le Conseil Café-Cacao / CCA pour la campagne en cours.
+                            </span>
                         </div>
                     </div>
                 )}

@@ -1,14 +1,20 @@
 import { useTheme } from '@/Components/ThemeProvider';
 import { Button } from '@/Components/ui/button';
 import { Moon, Sun } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export function ModeToggle() {
+interface ModeToggleProps {
+    className?: string;
+}
+
+export function ModeToggle({ className }: ModeToggleProps) {
     const { theme, setTheme } = useTheme();
 
     return (
         <Button
             variant="ghost"
             size="icon"
+            className={cn('h-11 w-11 rounded-full md:h-12 md:w-12', className)}
             onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
         >
             <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

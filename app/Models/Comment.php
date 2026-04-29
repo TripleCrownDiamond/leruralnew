@@ -10,6 +10,9 @@ class Comment extends Model
 
     protected $casts = [
         'is_approved' => 'boolean',
+        'auto_flagged' => 'boolean',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function article()
@@ -35,5 +38,21 @@ class Comment extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Scopes for admin panel
+    public function scopeApproved($query)
+    {
+        return $query->where('is_approved', true);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('is_approved', false);
+    }
+
+    public function scopeAutoFlagged($query)
+    {
+        return $query->where('auto_flagged', true);
     }
 }

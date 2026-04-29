@@ -2,44 +2,53 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Category;
-use App\Models\Setting;
-use App\Models\Poll;
-use App\Models\Quote;
-use App\Models\DidYouKnow;
 use App\Models\Agenda;
+use App\Models\Category;
+use App\Models\DidYouKnow;
+use App\Models\Poll;
 use App\Models\PollVote;
+use App\Models\PromoCode;
+use App\Models\Quote;
+use App\Models\Setting;
+use App\Models\StaticPage;
+use App\Models\SubscriptionPlan;
+use App\Models\UserSubscription;
+use App\Services\SharedContentService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that is loaded on the first page visit.
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determine the current asset version.
-     */
     public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
-    /**
-     * Define the props that are shared by default.
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        $hasActiveSubscription = false;
+        if ($user) {
+            $hasActiveSubscription = UserSubscription::query()
+                ->where('user_id', $user->id)
+                ->where('status', 'active')
+                ->where(function ($query) {
+                    $query->whereNull('ends_at')
+                        ->orWhere('ends_at', '>', now());
+                })
+                ->exists();
+        }
+
+        PromoCode::ensureDefaultCode();
+
         return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'has_active_subscription' => $hasActiveSubscription,
             ],
             'ziggy' => function () use ($request) {
                 return array_merge((new Ziggy)->toArray(), [
@@ -52,37 +61,34 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
             ],
             'widgets' => function () use ($request) {
-                // Poll Logic
-                $polls = \App\Models\Poll::with('options')
+                $polls = Poll::with('options')
                     ->where('is_active', true)
                     ->where(function ($query) {
                         $query->whereNull('expires_at')
-                              ->orWhere('expires_at', '>', now());
+                            ->orWhere('expires_at', '>', now());
                     })
                     ->latest()
                     ->get();
-                
-                $pollsData = [];
-                
+
+                $pollsData = collect();
+
                 if ($polls->isNotEmpty()) {
-                    // Check if user has voted via cookie
                     $votedPolls = json_decode($request->cookie('voted_polls', '[]'), true);
                     if (!is_array($votedPolls)) {
                         $votedPolls = [];
                     }
-                    
+
                     $ip = $request->ip();
                     $sessionId = $request->session()->getId();
 
-                    $pollsData = $polls->map(function($poll) use ($votedPolls, $ip, $sessionId) {
+                    $pollsData = $polls->map(function ($poll) use ($votedPolls, $ip, $sessionId) {
                         $userHasVoted = in_array($poll->id, $votedPolls);
 
-                        // Also check IP/Session if cookie check fails (e.g. cleared cookies)
                         if (!$userHasVoted) {
                             $userHasVoted = PollVote::where('poll_id', $poll->id)
                                 ->where(function ($query) use ($ip, $sessionId) {
                                     $query->where('ip_address', $ip)
-                                          ->orWhere('session_id', $sessionId);
+                                        ->orWhere('session_id', $sessionId);
                                 })
                                 ->exists();
                         }
@@ -90,10 +96,10 @@ class HandleInertiaRequests extends Middleware
                         return [
                             'id' => $poll->id,
                             'question' => $poll->question,
-                            'options' => $poll->options->map(fn($o) => [
-                                'id' => $o->id,
-                                'label' => $o->label,
-                                'votes' => $o->votes // Use direct votes column
+                            'options' => $poll->options->map(fn ($option) => [
+                                'id' => $option->id,
+                                'label' => $option->label,
+                                'votes' => $option->votes,
                             ]),
                             'user_has_voted' => $userHasVoted,
                         ];
@@ -101,40 +107,95 @@ class HandleInertiaRequests extends Middleware
                 }
 
                 $quote = Quote::where('is_active', true)->inRandomOrder()->first();
-                $did_you_know = DidYouKnow::where('is_active', true)->inRandomOrder()->first();
+                $didYouKnow = DidYouKnow::where('is_active', true)->inRandomOrder()->first();
                 $agenda = Agenda::where('is_active', true)
                     ->whereDate('date', '>=', now())
                     ->orderBy('date')
-                    ->take(3)
+                    ->orderBy('time')
+                    ->take(6)
                     ->get()
-                    ->map(fn ($e) => [
-                        'id' => $e->id,
-                        'title' => $e->title,
-                        'date' => $e->date->format('d M'),
-                        'location' => $e->location,
+                    ->map(fn ($event) => [
+                        'id' => $event->id,
+                        'title' => $event->title,
+                        'description' => $event->description,
+                        'date' => $event->date->format('d M'),
+                        'time' => $event->time,
+                        'location' => $event->location,
                     ]);
 
                 return [
                     'polls' => $pollsData,
-                    'poll' => $pollsData->first() ?? null, // Keep backward compatibility
+                    'poll' => $pollsData->first() ?? null,
                     'quote' => $quote ? [
                         'content' => $quote->content,
                         'author' => $quote->author,
                     ] : null,
-                    'did_you_know' => $did_you_know ? [
-                        'content' => $did_you_know->content,
+                    'did_you_know' => $didYouKnow ? [
+                        'content' => $didYouKnow->content,
                     ] : null,
                     'agenda' => $agenda,
                 ];
             },
-            'categories' => function () use ($request) {
-                // Return only needed fields
-                return Category::published()->orderBy('order')->get()->map(fn ($c) => [
-                    'slug' => $c->slug,
-                    'name' => app()->getLocale() === 'en' ? $c->name_en : $c->name_fr,
+            'categories' => function () {
+                return Category::published()->orderBy('order')->get()->map(fn ($category) => [
+                    'slug' => $category->slug,
+                    'name' => $category->name_fr,
                 ]);
             },
             'settings' => fn () => Setting::pluck('value', 'key')->all(),
+            'promo_offer' => fn () => optional(PromoCode::currentFeatured(), function (PromoCode $promo): array {
+                $targetPlans = collect();
+
+                if (method_exists($promo, 'targetedSubscriptionPlanIds')) {
+                    $targetIds = $promo->targetedSubscriptionPlanIds();
+                    if ($targetIds->isNotEmpty()) {
+                        $targetPlans = SubscriptionPlan::query()
+                            ->whereIn('id', $targetIds->all())
+                            ->where('is_active', true)
+                            ->get(['id', 'name', 'slug', 'price'])
+                            ->sortBy(fn (SubscriptionPlan $plan) => $targetIds->search((int) $plan->id))
+                            ->values();
+                    }
+                }
+
+                return [
+                    'code' => $promo->code,
+                    'name' => $promo->name,
+                    'description' => $promo->description,
+                    'discount_type' => $promo->discount_type,
+                    'discount_value' => (float) $promo->discount_value,
+                    'min_amount' => $promo->min_amount !== null ? (float) $promo->min_amount : null,
+                    'applies_to_all_subscriptions' => property_exists($promo, 'applies_to_all_subscriptions')
+                        ? (bool) $promo->applies_to_all_subscriptions
+                        : true,
+                    'target_subscription_plans' => $targetPlans->map(fn (SubscriptionPlan $plan) => [
+                        'id' => $plan->id,
+                        'slug' => $plan->slug,
+                        'name' => $plan->name,
+                        'price' => (float) $plan->price,
+                    ])->all(),
+                    'checkout_plan_id' => $targetPlans->first()?->slug ?? 'default',
+                ];
+            }),
+            'footer_pages' => function () {
+                StaticPage::ensureDefaultPages();
+
+                return StaticPage::query()
+                    ->where('is_published', true)
+                    ->whereIn('category', ['legal', 'info'])
+                    ->where('slug', '!=', 'contact')
+                    ->orderBy('category')
+                    ->orderBy('order')
+                    ->get(['id', 'slug', 'title', 'category'])
+                    ->map(fn ($page) => [
+                        'id' => $page->id,
+                        'slug' => $page->slug,
+                        'title' => $page->title,
+                        'category' => $page->category,
+                    ])
+                    ->values();
+            },
+            'shared_content' => fn () => cache()->remember('shared_content:v1', now()->addMinutes(10), fn () => app(SharedContentService::class)->get()),
         ]);
     }
 }

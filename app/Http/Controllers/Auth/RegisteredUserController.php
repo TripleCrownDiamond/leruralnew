@@ -46,6 +46,22 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        // Check for purchase data from URL parameter
+        $purchaseData = null;
+        if ($request->has('purchase')) {
+            try {
+                $purchaseData = json_decode(base64_decode(urldecode($request->get('purchase'))), true);
+                
+                // Store purchase data in session for email verification
+                if ($purchaseData && isset($purchaseData['type'])) {
+                    $request->session()->put('pending_purchase', $purchaseData);
+                    $request->session()->put('purchase_from_registration', true);
+                }
+            } catch (\Exception $e) {
+                // Invalid purchase data, ignore
+            }
+        }
+
         // Check for intended URL in session (saved by PaymentController or others)
         if ($request->session()->has('url.intended')) {
             return redirect($request->session()->get('url.intended'));

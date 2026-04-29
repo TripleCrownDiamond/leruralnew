@@ -1,8 +1,8 @@
-import MainLayout from '@/Layouts/MainLayout';
+﻿import MainLayout from '@/Layouts/MainLayout';
 import { Link, Head, usePage, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import axios from 'axios';
-import { Calendar, Eye, ThumbsUp, MessageSquare, Facebook, Twitter, Phone, Lock, ArrowLeft, Bookmark } from 'lucide-react';
+import { Calendar, Eye, ThumbsUp, MessageSquare, Facebook, Twitter, Lock, ArrowLeft, Bookmark, MessageCircle } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import ArticleCard from '@/Components/ArticleCard';
 import HomeSidebar from '@/Components/HomeSidebar';
@@ -10,6 +10,7 @@ import AdSpace from '@/Components/AdSpace';
 import CommentItem from '@/Components/CommentItem';
 import ImageWithFallback from '@/Components/ImageWithFallback';
 import Paywall from '@/Components/Paywall';
+import useSharedContent from '@/Hooks/useSharedContent';
 
 interface ArticleShowProps {
     article: {
@@ -19,6 +20,8 @@ interface ArticleShowProps {
         content: string | null;
         excerpt: string | null;
         image: string | null;
+        image_position_x?: number | null;
+        image_position_y?: number | null;
         author: string;
         published_at: string | null;
         published_human: string | null;
@@ -44,16 +47,14 @@ interface ArticleShowProps {
 
 export default function ArticleShow({ article, similar_articles, min_subscription_price }: ArticleShowProps) {
     const { props } = usePage<any>();
+    const { marketPrices, webtvVideos, partners, latestComments } = useSharedContent();
     const locale = props.locale ?? 'fr';
     const flash = props.flash ?? {};
-    const marketPrices = props.market_prices ?? [];
-    const webtvVideos = props.webtv_videos ?? [];
-    const partners = props.partners ?? [];
-    const latestComments = props.latest_comments ?? [];
-    
     const [likesCount, setLikesCount] = useState(article.likes_count);
     const [isLiked, setIsLiked] = useState(article.is_liked);
     const [isSaved, setIsSaved] = useState(article.is_saved ?? false);
+    const imagePositionX = Number(article.image_position_x ?? 50);
+    const imagePositionY = Number(article.image_position_y ?? 50);
 
     // Similar articles state
     const [similarLiked, setSimilarLiked] = useState<Record<string, boolean>>(() => {
@@ -141,16 +142,6 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
             preserveScroll: true,
         });
     };
-
-    // Fix category display if it's not an object with name
-    const categoryName = typeof article.category === 'object' && article.category !== null 
-        ? (article.category.name_fr || article.category.name) 
-        : (typeof article.category === 'string' ? article.category : 'Catégorie');
-
-    const categorySlug = typeof article.category === 'object' && article.category !== null 
-        ? article.category.slug 
-        : '#';
-
     const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
 
     return (
@@ -158,86 +149,111 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
             <Head>
                 <meta property="og:title" content={article.title} />
                 <meta property="og:description" content={article.excerpt || ''} />
-                <meta property="og:image" content={article.image || ''} />
+                <meta property="og:image" content={article.image || '/images/article-placeholder.svg'} />
                 <meta property="og:url" content={shareUrl} />
                 <meta name="twitter:card" content="summary_large_image" />
             </Head>
 
-            {/* Hero Header */}
-            <div className="relative overflow-hidden bg-gray-900 pb-16 pt-16 lg:pt-20 rounded-2xl md:rounded-[50px] mx-0 md:mx-4 mt-0 md:mt-4 shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/90 z-10" />
-                <div 
-                    className="absolute inset-0 bg-cover bg-center opacity-30 blur-sm scale-105"
-                    style={{ backgroundImage: `url(${article.image || '/images/placeholder.jpg'})` }}
-                />
-                
-                <div className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="mx-auto max-w-4xl text-center">
-                        <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-                            {(article.categories && article.categories.length > 0) ? (
-                                article.categories.map((cat: any) => (
-                                    <Link 
-                                        key={cat.slug}
-                                        href={`/categorie/${cat.slug}`}
-                                        className="inline-flex items-center rounded-full bg-black/60 px-3 py-1 text-sm font-medium text-white backdrop-blur-md border border-white/20 hover:bg-black/80 transition-colors shadow-sm"
+            {/* Editorial Article Hero */}
+            <div className="relative mx-0 mt-0 overflow-hidden shadow-2xl md:mx-4 md:mt-4 md:rounded-3xl">
+                <div className="relative bg-gray-950 pb-16 pt-12 text-white lg:pb-20 lg:pt-14">
+                    <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-cover bg-center opacity-40"
+                        style={{ backgroundImage: `url(${article.image || '/images/article-placeholder.svg'})`, backgroundPosition: `${imagePositionX}% ${imagePositionY}%`, filter: 'blur(8px)', transform: 'scale(1.08)' }}
+                    />
+                    <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-gray-950/45 via-gray-950/55 to-gray-950/75" />
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.05]"
+                         style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)', backgroundSize: '26px 26px' }} />
+                    <div aria-hidden="true" className="pointer-events-none absolute -top-24 left-1/3 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
+
+                    {/* Brand rail */}
+                    <div className="relative z-20 mb-10 flex items-center gap-3 border-b border-white/10 px-5 pb-3 text-[10px] font-black uppercase tracking-[0.32em] text-white/70 sm:px-10">
+                        <span className="flex h-1.5 w-1.5 rounded-full bg-primary" />
+                        <span>LE RURAL</span>
+                        <span className="text-white/20">/</span>
+                        <span>Article</span>
+                        {article.premium && <span className="ml-auto text-primary">Premium</span>}
+                    </div>
+
+                    <div className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                        <div className="mx-auto max-w-4xl text-center">
+                            <div className="mb-7 flex flex-wrap items-center justify-center gap-2">
+                                {(article.category && Array.isArray(article.category) && article.category.length > 0) ? (
+                                    article.category.map((cat: any) => (
+                                        <Link
+                                            key={cat.slug}
+                                            href={`/categorie/${cat.slug}`}
+                                            className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white backdrop-blur transition-colors hover:border-primary hover:bg-primary/20"
+                                        >
+                                            {cat.name}
+                                        </Link>
+                                    ))
+                                ) : (article.category && typeof article.category === 'object') ? (
+                                    <Link
+                                        href={`/categorie/${article.category.slug}`}
+                                        className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white backdrop-blur transition-colors hover:border-primary hover:bg-primary/20"
                                     >
-                                        {cat.name}
+                                        {article.category.name_fr || article.category.name}
                                     </Link>
-                                ))
-                            ) : (article.category && typeof article.category === 'object') ? (
-                                <Link 
-                                    href={`/categorie/${article.category.slug}`}
-                                    className="inline-flex items-center rounded-full bg-black/60 px-3 py-1 text-sm font-medium text-white backdrop-blur-md border border-white/20 hover:bg-black/80 transition-colors shadow-sm"
-                                >
-                                    {article.category.name_fr || article.category.name}
-                                </Link>
-                            ) : (typeof article.category === 'string') ? (
-                                <span className="inline-flex items-center rounded-full bg-black/60 px-3 py-1 text-sm font-medium text-white backdrop-blur-md border border-white/20 shadow-sm">
-                                    {article.category}
-                                </span>
-                            ) : null}
-                            
-                            {article.premium ? (
-                                <span className="inline-flex items-center rounded-full bg-amber-500/90 px-3 py-1 text-sm font-bold text-white shadow-lg backdrop-blur-sm">
-                                    <Lock className="w-3 h-3 mr-1" />
-                                    {article.price ? `${formatCfa(article.price)}` : 'PAYANT'}
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center rounded-full bg-green-500/90 px-3 py-1 text-sm font-bold text-white shadow-lg backdrop-blur-sm">
-                                    GRATUIT
-                                </span>
-                            )}
-                        </div>
-                        <h1 className="text-2xl sm:text-3xl font-black leading-tight tracking-tight text-white md:text-5xl lg:text-6xl mb-8 drop-shadow-lg">
-                            {article.title}
-                        </h1>
-                        
-                        <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-300">
-                            <div className="flex items-center gap-2">
-                                <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center font-bold text-white border-2 border-gray-600">
-                                    {article.author ? article.author.charAt(0) : '?'}
-                                </div>
-                                <span className="font-bold text-white">{article.author || 'Auteur inconnu'}</span>
-                            </div>
-                            <span className="hidden sm:inline text-gray-600">•</span>
-                            <span className="flex items-center gap-1.5">
-                                <Calendar className="h-4 w-4" />
-                                {article.published_at || article.published_human}
-                            </span>
-                            <span className="hidden sm:inline text-gray-600">•</span>
-                            <span className="flex items-center gap-1.5">
-                                <Eye className="h-4 w-4" />
-                                {new Intl.NumberFormat(locale).format(article.views_count)} vues
-                            </span>
-                            {article.read_time && (
-                                <>
-                                    <span className="hidden sm:inline text-gray-600">•</span>
-                                    <span className="flex items-center gap-1.5">
-                                        <div className="h-1 w-1 rounded-full bg-current" />
-                                        {article.read_time} min de lecture
+                                ) : (typeof article.category === 'string') ? (
+                                    <span className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white backdrop-blur">
+                                        {article.category}
                                     </span>
-                                </>
+                                ) : null}
+
+                                {article.premium ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/30">
+                                        <Lock className="h-3 w-3" />
+                                        {article.price ? `${formatCfa(article.price)}` : 'Payant'}
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center rounded-full bg-gradient-to-r from-primary to-emerald-600 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-primary/30">
+                                        Gratuit
+                                    </span>
+                                )}
+                            </div>
+
+                            <h1 className="font-heading text-3xl font-black leading-[1.08] tracking-tight text-white drop-shadow-lg sm:text-4xl md:text-5xl lg:text-[3.75rem]">
+                                {article.title}
+                            </h1>
+
+                            {article.excerpt && (
+                                <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg">
+                                    {article.excerpt.length > 180 ? `${article.excerpt.slice(0, 180)}...` : article.excerpt}
+                                </p>
                             )}
+
+                            <div className="mt-9 flex flex-wrap items-center justify-center gap-5 text-sm text-gray-300">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-emerald-700 text-sm font-black text-white ring-2 ring-white/20">
+                                        {article.author ? article.author.charAt(0) : '?'}
+                                    </div>
+                                    <div className="leading-tight">
+                                        <div className="text-[10px] font-bold uppercase tracking-widest text-white/50">Par</div>
+                                        <div className="text-sm font-bold text-white">{article.author || 'Auteur inconnu'}</div>
+                                    </div>
+                                </div>
+                                <span className="h-5 w-px bg-white/20" />
+                                <span className="flex items-center gap-1.5 text-white/80">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    {article.published_at || article.published_human}
+                                </span>
+                                <span className="h-5 w-px bg-white/20" />
+                                <span className="flex items-center gap-1.5 text-white/80">
+                                    <Eye className="h-3.5 w-3.5" />
+                                    {new Intl.NumberFormat(locale).format(article.views_count)} vues
+                                </span>
+                                {article.read_time && (
+                                    <>
+                                        <span className="h-5 w-px bg-white/20" />
+                                        <span className="flex items-center gap-1.5 text-white/80">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                            {article.read_time} min de lecture
+                                        </span>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -250,17 +266,16 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
                     <div className="lg:col-span-8 xl:col-span-9">
                         <div className="bg-white dark:bg-gray-800 rounded-none md:rounded-2xl shadow-xl border-y md:border border-gray-100 dark:border-gray-700 overflow-hidden">
                             {/* Featured Image */}
-                            {article.image && (
-                                <div className="aspect-[21/9] w-full overflow-hidden">
-                                    <ImageWithFallback 
-                                        src={article.image} 
-                                        alt={article.title} 
-                                        className="h-full w-full object-cover"
-                                    />
-                                </div>
-                            )}
-
-                            <div className="p-6 sm:p-10">
+                            <div className="aspect-[21/9] w-full overflow-hidden">
+                                <ImageWithFallback 
+                                    src={article.image || undefined} 
+                                    alt={article.title} 
+                                    className="h-full w-full object-cover"
+                                    style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
+                                    fallbackSrc="/images/article-placeholder.svg"
+                                />
+                            </div>
+<div className="p-6 sm:p-10">
                                 {/* Actions Bar */}
                                 <div className="flex flex-col sm:flex-row items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-6 mb-8 gap-4">
                                     <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-start">
@@ -280,7 +295,7 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
                                             onClick={handleSave}
                                         >
                                             <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                                            <span className="hidden sm:inline">{isSaved ? 'Enregistré' : 'Sauvegarder'}</span>
+                                            <span className="hidden sm:inline">{isSaved ? 'Enregistre' : 'Sauvegarder'}</span>
                                         </Button>
                                     </div>
                                     <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-end">
@@ -296,7 +311,7 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
                                         </Button>
                                         <Button variant="outline" size="icon" className="rounded-full" asChild>
                                             <a href={`https://wa.me/?text=${article.title} ${shareUrl}`} target="_blank" rel="noopener noreferrer">
-                                                <Phone className="h-4 w-4 text-green-500" />
+                                                <MessageCircle className="h-4 w-4 text-green-500" />
                                             </a>
                                         </Button>
                                     </div>
@@ -305,37 +320,78 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
                                 {/* Article Body */}
                                 <div className="prose prose-lg prose-indigo max-w-none dark:prose-invert">
                                     {article.excerpt && (
-                                        <p className="lead font-medium text-gray-700 dark:text-gray-300 border-l-4 border-primary pl-4 italic bg-gray-50 dark:bg-gray-900/50 p-4 rounded-r-lg">
-                                            {article.excerpt}
-                                        </p>
+                                        <div className="relative mb-6">
+                                            <p className="lead font-medium text-gray-700 dark:text-gray-300 border-l-4 border-primary pl-4 italic bg-gray-50 dark:bg-gray-900/50 p-4 rounded-r-lg overflow-hidden">
+                                                <span 
+                                                    className="block"
+                                                    style={{
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 3,
+                                                        WebkitBoxOrient: 'vertical',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}
+                                                >
+                                                    {article.excerpt}
+                                                </span>
+                                            </p>
+                                            {/* Indicateur visuel si l'extrait est tronque */}
+                                            {article.excerpt.length > 200 && (
+                                                <div className="absolute bottom-2 right-4 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs text-gray-500 dark:text-gray-400">
+                                                    ...
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                     
-                                    <div 
-                                        className="prose prose-lg dark:prose-invert max-w-none prose-img:rounded-xl prose-a:text-primary hover:prose-a:text-primary/80"
-                                        dangerouslySetInnerHTML={{ __html: article.content || '' }}
-                                    />
+                                    {/* Contenu payant avec effet de floutage */}
+                                    {!article.can_read && article.premium ? (
+                                        <div className="relative">
+                                            <div 
+                                                className="prose prose-lg dark:prose-invert max-w-none prose-img:rounded-xl prose-a:text-primary hover:prose-a:text-primary/80 blur-sm select-none"
+                                                dangerouslySetInnerHTML={{ __html: article.content || '' }}
+                                            />
+                                            
+                                            {/* Overlay de floutage */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-gray-800 dark:via-gray-800/90 dark:to-transparent pointer-events-none"></div>
+                                            
+                                            {/* Icone de cadenas au centre */}
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full p-4 shadow-lg border border-gray-200 dark:border-gray-600">
+                                                    <Lock className="h-6 w-6 text-primary" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div 
+                                            className="prose prose-lg dark:prose-invert max-w-none prose-img:rounded-xl prose-a:text-primary hover:prose-a:text-primary/80"
+                                            dangerouslySetInnerHTML={{ __html: article.content || '' }}
+                                        />
+                                    )}
                                     
                                     {/* Paywall */}
-                            {!article.can_read && article.premium && (
-                                <Paywall 
-                                    price={article.price} 
-                                    articleId={article.id} 
-                                    articleSlug={article.slug}
-                                    title="Contenu Payant"
-                                    minSubscriptionPrice={min_subscription_price}
-                                />
-                            )}
+                                    {!article.can_read && article.premium && (
+                                        <Paywall 
+                                            price={article.price} 
+                                            articleId={article.id} 
+                                            articleSlug={article.slug}
+                                            title="Contenu Payant"
+                                            minSubscriptionPrice={min_subscription_price}
+                                        />
+                                    )}
                                 </div>
 
                                 {/* Tags & Navigation */}
                                 <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-700">
                                     <div className="flex justify-between items-center">
-                                        <Button variant="link" className="pl-0 text-gray-500 hover:text-primary transition-colors" asChild>
-                                            <Link href={`/categorie/${article.category.slug}`} className="flex items-center gap-2">
-                                                <ArrowLeft className="h-4 w-4" />
-                                                Retour à {article.category.name}
-                                            </Link>
-                                        </Button>
+                                        {article.category && (
+                                            <Button variant="link" className="pl-0 text-gray-500 hover:text-primary transition-colors" asChild>
+                                                <Link href={`/categorie/${article.category.slug}`} className="flex items-center gap-2">
+                                                    <ArrowLeft className="h-4 w-4" />
+                                                    Retour a {article.category.name}
+                                                </Link>
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -345,22 +401,31 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
                         <AdSpace 
                             width="100%" 
                             height={150} 
-                            locationId={`article_${article.slug}_bottom`} 
+                            locationId="article_single_bottom" 
                             className="my-12 rounded-xl overflow-hidden shadow-sm"
+                            hideWhenEmpty
                         />
 
                         {/* Author Bio */}
-                        <div className="mb-12 flex flex-col sm:flex-row items-center sm:items-start gap-6 rounded-xl bg-white p-8 shadow-sm dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-center sm:text-left">
-                            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full bg-gray-200 ring-4 ring-gray-50 dark:ring-gray-700">
-                                <div className="flex h-full w-full items-center justify-center bg-primary text-2xl font-bold text-white">
-                                    {article.author.charAt(0)}
+                        <div className="relative mt-10 mb-12 overflow-hidden rounded-3xl border border-gray-200 bg-gradient-to-br from-white to-primary/[0.03] p-8 shadow-[0_10px_40px_-15px_rgba(47,106,17,0.15)] dark:border-white/10 dark:from-gray-900 dark:to-primary/10">
+                            <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+                            <div className="relative flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:text-left">
+                                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl shadow-lg shadow-primary/20 ring-4 ring-white dark:ring-white/10">
+                                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-emerald-700 text-2xl font-black text-white">
+                                        {article.author.charAt(0)}
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">À propos de {article.author}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
-                                    Rédacteur expert sur Le Rural. Passionné par l'agriculture durable et les innovations technologiques dans le secteur agro-alimentaire en Afrique de l'Ouest.
-                                </p>
+                                <div className="flex-1 pt-2">
+                                    <div className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                                        LE RURAL / Redaction
+                                    </div>
+                                    <h3 className="mt-1 font-heading text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                                        A propos de {article.author}
+                                    </h3>
+                                    <p className="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                                        Redacteur expert sur LE RURAL. Passionne par l'agriculture durable et les innovations technologiques dans le secteur agro-alimentaire en Afrique de l'Ouest.
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
@@ -368,7 +433,7 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
                         <div className="mb-12 rounded-xl bg-white p-6 sm:p-10 shadow-sm dark:bg-gray-800 border border-gray-100 dark:border-gray-700" id="comments">
                             <h3 className="mb-8 text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <MessageSquare className="h-6 w-6 text-primary" />
-                                Commentaires ({article.comments?.length || 0})
+                                Commentaires ({article.comments_count ?? article.comments?.length ?? 0})
                             </h3>
 
                             {/* Flash Message */}
@@ -427,7 +492,7 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
                                         />
                                     ))
                                 ) : (
-                                    <p className="text-center text-gray-500 italic py-8 bg-gray-50 dark:bg-gray-900/30 rounded-xl">Soyez le premier à commenter cet article !</p>
+                                    <p className="text-center text-gray-500 italic py-8 bg-gray-50 dark:bg-gray-900/30 rounded-xl">Soyez le premier a commenter cet article !</p>
                                 )}
                             </div>
                         </div>
@@ -435,9 +500,17 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
                         {/* Similar Articles */}
                         {similar_articles.length > 0 && (
                             <section>
-                                <h3 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white border-l-4 border-primary pl-4">
-                                    Articles similaires
-                                </h3>
+                                <div className="mb-6 flex items-end justify-between gap-4">
+                                    <div>
+                                        <div className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                                            LE RURAL / Continuer la lecture
+                                        </div>
+                                        <h3 className="mt-1 font-heading text-2xl font-black tracking-tight text-gray-900 dark:text-white sm:text-3xl">
+                                            Articles similaires
+                                        </h3>
+                                    </div>
+                                    <div className="hidden h-1 flex-1 translate-y-[-0.5rem] bg-gradient-to-r from-primary to-transparent sm:block" />
+                                </div>
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                                     {similar_articles.map((article) => (
                                         <ArticleCard
@@ -468,3 +541,7 @@ export default function ArticleShow({ article, similar_articles, min_subscriptio
         </MainLayout>
     );
 }
+
+
+
+

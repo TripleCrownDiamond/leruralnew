@@ -8,13 +8,46 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
-class SubscriptionPlanController extends Controller
+class SubscriptionPlanController extends AdminController
 {
-    public function index()
+    public function index(Request $request)
     {
-        $plans = SubscriptionPlan::all();
+        $query = SubscriptionPlan::query();
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status') && $request->get('status') !== 'all') {
+            $status = $request->get('status');
+            $query->where('is_active', $status === 'active');
+        }
+
+        // Featured filter
+        if ($request->filled('featured') && $request->get('featured') !== 'all') {
+            $featured = $request->get('featured');
+            $query->where('is_featured', $featured === 'featured');
+        }
+
+        // Pagination
+        $plans = $query->latest()->paginate(10);
+
+        // Pass filters to view
+        $filters = [
+            'search' => $request->get('search'),
+            'status' => $request->get('status', 'all'),
+            'featured' => $request->get('featured', 'all'),
+        ];
+
         return Inertia::render('Admin/SubscriptionPlans/Index', [
-            'plans' => $plans
+            'plans' => $plans,
+            'filters' => $filters
         ]);
     }
 

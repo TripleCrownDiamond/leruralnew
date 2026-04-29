@@ -1,9 +1,37 @@
 import { Button } from '@/Components/ui/button';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, usePage } from '@inertiajs/react';
-import { User, LogOut, LayoutDashboard, Sun, Moon, Globe } from 'lucide-react';
-import LiveSearch from '@/Components/LiveSearch';
+import { User, LogOut, LayoutDashboard, Sun, Moon, Facebook, Instagram, Linkedin, MessageCircle, Twitter, Video } from 'lucide-react';
 import { useTheme } from '@/Components/ThemeProvider';
+import { normalizeUrl, socialSettingKeys } from '@/lib/siteSettings';
+
+interface FooterLinkItem {
+    label: string;
+    url: string;
+}
+
+function parseFooterLinks(rawValue?: string | null): FooterLinkItem[] {
+    if (!rawValue) {
+        return [];
+    }
+
+    return rawValue
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+            const [labelPart, urlPart] = line.split('|');
+            const label = labelPart?.trim() ?? '';
+            const url = urlPart?.trim() || '#';
+
+            if (!label) {
+                return null;
+            }
+
+            return { label, url };
+        })
+        .filter((item): item is FooterLinkItem => Boolean(item));
+}
 
 interface MobileMenuProps {
     isOpen: boolean;
@@ -11,6 +39,7 @@ interface MobileMenuProps {
     categories: { slug: string; name: string }[];
     locale: string;
     settings?: Record<string, string>;
+    footerPages?: { id: number; slug: string; title: string }[];
 }
 
 export default function MobileMenu({
@@ -19,17 +48,69 @@ export default function MobileMenu({
     categories,
     locale,
     settings = {},
+    footerPages = [],
 }: MobileMenuProps) {
     const { props } = usePage<any>();
     const user = props.auth?.user;
     const { theme, setTheme } = useTheme();
+    const stableCategories = useMemo(() => categories, [categories]);
+    const stableFooterPages = useMemo(() => footerPages, [footerPages]);
+    const socialIcons: Record<string, React.ReactNode> = {
+        social_facebook_url: <Facebook className="h-5 w-5" />,
+        social_x_url: <Twitter className="h-5 w-5" />,
+        social_instagram_url: <Instagram className="h-5 w-5" />,
+        social_tiktok_url: <Video className="h-5 w-5" />,
+        social_whatsapp_url: <MessageCircle className="h-5 w-5" />,
+        social_linkedin_url: <Linkedin className="h-5 w-5" />,
+    };
+    const socialLinks = socialSettingKeys
+        .map((item) => ({ ...item, url: normalizeUrl(settings[item.key]) }))
+        .filter((item) => item.url);
+    const footerGroupLinks = parseFooterLinks(settings.footer_group_links);
+    const mobileMenuLinksTitle = settings.mobile_menu_links_title?.trim() || 'Liens utiles';
+    const currentPath = useMemo(() => {
+        const candidate = props.ziggy?.location;
+
+        try {
+            if (typeof candidate === 'string' && candidate.length > 0) {
+                return new URL(candidate).pathname;
+            }
+        } catch {
+            // Ignore malformed URL and fallback below.
+        }
+
+        if (typeof window !== 'undefined') {
+            return window.location.pathname;
+        }
+
+        return '/';
+    }, [props.ziggy?.location]);
+
+    const getFooterPageHref = (slug: string) => (slug === 'contact' ? route('contact') : `/pages/${slug}`);
+
+    const isFooterPageActive = (slug: string) => {
+        if (slug === 'contact') {
+            return route().current('contact') || route().current('pages.show', { slug: 'contact' });
+        }
+
+        return route().current('pages.show', { slug });
+    };
+
+    const isPressEcriteActive = route().current('press-papers.index');
+
+    const isInternalPathActive = (url: string) => {
+        if (!url || url === '#') return false;
+
+        try {
+            const parsed = new URL(url, 'https://lerural.local');
+            return parsed.pathname === currentPath;
+        } catch {
+            return false;
+        }
+    };
 
     useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'auto';
-        }
+        document.body.style.overflow = isOpen ? 'hidden' : 'auto';
         return () => {
             document.body.style.overflow = 'auto';
         };
@@ -38,281 +119,268 @@ export default function MobileMenu({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex flex-col bg-background/95 backdrop-blur-md transition-all duration-300">
-            {/* Header with Close Button */}
-            <div className="flex items-center justify-between border-b border-border p-4">
-                <div className="text-xl font-bold text-primary">Menu</div>
+        <div className="fixed inset-0 z-[100] flex flex-col bg-[linear-gradient(180deg,rgba(10,18,10,0.97)_0%,rgba(15,34,14,0.96)_100%)] text-white backdrop-blur-xl transition-all duration-300">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-4">
+                <div className="flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+                    <span className="inline-block h-2 w-2 rounded-full bg-primary shadow-[0_0_0_4px_rgba(47,106,17,0.15)]" />
+                    <span>LE RURAL</span>
+                    <span className="h-px w-4 bg-primary/40" />
+                    <span className="text-gray-500 dark:text-gray-400">Menu</span>
+                </div>
                 <Button
                     size="icon"
                     variant="ghost"
                     onClick={onClose}
-                    className="text-foreground hover:bg-muted"
+                    className="rounded-full border border-white/10 bg-white/10 text-white hover:bg-white/15 hover:text-white"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" x2="6" y1="6" y2="18" />
                         <line x1="6" x2="18" y1="6" y2="18" />
                     </svg>
                 </Button>
             </div>
 
-            {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                
-                {/* Theme & Language Switchers */}
-                <div className="mb-6 flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/50 border border-border">
-                    <div className="flex items-center gap-2">
-                        <Button 
-                            variant="outline"
-                            size="sm" 
-                            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                            className="h-9 px-4 w-full flex items-center justify-center gap-2"
-                        >
-                            {theme === 'light' ? (
-                                <>
-                                    <Sun className="h-4 w-4" /> 
-                                    <span>Mode Clair</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Moon className="h-4 w-4" /> 
-                                    <span>Mode Sombre</span>
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                    
-                    <div className="h-6 w-px bg-border" />
-                    
-                    <a
-                        href={locale === 'en' ? '/' : '/en'}
-                        className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+                <div className="mb-6 flex items-center justify-center gap-4 rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                        className="flex h-10 w-full items-center justify-center gap-2 rounded-full border-white/10 bg-white/10 text-white hover:bg-white/15 hover:text-white"
                     >
-                        <Globe className="h-4 w-4" />
-                        {locale === 'en' ? 'FR' : 'EN'}
-                    </a>
+                        {theme === 'light' ? (
+                            <>
+                                <Sun className="h-4 w-4" />
+                                <span>Mode clair</span>
+                            </>
+                        ) : (
+                            <>
+                                <Moon className="h-4 w-4" />
+                                <span>Mode sombre</span>
+                            </>
+                        )}
+                    </Button>
                 </div>
 
-                {/* Actions */}
                 <div className="mb-8 space-y-4">
                     {user ? (
                         <div className="space-y-3">
-                            <div className="flex items-center gap-3 px-2 mb-4">
-                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            <div className="mb-4 flex items-center gap-3 px-2">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-primary font-bold">
                                     {user.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="font-medium">{user.name}</span>
-                                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                                    <span className="text-xs text-white/60">{user.email}</span>
                                 </div>
                             </div>
-                            <Link href={route('dashboard')} className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-base font-medium hover:bg-accent hover:text-accent-foreground h-12" onClick={onClose}>
+                            <Link href={route('dashboard')} className="flex h-12 w-full items-center justify-start rounded-2xl border border-white/10 bg-white/8 px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition-colors hover:border-primary hover:bg-primary hover:text-white" onClick={onClose}>
                                 <LayoutDashboard className="mr-3 h-5 w-5" />
                                 Tableau de bord
                             </Link>
-                            <Link href={route('profile.edit')} className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 text-base font-medium hover:bg-accent hover:text-accent-foreground h-12" onClick={onClose}>
+                            <Link href={route('profile.edit')} className="flex h-12 w-full items-center justify-start rounded-2xl border border-white/10 bg-white/8 px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition-colors hover:border-primary hover:bg-primary hover:text-white" onClick={onClose}>
                                 <User className="mr-3 h-5 w-5" />
-                                {locale === 'en' ? 'Profile' : 'Mon Profil'}
+                                {locale === 'en' ? 'Profile' : 'Mon profil'}
                             </Link>
-                            <Link href={route('logout')} method="post" as="button" className="flex w-full items-center justify-start rounded-md bg-destructive px-4 py-2 text-base font-medium text-destructive-foreground hover:bg-destructive/90 h-12" onClick={onClose}>
+                            <Link href={route('logout')} method="post" as="button" className="flex h-12 w-full items-center justify-start rounded-2xl bg-red-600 px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition-colors hover:bg-red-700" onClick={onClose}>
                                 <LogOut className="mr-3 h-5 w-5" />
-                                {locale === 'en' ? 'Logout' : 'Déconnexion'}
+                                {locale === 'en' ? 'Logout' : 'Deconnexion'}
                             </Link>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-4">
-                            <Link href={route('login')} className="flex w-full items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-base font-medium hover:bg-accent hover:text-accent-foreground h-12" onClick={onClose}>
+                        <div className="grid grid-cols-2 gap-3">
+                            <Link href={route('login')} className="flex h-12 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/8 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-white/14 hover:text-white" onClick={onClose}>
                                 {locale === 'en' ? 'Login' : 'Connexion'}
                             </Link>
-                            <Link href={route('register')} className="flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-base font-medium text-primary-foreground hover:bg-primary/90 h-12" onClick={onClose}>
+                            <Link href={route('register')} className="flex h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-primary to-primary/85 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-primary/20 transition-opacity hover:opacity-90" onClick={onClose}>
                                 {locale === 'en' ? 'Subscribe' : "S'abonner"}
                             </Link>
                         </div>
                     )}
                 </div>
 
-                {/* Categories */}
                 <div className="mb-8">
-                    <h3 className="mb-4 text-sm font-bold uppercase text-muted-foreground">
-                        Rubriques
+                    <h3 className="mb-4 flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.22em] text-primary">
+                        <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                        <span>LE RURAL</span>
+                        <span className="h-px w-6 bg-primary/30" />
+                        <span className="text-gray-500 dark:text-gray-400">Rubriques</span>
                     </h3>
-                    <nav className="space-y-2">
-                        {categories.map((c) => (
-                            <a
-                                key={c.slug}
-                                href={`#${c.slug}`}
-                                onClick={onClose}
-                                className="block rounded-md px-4 py-2 text-lg font-medium text-foreground hover:bg-muted hover:text-primary"
-                            >
-                                {c.name}
-                            </a>
-                        ))}
+                    <nav className="space-y-1.5">
+                        {stableCategories.length > 0 ? (
+                            stableCategories.map((c, idx) => (
+                                <a
+                                    key={`mobile-category-${c.slug}`}
+                                    href={route('category.show', c.slug)}
+                                    onClick={onClose}
+                                    className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:border-primary hover:bg-primary hover:text-white"
+                                >
+                                    <span className="inline-block w-6 text-[10px] font-black tabular-nums text-white/45 group-hover:text-white/70">
+                                        {String(idx + 1).padStart(2, '0')}
+                                    </span>
+                                    <span className="flex-1">{c.name}</span>
+                                    <span className="h-px w-4 bg-white/20 transition-all group-hover:w-8 group-hover:bg-white" />
+                                </a>
+                            ))
+                        ) : (
+                            <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
+                                Aucune rubrique disponible pour le moment.
+                            </div>
+                                                )}
+                        <Link
+                            href={route('press-papers.index')}
+                            onClick={onClose}
+                            className={`group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-black uppercase tracking-[0.14em] transition-all ${
+                                isPressEcriteActive
+                                    ? 'border-primary bg-primary text-white'
+                                    : 'border-white/10 bg-white/5 text-white hover:border-primary hover:bg-primary hover:text-white'
+                            }`}
+                        >
+                            <span className={`h-px transition-all ${isPressEcriteActive ? 'w-8 bg-white' : 'w-4 bg-white/20 group-hover:w-8 group-hover:bg-white'}`} />
+                            <span className="flex-1">Nos parutions</span>
+                        </Link>
                     </nav>
                 </div>
 
-                {/* Other Info */}
+                <div className="mb-8">
+                    <h3 className="mb-4 flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.22em] text-primary">
+                        <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                        <span>LE RURAL</span>
+                        <span className="h-px w-6 bg-primary/30" />
+                        <span className="text-gray-500 dark:text-gray-400">Pages statiques</span>
+                    </h3>
+                    {stableFooterPages.length > 0 ? (
+                        <div className="space-y-2">
+                            {stableFooterPages.map((page) => {
+                                const active = isFooterPageActive(page.slug);
+                                const railClass = active ? 'h-px w-8 bg-white transition-all' : 'h-px w-4 bg-white/20 transition-all group-hover:w-8 group-hover:bg-white';
+
+                                return (
+                                    <Link
+                                        key={page.id}
+                                        href={getFooterPageHref(page.slug)}
+                                        onClick={onClose}
+                                        className={`group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-black uppercase tracking-[0.14em] transition-all ${
+                                            active
+                                                ? 'border-primary bg-primary text-white'
+                                                : 'border-white/10 bg-white/5 text-white hover:border-primary hover:bg-primary hover:text-white'
+                                        }`}
+                                    >
+                                        <span className={railClass} />
+                                        <span className="flex-1">{page.title}</span>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
+                            Aucune page statique publiee.
+                        </div>
+                    )}
+                </div>
+
+                <div className="mb-8">
+                    <h3 className="mb-4 flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.22em] text-primary">
+                        <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                        <span>LE RURAL</span>
+                        <span className="h-px w-6 bg-primary/30" />
+                        <span className="text-gray-500 dark:text-gray-400">{mobileMenuLinksTitle}</span>
+                    </h3>
+                    {footerGroupLinks.length > 0 ? (
+                        <div className="space-y-2">
+                            {footerGroupLinks.map((item) => {
+                                const active = isInternalPathActive(item.url);
+                                const itemClass = `group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-black uppercase tracking-[0.14em] transition-all ${
+                                    active
+                                        ? 'border-primary bg-primary text-white'
+                                        : 'border-white/10 bg-white/5 text-white hover:border-primary hover:bg-primary hover:text-white'
+                                }`;
+                                const railClass = active ? 'h-px w-8 bg-white transition-all' : 'h-px w-4 bg-white/20 transition-all group-hover:w-8 group-hover:bg-white';
+
+                                return item.url.startsWith('/') ? (
+                                    <Link key={item.label} href={item.url} onClick={onClose} className={itemClass}>
+                                        <span className={railClass} />
+                                        <span className="flex-1">{item.label}</span>
+                                    </Link>
+                                ) : (
+                                    <a key={item.label} href={item.url} onClick={onClose} className={itemClass}>
+                                        <span className={railClass} />
+                                        <span className="flex-1">{item.label}</span>
+                                    </a>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
+                            Aucun lien configure.
+                        </div>
+                    )}
+                </div>
+
                 <div>
-                    <h3 className="mb-4 text-sm font-bold uppercase text-muted-foreground">
-                        Infos & Réseaux
+                    <h3 className="mb-4 flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.22em] text-primary">
+                        <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                        <span>LE RURAL</span>
+                        <span className="h-px w-6 bg-primary/30" />
+                        <span className="text-gray-500 dark:text-gray-400">Infos et reseaux</span>
                     </h3>
 
-                    {/* Contact Info */}
-                    <div className="mb-6 space-y-3 text-sm text-foreground">
+                    {settings.mobile_menu_description && (
+                        <p className="mb-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-relaxed text-white/75">
+                            {settings.mobile_menu_description}
+                        </p>
+                    )}
+
+                    <div className="mb-6 space-y-3 text-sm text-white/85">
                         {settings.contact_address && (
                             <div className="flex items-center gap-3">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="text-primary"
-                                >
-                                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                                    <circle cx="12" cy="10" r="3" />
-                                </svg>
+                                <span className="text-primary">&bull;</span>
                                 <span>{settings.contact_address}</span>
                             </div>
                         )}
                         {settings.contact_phone && (
                             <div className="flex items-center gap-3">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="text-primary"
-                                >
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                </svg>
+                                <span className="text-primary">&bull;</span>
                                 <span>{settings.contact_phone}</span>
                             </div>
                         )}
                         {settings.contact_email && (
                             <div className="flex items-center gap-3">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="text-primary"
-                                >
-                                    <rect
-                                        width="20"
-                                        height="16"
-                                        x="2"
-                                        y="4"
-                                        rx="2"
-                                    />
-                                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                                </svg>
+                                <span className="text-primary">&bull;</span>
                                 <span>{settings.contact_email}</span>
+                            </div>
+                        )}
+                        {!settings.contact_address && !settings.contact_phone && !settings.contact_email && (
+                            <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
+                                Coordonnees non configurees.
                             </div>
                         )}
                     </div>
 
-                    <div className="flex gap-4">
-                        <a
-                            href="#"
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground hover:bg-primary hover:text-white"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-                            </svg>
-                        </a>
-                        <a
-                            href="#"
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground hover:bg-primary hover:text-white"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
-                            </svg>
-                        </a>
-                        <a
-                            href="#"
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground hover:bg-primary hover:text-white"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-                                <rect width="4" height="12" x="2" y="9" />
-                                <circle cx="4" cy="4" r="2" />
-                            </svg>
-                        </a>
-                        <a
-                            href="#"
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground hover:bg-primary hover:text-white"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-                                <path d="m10 15 5-3-5-3z" />
-                            </svg>
-                        </a>
+                    <div className="flex flex-wrap gap-4">
+                        {socialLinks.length > 0 ? (
+                            socialLinks.map((item) => (
+                                <a
+                                    key={item.key}
+                                    href={item.url!}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-primary hover:text-white"
+                                    aria-label={item.label}
+                                >
+                                    {socialIcons[item.key]}
+                                </a>
+                            ))
+                        ) : (
+                            <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
+                                Reseaux sociaux non configures.
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
+

@@ -13,43 +13,38 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable;
 
     const ROLE_ADMIN = 'admin';
-    const ROLE_EDITOR = 'editor'; // Rédacteur
+    const ROLE_EDITOR = 'editor';
     const ROLE_CLIENT = 'client';
     const ROLE_USER = 'user';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
         'avatar',
+        'status',
+        'permissions',
+        'invitation_token',
+        'invitation_expires_at',
+        'email_verified_at',
+        'last_login_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
+        'invitation_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
+            'invitation_expires_at' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -66,5 +61,45 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isClient(): bool
     {
         return $this->role === self::ROLE_CLIENT;
+    }
+
+    public function articles()
+    {
+        return $this->hasMany(Article::class, 'author_id');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(UserSubscription::class);
+    }
+
+    public function savedArticles()
+    {
+        return $this->hasMany(SavedArticle::class);
+    }
+
+    public function articleLikes()
+    {
+        return $this->hasMany(ArticleLike::class);
+    }
+
+    public function commentLikes()
+    {
+        return $this->hasMany(CommentLike::class);
+    }
+
+    public function followedCategories()
+    {
+        return $this->belongsToMany(Category::class, 'category_user_follows')->withTimestamps();
     }
 }

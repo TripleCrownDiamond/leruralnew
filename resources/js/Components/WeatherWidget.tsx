@@ -179,150 +179,178 @@ export default function WeatherWidget({
     }, [locationName, refreshKey]);
 
     return (
-        <div className={`rounded-lg border bg-card p-4 ${className ?? ''}`}>
-            <div className="mb-4 flex items-center gap-2 border-b border-border pb-2">
-                <div className="h-4 w-1 rounded-full bg-primary" />
-                <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">
-                    Météo
-                </h3>
-            </div>
-            {loading ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/40 border-t-transparent" />
-                    Chargement…
+        <div className={`relative overflow-hidden rounded-3xl border border-gray-200/70 bg-gradient-to-br from-white via-white to-primary/5 dark:border-gray-800 dark:from-gray-900 dark:via-gray-900 dark:to-primary/10 shadow-[0_10px_30px_-15px_rgba(47,106,17,0.15)] ${className ?? ''}`}>
+            {/* Decorative glow */}
+            <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
+
+            <div className="relative p-5">
+                {/* Editorial header */}
+                <div className="mb-5">
+                    <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.22em] text-primary mb-3">
+                        <span className="inline-block h-2 w-2 rounded-full bg-primary shadow-[0_0_0_4px_rgba(47,106,17,0.15)]" />
+                        <span>LE RURAL</span>
+                        <span className="h-px w-6 bg-primary/30" />
+                        <span className="text-gray-400 dark:text-gray-500">Météo</span>
+                    </div>
+                    <h3 className="font-heading text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white pb-3">
+                        Prévisions
+                    </h3>
                 </div>
-            ) : error ? (
-                <div className="text-sm text-muted-foreground">{error}</div>
-            ) : data ? (
-                <>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <img
-                                src="/meteo.png"
-                                alt="météo"
-                                className="h-7 w-7 shrink-0"
-                                loading="lazy"
-                            />
-                            <div>
-                                <div className="text-sm font-semibold">
-                                    {data.locationLabel}
+
+                {loading ? (
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/40 border-t-primary" />
+                        <span className="uppercase tracking-wider text-xs font-bold">Chargement…</span>
+                    </div>
+                ) : error ? (
+                    <div className="rounded-2xl bg-red-50 dark:bg-red-950/30 p-3 text-xs font-semibold uppercase tracking-wider text-red-700 dark:text-red-300">{error}</div>
+                ) : data ? (
+                    <>
+                        {/* Current conditions */}
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 shadow-md shadow-primary/20">
+                                    <img
+                                        src="/meteo.png"
+                                        alt="météo"
+                                        className="h-7 w-7"
+                                        loading="lazy"
+                                    />
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                    {codeToLabel(data.weathercode)}
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] font-black text-primary mb-0.5">
+                                        <MapPin className="h-3 w-3" />
+                                        <span className="truncate">{data.locationLabel}</span>
+                                    </div>
+                                    <div className="font-heading text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white leading-tight truncate">
+                                        {codeToLabel(data.weathercode)}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="shrink-0 text-right">
+                                <div className="font-heading text-4xl font-black tabular-nums text-primary leading-none">
+                                    {data.temperature}°
+                                </div>
+                                <div className="mt-1 text-[9px] uppercase tracking-[0.16em] font-black text-gray-400 dark:text-gray-500">
+                                    Celsius
                                 </div>
                             </div>
                         </div>
-                        <div className="text-xl font-bold text-primary">
-                            {data.temperature}°C
-                        </div>
-                    </div>
-                    {data.daily && data.daily.length > 0 ? (
-                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                            {data.daily.map((d, i) => (
-                                <div
-                                    key={i}
-                                    className="rounded border bg-muted/30 p-2 text-center"
-                                >
-                                    <div className="font-semibold">J+{i}</div>
-                                    <div>
-                                        <span className="font-semibold text-primary">
+
+                        {/* 3-day forecast */}
+                        {data.daily && data.daily.length > 0 ? (
+                            <div className="mt-5 grid grid-cols-3 gap-2">
+                                {data.daily.map((d, i) => (
+                                    <div
+                                        key={i}
+                                        className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 p-3 text-center"
+                                    >
+                                        <div className="text-[9px] font-black uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500 mb-1">
+                                            J+{i}
+                                        </div>
+                                        <div className="font-heading text-lg font-black tabular-nums text-primary leading-none">
                                             {d.max}°
-                                        </span>{' '}
-                                        / {d.min}°
+                                        </div>
+                                        <div className="mt-1 text-[10px] font-bold tabular-nums text-gray-500 dark:text-gray-400">
+                                            min {d.min}°
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                        ) : null}
+
+                        {/* Controls */}
+                        <div className="mt-5 flex items-center justify-start gap-2 border-t border-dashed border-gray-200 dark:border-gray-800 pt-4">
+                            <button
+                                type="button"
+                                title="Utiliser ma position"
+                                className="group inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all hover:bg-primary hover:text-white hover:scale-105"
+                                onClick={() => {
+                                    if (!navigator.geolocation) return;
+                                    navigator.geolocation.getCurrentPosition(
+                                        (pos) => {
+                                            const lat = pos.coords.latitude;
+                                            const lon = pos.coords.longitude;
+                                            try {
+                                                localStorage.setItem(
+                                                    'weather_pref',
+                                                    JSON.stringify({
+                                                        type: 'geo',
+                                                        lat,
+                                                        lon,
+                                                        label: 'Ma position',
+                                                    }),
+                                                );
+                                            } catch {
+                                                void 0;
+                                            }
+                                            setRefreshKey((k) => k + 1);
+                                        },
+                                    );
+                                }}
+                            >
+                                <Navigation className="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                title="Saisir une ville"
+                                className="group inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all hover:bg-primary hover:text-white hover:scale-105"
+                                onClick={() => setShowInput((v) => !v)}
+                            >
+                                <Search className="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                title="Réinitialiser"
+                                className="group inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 transition-all hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 hover:scale-105"
+                                onClick={() => {
+                                    try {
+                                        localStorage.removeItem('weather_pref');
+                                    } catch {
+                                        void 0;
+                                    }
+                                    setRefreshKey((k) => k + 1);
+                                }}
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                            </button>
                         </div>
-                    ) : null}
-                    <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
-                        <button
-                            type="button"
-                            title="Utiliser ma position"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
-                            onClick={() => {
-                                if (!navigator.geolocation) return;
-                                navigator.geolocation.getCurrentPosition(
-                                    (pos) => {
-                                        const lat = pos.coords.latitude;
-                                        const lon = pos.coords.longitude;
+
+                        {showInput ? (
+                            <div className="mt-3 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                                <input
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    className="h-10 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                                    placeholder="Ville, pays"
+                                />
+                                <button
+                                    type="button"
+                                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-primary to-primary/85 text-white hover:opacity-90 shadow-md shadow-primary/20"
+                                    onClick={() => {
+                                        if (!inputValue.trim()) return;
                                         try {
                                             localStorage.setItem(
                                                 'weather_pref',
                                                 JSON.stringify({
-                                                    type: 'geo',
-                                                    lat,
-                                                    lon,
-                                                    label: 'Ma position',
+                                                    type: 'name',
+                                                    name: inputValue.trim(),
                                                 }),
                                             );
                                         } catch {
                                             void 0;
                                         }
+                                        setShowInput(false);
                                         setRefreshKey((k) => k + 1);
-                                    },
-                                );
-                            }}
-                        >
-                            <Navigation className="h-4 w-4" />
-                        </button>
-                        <button
-                            type="button"
-                            title="Saisir une ville"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
-                            onClick={() => setShowInput((v) => !v)}
-                        >
-                            <Search className="h-4 w-4" />
-                        </button>
-                        <button
-                            type="button"
-                            title="Réinitialiser"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
-                            onClick={() => {
-                                try {
-                                    localStorage.removeItem('weather_pref');
-                                } catch {
-                                    void 0;
-                                }
-                                setRefreshKey((k) => k + 1);
-                            }}
-                        >
-                            <RotateCcw className="h-4 w-4" />
-                        </button>
-                    </div>
-                    {showInput ? (
-                        <div className="mt-3 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-                            <input
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                className="h-9 w-full rounded-md border border-border bg-background px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                placeholder="Ville, pays"
-                            />
-                            <button
-                                type="button"
-                                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-white hover:bg-primary/90"
-                                onClick={() => {
-                                    if (!inputValue.trim()) return;
-                                    try {
-                                        localStorage.setItem(
-                                            'weather_pref',
-                                            JSON.stringify({
-                                                type: 'name',
-                                                name: inputValue.trim(),
-                                            }),
-                                        );
-                                    } catch {
-                                        void 0;
-                                    }
-                                    setShowInput(false);
-                                    setRefreshKey((k) => k + 1);
-                                }}
-                            >
-                                <Check className="h-4 w-4" />
-                            </button>
-                        </div>
-                    ) : null}
-                </>
-            ) : null}
+                                    }}
+                                >
+                                    <Check className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ) : null}
+                    </>
+                ) : null}
+            </div>
         </div>
     );
 }

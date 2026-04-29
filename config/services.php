@@ -35,4 +35,19 @@ return [
         ],
     ],
 
+    'kkiapay' => [
+        'public_key' => env('KKIAPAY_PUBLIC_KEY'),
+        'private_key' => env('KKIAPAY_PRIVATE_KEY'),
+        'sandbox' => env('KKIAPAY_SANDBOX', true),
+        'webhook_secret' => env('KKIAPAY_WEBHOOK_SECRET'),
+    ],
+
+    'youtube' => [
+        'api_key' => env('YOUTUBE_API_KEY'),
+        'channel_id' => env('YOUTUBE_CHANNEL_ID'),
+        'channel_handle' => env('YOUTUBE_CHANNEL_HANDLE', '@leruralbenintv9989'),
+        'channel_url' => env('YOUTUBE_CHANNEL_URL'),
+        'cache_ttl' => env('YOUTUBE_CACHE_TTL', 3600),
+    ],
+
 ];

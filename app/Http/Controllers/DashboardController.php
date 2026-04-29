@@ -45,7 +45,7 @@ class DashboardController extends Controller
                 ->map(fn($a) => [
                     'id' => $a->id,
                     'title' => $a->title_fr,
-                    'category' => $a->category->name_fr,
+                    'category' => $a->category ? $a->category->name_fr : 'Non classé',
                     'status' => $a->status,
                     'date' => $a->created_at->diffForHumans(),
                     'views' => $a->read_count,
@@ -106,9 +106,9 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get()
                 ->map(fn($s) => [
-                    'id' => $s->article->id,
-                    'title' => $s->article->title_fr,
-                    'slug' => $s->article->slug,
+                    'id' => $s->article?->id,
+                    'title' => $s->article?->title_fr,
+                    'slug' => $s->article?->slug,
                     'date' => $s->created_at->diffForHumans(),
                 ]);
         }

@@ -1,111 +1,132 @@
 import MainLayout from '@/Layouts/MainLayout';
-import { Head } from '@inertiajs/react';
-import { Mail, Phone, MapPin } from 'lucide-react';
-import { Button } from '@/Components/ui/button';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { Mail, MapPin, Phone, SendHorizonal } from 'lucide-react';
 
 export default function Contact() {
+    const { props } = usePage<any>();
+    const settings = props.settings ?? {};
+    const flash = props.flash ?? {};
+
+    const form = useForm({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+    });
+
+    const submit = (event: React.FormEvent) => {
+        event.preventDefault();
+        form.post(route('contact.submit'), {
+            preserveScroll: true,
+            onSuccess: () => form.reset('subject', 'message'),
+        });
+    };
+
     return (
         <MainLayout title="Contact">
-            <div className="container mx-auto max-w-4xl py-12">
-                <div className="mb-12 text-center">
-                    <h1 className="text-4xl font-bold text-foreground">Contactez-nous</h1>
-                    <p className="mt-4 text-muted-foreground">
-                        Une question ? Une suggestion ? N'hésitez pas à nous écrire.
-                    </p>
-                </div>
+            <Head title="Contact" />
 
-                <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
-                    {/* Contact Info */}
-                    <div className="space-y-8">
-                        <div>
-                            <h3 className="mb-4 text-xl font-bold text-foreground">Nos Coordonnées</h3>
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-4">
-                                    <MapPin className="mt-1 h-5 w-5 text-primary" />
-                                    <div>
-                                        <p className="font-medium">Adresse</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Immeuble Le Rural, Cotonou, Bénin
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <Phone className="mt-1 h-5 w-5 text-primary" />
-                                    <div>
-                                        <p className="font-medium">Téléphone</p>
-                                        <p className="text-sm text-muted-foreground">+229 01 02 03 04</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <Mail className="mt-1 h-5 w-5 text-primary" />
-                                    <div>
-                                        <p className="font-medium">Email</p>
-                                        <p className="text-sm text-muted-foreground">contact@lerural.bj</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <article className="mx-auto max-w-6xl space-y-6">
+                <section className="relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-gray-950 via-gray-900 to-primary/30 px-6 py-10 text-white shadow-[0_28px_70px_-40px_rgba(47,106,17,0.7)] sm:px-8 sm:py-12">
+                    <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 opacity-10"
+                        style={{
+                            backgroundImage: 'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)',
+                            backgroundSize: '22px 22px',
+                        }}
+                    />
+                    <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/25 blur-3xl" />
 
-                        {/* Map Placeholder */}
-                        <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted">
-                            <iframe 
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3965.087799072462!2d2.4180!3d6.3650!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwMjEnNTQuMCJOIDLCsDI1JzA0LjgiRQ!5e0!3m2!1sen!2sbj!4v1620000000000!5m2!1sen!2sbj" 
-                                width="100%" 
-                                height="100%" 
-                                style={{ border: 0 }} 
-                                allowFullScreen 
-                                loading="lazy"
-                            ></iframe>
-                        </div>
+                    <div className="relative">
+                        <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white/85">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+                            Contact
+                        </p>
+                        <h1 className="mt-4 font-heading text-3xl font-black uppercase tracking-tight sm:text-5xl">Contactez la redaction</h1>
+                        <p className="mt-3 max-w-2xl text-sm text-white/75">Envoyez votre message via ce formulaire. L'equipe LE RURAL vous repondra a l'adresse indiquee.</p>
                     </div>
+                </section>
 
-                    {/* Contact Form */}
-                    <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
-                        <h3 className="mb-6 text-xl font-bold text-foreground">Envoyez-nous un message</h3>
-                        <form className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <label htmlFor="name" className="text-sm font-medium">Nom</label>
-                                    <input 
-                                        id="name" 
-                                        type="text" 
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
-                                        placeholder="Votre nom" 
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="email" className="text-sm font-medium">Email</label>
-                                    <input 
-                                        id="email" 
-                                        type="email" 
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
-                                        placeholder="votre@email.com" 
-                                    />
-                                </div>
+                <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+                    <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.03] sm:p-8">
+                        <div className="mb-5 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-primary">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                            <span>Formulaire</span>
+                        </div>
+
+                        {flash.success && (
+                            <div className="mb-4 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-600/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+                                {flash.success}
                             </div>
-                            <div className="space-y-2">
-                                <label htmlFor="subject" className="text-sm font-medium">Sujet</label>
-                                <input 
-                                    id="subject" 
-                                    type="text" 
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
-                                    placeholder="Sujet de votre message" 
-                                />
+                        )}
+                        {flash.error && (
+                            <div className="mb-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-600/40 dark:bg-red-900/20 dark:text-red-300">
+                                {flash.error}
                             </div>
-                            <div className="space-y-2">
-                                <label htmlFor="message" className="text-sm font-medium">Message</label>
-                                <textarea 
-                                    id="message" 
-                                    rows={5} 
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
-                                    placeholder="Votre message..." 
-                                />
+                        )}
+
+                        <form onSubmit={submit} className="space-y-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Field label="Nom" error={form.errors.name}>
+                                    <input type="text" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white" required />
+                                </Field>
+                                <Field label="Email" error={form.errors.email}>
+                                    <input type="email" value={form.data.email} onChange={(e) => form.setData('email', e.target.value)} className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white" required />
+                                </Field>
                             </div>
-                            <Button className="w-full">Envoyer le message</Button>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Field label="Telephone" error={form.errors.phone}>
+                                    <input type="text" value={form.data.phone} onChange={(e) => form.setData('phone', e.target.value)} className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white" />
+                                </Field>
+                                <Field label="Sujet" error={form.errors.subject}>
+                                    <input type="text" value={form.data.subject} onChange={(e) => form.setData('subject', e.target.value)} className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white" required />
+                                </Field>
+                            </div>
+
+                            <Field label="Message" error={form.errors.message}>
+                                <textarea rows={6} value={form.data.message} onChange={(e) => form.setData('message', e.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm leading-relaxed focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white" required />
+                            </Field>
+
+                            <button type="submit" disabled={form.processing} className="inline-flex h-11 items-center gap-2 rounded-full bg-gradient-to-br from-primary to-emerald-700 px-5 text-[11px] font-black uppercase tracking-[0.16em] text-white shadow-[0_14px_34px_-18px_rgba(47,106,17,0.7)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
+                                <SendHorizonal className="h-4 w-4" />
+                                {form.processing ? 'Envoi en cours...' : 'Envoyer le message'}
+                            </button>
                         </form>
                     </div>
-                </div>
-            </div>
+
+                    <aside className="space-y-4 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+                        <h2 className="font-heading text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white">Coordonnees</h2>
+
+                        <div className="space-y-3 text-sm text-gray-700 dark:text-white/80">
+                            <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+                                <MapPin className="mt-0.5 h-4 w-4 text-primary" />
+                                <span>{settings.contact_address || 'Adresse non configuree.'}</span>
+                            </div>
+                            <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+                                <Phone className="mt-0.5 h-4 w-4 text-primary" />
+                                <span>{settings.contact_phone || 'Telephone non configure.'}</span>
+                            </div>
+                            <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+                                <Mail className="mt-0.5 h-4 w-4 text-primary" />
+                                <span>{settings.contact_email || 'Email non configure.'}</span>
+                            </div>
+                        </div>
+                    </aside>
+                </section>
+            </article>
         </MainLayout>
+    );
+}
+
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+    return (
+        <label className="block">
+            <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">{label}</span>
+            {children}
+            {error && <span className="mt-1 block text-xs font-semibold text-red-600 dark:text-red-300">{error}</span>}
+        </label>
     );
 }

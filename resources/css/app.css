@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Poppins:wght@300;400;600;800&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Poppins:wght@300;400;600;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -81,3 +81,35 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer base {
+  .dark h1,
+  .dark h2,
+  .dark h3,
+  .dark h4,
+  .dark h5,
+  .dark h6,
+  .dark .font-heading {
+    color: rgb(244 244 245);
+  }
+
+  .dark .prose,
+  .dark .prose p,
+  .dark .prose li {
+    color: rgb(226 232 240);
+  }
+
+  .dark .newsletter-sidebar-submit {
+    color: rgb(17 24 39) !important;
+  }
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+

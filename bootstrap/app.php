@@ -17,7 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ], prepend: [
             \App\Http\Middleware\SetLocale::class,
         ]);
-
+        
+        // Enregistrer le middleware admin
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+        ]);
+        
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {

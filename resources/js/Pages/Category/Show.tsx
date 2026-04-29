@@ -1,25 +1,23 @@
 import MainLayout from '@/Layouts/MainLayout';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import ArticleCard from '@/Components/ArticleCard';
+import AuthModal from '@/Components/AuthModal';
 import HomeSidebar from '@/Components/HomeSidebar';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Search, Grid, List, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-import AdSpace from '@/Components/AdSpace';
-import StickyCategoryNav from '@/Components/StickyCategoryNav';
-import { router } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
+import useSharedContent from '@/Hooks/useSharedContent';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from "@/Components/ui/dropdown-menu"
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/Components/ui/dropdown-menu';
 
 interface Article {
     id: number;
@@ -43,6 +41,10 @@ interface CategoryShowProps {
         slug: string;
         description: string | null;
         image: string | null;
+        image_position_x?: number | null;
+        image_position_y?: number | null;
+        is_following?: boolean;
+        followers_count?: number;
     };
     articles: {
         data: Article[];
@@ -68,18 +70,19 @@ interface CategoryShowProps {
     latest_comments?: any[];
 }
 
-export default function CategoryShow({ 
-    category, 
-    articles, 
+export default function CategoryShow({
+    category,
+    articles,
     filters = {},
-    market_prices = [],
-    webtv_videos = [],
-    partners = [],
-    latest_comments = [] 
 }: CategoryShowProps) {
+    const categoryImagePositionX = Number(category.image_position_x ?? 50);
+    const categoryImagePositionY = Number(category.image_position_y ?? 50);
     const { props } = usePage<any>();
+    const { marketPrices, webtvVideos, partners: partnersData, latestComments } = useSharedContent();
     const locale = props.locale ?? 'fr';
-
+    const authUser = props.auth?.user;
+    const hasActiveSubscription = Boolean(props.auth?.has_active_subscription);
+    const isElevatedUser = Boolean(authUser && ['admin', 'editor'].includes(String(authUser.role ?? '')));
     const [liked, setLiked] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
         if (articles?.data) {
@@ -108,6 +111,9 @@ export default function CategoryShow({
     const [filterType, setFilterType] = useState('all');
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
+    const [showSubscriptionAuthModal, setShowSubscriptionAuthModal] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(Boolean(category.is_following));
+    const [followBusy, setFollowBusy] = useState(false);
 
     // Effect to sync filters from props when they change
     useEffect(() => {
@@ -146,6 +152,50 @@ export default function CategoryShow({
         }).format(Number(value));
     };
 
+    const handleSubscriptionCta = () => {
+        if (!authUser) {
+            setShowSubscriptionAuthModal(true);
+            return;
+        }
+
+        if (isElevatedUser) {
+            window.location.href = '/dashboard';
+            return;
+        }
+
+        if (hasActiveSubscription) {
+            window.location.href = route('user.subscription');
+            return;
+        }
+
+        window.location.href = '/checkout?type=subscription&id=default';
+    };
+
+
+    const toggleCategoryFollow = () => {
+        if (!authUser) {
+            router.visit(route('login'));
+            return;
+        }
+
+        setFollowBusy(true);
+        const done = () => setFollowBusy(false);
+
+        if (isFollowing) {
+            router.delete(route('categories.unfollow', category.slug), {
+                preserveScroll: true,
+                onSuccess: () => setIsFollowing(false),
+                onFinish: done,
+            });
+        } else {
+            router.post(route('categories.follow', category.slug), {}, {
+                preserveScroll: true,
+                onSuccess: () => setIsFollowing(true),
+                onFinish: done,
+            });
+        }
+    };
+
     const toggleLike = async (slug: string, baseLikes: number) => {
         try {
             const currentLiked = liked[slug];
@@ -168,43 +218,59 @@ export default function CategoryShow({
     // But if we wanted to filter locally, we would use articles.data
     const displayArticles = articles?.data || [];
 
+    const totalArticles = articles?.total ?? displayArticles.length;
+
     return (
         <MainLayout title={category.name}>
-            {/* Category Header */}
-            <div className="relative mb-6 md:mb-12 overflow-hidden bg-gray-900 py-16 md:py-20 text-center text-white rounded-2xl md:rounded-[50px] mx-0 md:mx-4 mt-0 md:mt-4 shadow-2xl">
-                {/* Background Image or Gradient */}
-                {category.image ? (
-                    <>
-                        <div className="absolute inset-0 z-0">
-                            <img 
-                                src={category.image} 
-                                alt={category.name} 
-                                className="h-full w-full object-cover opacity-40"
-                            />
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-gray-900/30 z-10" />
-                    </>
-                ) : (
-                    <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 z-10" />
-                )}
-                
-                {/* Optional pattern background (only if no image) */}
-                {!category.image && (
-                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] z-0" />
-                )}
-                
-                <div className="relative z-20 container mx-auto px-4">
-                    <span className="inline-block mb-4 rounded-full bg-primary/20 px-4 py-1 text-sm font-bold uppercase tracking-wider text-primary border border-primary/20 backdrop-blur-sm">
-                        Catégorie
-                    </span>
-                    <h1 className="mb-4 md:mb-6 text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black uppercase tracking-tight drop-shadow-lg">
-                        {category.name}
-                    </h1>
-                    {category.description && (
-                        <p className="mx-auto max-w-2xl text-base md:text-lg text-gray-200 drop-shadow-md">
-                            {category.description}
-                        </p>
+            <AuthModal
+                isOpen={showSubscriptionAuthModal}
+                onClose={() => setShowSubscriptionAuthModal(false)}
+                purchaseType="subscription"
+            />
+            {/* Editorial Category Header */}
+            <div className="relative mx-0 mb-8 mt-0 overflow-hidden shadow-2xl md:mx-4 md:mt-4 md:mb-12 md:rounded-3xl">
+                <div className="relative bg-gray-950 text-white">
+                    {category.image && (
+                        <img src={category.image} alt={category.name} className="absolute inset-0 h-full w-full object-cover opacity-45" style={{ objectPosition: `${categoryImagePositionX}% ${categoryImagePositionY}%` }} loading="eager" decoding="async" />
                     )}
+                    <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-br from-gray-950/70 via-gray-950/60 to-gray-900/35" />
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.06]"
+                         style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)', backgroundSize: '26px 26px' }} />
+                    <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-primary/25 blur-3xl" />
+
+                    {/* Brand rail */}
+                    <div className="relative flex items-center gap-3 border-b border-white/10 px-5 py-3 text-[10px] font-black uppercase tracking-[0.32em] text-white/70 sm:px-10">
+                        <span className="flex h-1.5 w-1.5 rounded-full bg-primary" />
+                        <span>LE RURAL</span>
+                        <span className="text-white/20">/</span>
+                        <span>Categorie</span>
+                        <span className="ml-auto hidden text-white/50 sm:inline">{totalArticles} article{totalArticles > 1 ? 's' : ''}</span>
+                    </div>
+
+                    <div className="relative mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20 lg:px-12">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/80 backdrop-blur">
+                            Rubrique
+                        </span>
+                        <h1 className="mt-5 font-heading text-4xl font-black leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                            {category.name}
+                        </h1>
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={toggleCategoryFollow}
+                                disabled={followBusy}
+                                className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white backdrop-blur transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                                {isFollowing ? 'Ne plus suivre' : 'Suivre cette rubrique'}
+                            </button>
+                            <span className="text-xs font-semibold text-white/75">{category.followers_count ?? 0} abonnes</span>
+                        </div>
+                        {category.description && (
+                            <p className="mt-5 max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg">
+                                {category.description}
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -215,7 +281,7 @@ export default function CategoryShow({
                     <div className="lg:col-span-8 xl:col-span-9">
                         
                         {/* Filters & Search Bar */}
-                        <div className="mb-8 flex flex-col gap-4 p-4 rounded-xl bg-white shadow-sm dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                        <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_10px_40px_-15px_rgba(47,106,17,0.15)] dark:border-white/10 dark:bg-white/[0.03] dark:shadow-[0_10px_40px_-15px_rgba(0,0,0,0.5)]">
                             {/* Top Row: Search & View Mode */}
                             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                                 <div className="relative flex-1 w-full">
@@ -270,18 +336,18 @@ export default function CategoryShow({
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" size="sm" className="gap-2">
                                             <Filter className="h-3.5 w-3.5" />
-                                            Tri: {sortOption === 'recent' ? 'Récent' : sortOption === 'oldest' ? 'Ancien' : sortOption === 'popular' ? 'Populaire' : sortOption === 'az' ? 'A-Z' : 'Z-A'}
+                                            Tri: {sortOption === 'recent' ? 'Recent' : sortOption === 'oldest' ? 'Ancien' : sortOption === 'popular' ? 'Populaire' : sortOption === 'az' ? 'A-Z' : 'Z-A'}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start">
                                         <DropdownMenuLabel>Trier par</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuRadioGroup value={sortOption} onValueChange={(val) => { setSortOption(val); updateFilters({ sort: val }); }}>
-                                            <DropdownMenuRadioItem value="recent">Plus récent</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="recent">Plus recent</DropdownMenuRadioItem>
                                             <DropdownMenuRadioItem value="oldest">Plus ancien</DropdownMenuRadioItem>
                                             <DropdownMenuRadioItem value="popular">Populaire</DropdownMenuRadioItem>
-                                            <DropdownMenuRadioItem value="az">Alphabétique (A-Z)</DropdownMenuRadioItem>
-                                            <DropdownMenuRadioItem value="za">Alphabétique (Z-A)</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="az">Alphabetique (A-Z)</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="za">Alphabetique (Z-A)</DropdownMenuRadioItem>
                                         </DropdownMenuRadioGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -308,7 +374,7 @@ export default function CategoryShow({
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" size="sm" className="gap-2">
-                                            {(minPrice || maxPrice) ? `Prix: ${minPrice || '0'} - ${maxPrice || '∞'}` : 'Prix'}
+                                            {(minPrice || maxPrice) ? `Prix: ${minPrice || '0'} - ${maxPrice || 'illimite'}` : 'Prix'}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="w-64 p-4">
@@ -355,11 +421,44 @@ export default function CategoryShow({
                                         }}
                                         className="text-red-500 hover:text-red-600 hover:bg-red-50"
                                     >
-                                        Réinitialiser
+                                        Reinitialiser
                                     </Button>
                                 )}
                             </div>
                         </div>
+
+                        {!isElevatedUser && (
+                            <section className="mb-8 overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary via-emerald-700 to-emerald-800 p-[1px] shadow-[0_20px_60px_-35px_rgba(47,106,17,0.45)]">
+                                <div className="rounded-3xl bg-gray-950 px-5 py-6 text-white sm:px-7 sm:py-7">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/65">Abonnement LE RURAL</p>
+                                    <h3 className="mt-2 font-heading text-2xl font-black tracking-tight sm:text-3xl">
+                                        {hasActiveSubscription ? 'Votre abonnement est actif' : 'Debloquez tous les articles premium'}
+                                    </h3>
+                                    <p className="mt-2 max-w-2xl text-sm text-gray-300">
+                                        {hasActiveSubscription
+                                            ? 'Profitez de tous les contenus reserves aux abonnes, gerez vos factures et vos achats depuis votre tableau de bord.'
+                                            : "Accedez a l'integralite des analyses payantes et des contenus exclusifs de la redaction."}
+                                    </p>
+                                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleSubscriptionCta}
+                                            className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/40 transition-transform hover:scale-[1.02]"
+                                        >
+                                            {hasActiveSubscription ? 'Tableau de bord' : "S'abonner"}
+                                        </button>
+                                        {!authUser && (
+                                            <a
+                                                href={route('register')}
+                                                className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/20 px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-white transition-colors hover:border-white/40 hover:bg-white/10"
+                                            >
+                                                Creer un compte
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            </section>
+                        )}
 
                         {/* Articles Grid/List */}
                         {articles?.data && articles.data.length > 0 ? (
@@ -377,6 +476,7 @@ export default function CategoryShow({
                                         likesCount={likesCountBySlug[article.slug] ?? 0}
                                         onToggleLike={() => toggleLike(article.slug, article.likes_count ?? 0)}
                                         mode={viewMode}
+                                        className={viewMode === 'grid' ? 'h-full' : ''}
                                     />
                                 ))}
                                 </div>
@@ -426,17 +526,20 @@ export default function CategoryShow({
                                 </div>
                             </>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-20 text-center">
-                                <div className="mb-4 rounded-full bg-gray-100 p-6 dark:bg-gray-800">
-                                    <Search className="h-10 w-10 text-gray-400" />
+                            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200 bg-white/50 py-24 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-emerald-500/10 text-primary">
+                                    <Search className="h-7 w-7" />
                                 </div>
-                                <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">
-                                    Aucun article trouvé
+                                <div className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
+                                    LE RURAL / Archives vides
+                                </div>
+                                <h3 className="font-heading text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+                                    Aucun article dans cette selection
                                 </h3>
-                                <p className="mb-6 max-w-md text-gray-500 dark:text-gray-400">
-                                    Nous n'avons trouvé aucun article correspondant à vos critères dans cette catégorie.
+                                <p className="mb-7 mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
+                                    Ajustez vos filtres ou elargissez la recherche pour decouvrir plus de contenus agricoles.
                                 </p>
-                                <Button 
+                                <Button
                                     onClick={() => {
                                         setSearchQuery('');
                                         setSortOption('recent');
@@ -445,8 +548,9 @@ export default function CategoryShow({
                                         setMaxPrice('');
                                         router.get(route('category.show', category.slug));
                                     }}
+                                    className="rounded-full px-6"
                                 >
-                                    Réinitialiser les filtres
+                                    Reinitialiser les filtres
                                 </Button>
                             </div>
                         )}
@@ -455,10 +559,10 @@ export default function CategoryShow({
                     {/* Sidebar */}
                     <aside className="lg:col-span-4 xl:col-span-3 space-y-8">
                         <HomeSidebar
-                            marketPrices={market_prices}
-                            webtvVideos={webtv_videos}
-                            partners={partners}
-                            comments={latest_comments}
+                            marketPrices={marketPrices}
+                            webtvVideos={webtvVideos}
+                            partners={partnersData}
+                            comments={latestComments}
                         />
                     </aside>
                 </div>
@@ -466,3 +570,11 @@ export default function CategoryShow({
         </MainLayout>
     );
 }
+
+
+
+
+
+
+
+

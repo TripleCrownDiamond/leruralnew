@@ -19,4 +19,23 @@ class Emission extends Model
         'is_active' => 'boolean',
         'order' => 'integer',
     ];
+
+    public function getImageAttribute($value): ?string
+    {
+        $image = trim((string) $value);
+
+        if ($image === '') {
+            return null;
+        }
+
+        if (str_starts_with($image, '//')) {
+            return 'https:' . $image;
+        }
+
+        if (preg_match('/^https?:\/\//i', $image) === 1) {
+            return $image;
+        }
+
+        return asset(ltrim($image, '/'));
+    }
 }

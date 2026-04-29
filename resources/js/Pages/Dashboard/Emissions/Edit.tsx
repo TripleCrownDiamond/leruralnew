@@ -1,12 +1,10 @@
+import CloudinaryUpload from '@/Components/CloudinaryUpload';
+import AdminCard from '@/Components/Dashboard/AdminCard';
+import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
+import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head, Link, useForm, router } from '@inertiajs/react';
-import { Button } from '@/Components/ui/button';
-import TextInput from '@/Components/TextInput';
-import InputLabel from '@/Components/InputLabel';
-import InputError from '@/Components/InputError';
-import Checkbox from '@/Components/Checkbox';
-import { ArrowLeft, Save } from 'lucide-react';
-import ImageWithFallback from '@/Components/ImageWithFallback';
+import { Head, useForm } from '@inertiajs/react';
+import { ArrowLeft, Check, Tv } from 'lucide-react';
 
 interface Emission {
     id: number;
@@ -18,16 +16,13 @@ interface Emission {
     order: number;
 }
 
-interface Props {
-    emission: Emission;
-}
-
-export default function Edit({ emission }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+export default function Edit({ emission }: { emission: Emission }) {
+    const form = useForm({
         _method: 'PUT',
         name: emission.name,
-        description: emission.description || '',
+        description: emission.description ?? '',
         image: null as File | null,
+        image_url: emission.image ?? '',
         playlist_url: emission.playlist_url,
         is_active: emission.is_active,
         order: emission.order,
@@ -35,121 +30,130 @@ export default function Edit({ emission }: Props) {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('dashboard.emissions.update', emission.id));
+        form.post(route('dashboard.emissions.update', emission.id));
     };
 
     return (
-        <DashboardLayout title="Modifier l'Émission">
-            <Head title="Modifier l'Émission" />
+        <DashboardLayout title={`Modifier · ${emission.name}`}>
+            <Head title={`Modifier · ${emission.name}`} />
 
-            <div className="max-w-2xl mx-auto space-y-6">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href={route('dashboard.emissions.index')}>
-                            <ArrowLeft className="h-5 w-5" />
-                        </Link>
-                    </Button>
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            Modifier l'émission
-                        </h2>
-                        <p className="text-sm text-gray-500">
-                            Modifiez les informations de l'émission
-                        </p>
-                    </div>
-                </div>
+            <div className="space-y-6">
+                <AdminPageHeader
+                    eyebrow="Modification"
+                    title={emission.name}
+                    subtitle="Ajustez la fiche de l'emission, sa playlist et son statut."
+                    icon={<Tv className="h-6 w-6" />}
+                    actions={
+                        <AdminLinkButton
+                            href={route('dashboard.emissions.index')}
+                            variant="ghost"
+                            icon={<ArrowLeft className="h-4 w-4" />}
+                        >
+                            Retour
+                        </AdminLinkButton>
+                    }
+                />
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-                    <form onSubmit={submit} className="space-y-6">
-                        <div>
-                            <InputLabel htmlFor="name" value="Nom de l'émission" />
-                            <TextInput
-                                id="name"
-                                className="mt-1 block w-full"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
-                                required
-                            />
-                            <InputError className="mt-2" message={errors.name} />
+                <form onSubmit={submit} className="space-y-6">
+                    <AdminCard padded>
+                        <div className="mb-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Informations
                         </div>
-
-                        <div>
-                            <InputLabel htmlFor="description" value="Description (Optionnel)" />
-                            <textarea
-                                id="description"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-                                value={data.description}
-                                onChange={(e) => setData('description', e.target.value)}
-                                rows={3}
-                            />
-                            <InputError className="mt-2" message={errors.description} />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="playlist_url" value="Lien de la Playlist (YouTube)" />
-                            <TextInput
-                                id="playlist_url"
-                                type="url"
-                                className="mt-1 block w-full"
-                                value={data.playlist_url}
-                                onChange={(e) => setData('playlist_url', e.target.value)}
-                                required
-                            />
-                            <InputError className="mt-2" message={errors.playlist_url} />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="image" value="Image de couverture (400x225 recommandé)" />
-                            {emission.image && (
-                                <div className="mb-2 w-40 aspect-video rounded-md overflow-hidden bg-gray-100">
-                                    <ImageWithFallback src={emission.image || undefined} alt={emission.name} className="w-full h-full object-cover" />
-                                </div>
-                            )}
-                            <input
-                                id="image"
-                                type="file"
-                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                                onChange={(e) => setData('image', e.target.files ? e.target.files[0] : null)}
-                                accept="image/*"
-                            />
-                            <InputError className="mt-2" message={errors.image} />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <InputLabel htmlFor="order" value="Ordre d'affichage" />
-                                <TextInput
-                                    id="order"
-                                    type="number"
-                                    className="mt-1 block w-full"
-                                    value={data.order}
-                                    onChange={(e) => setData('order', parseInt(e.target.value))}
-                                />
-                                <InputError className="mt-2" message={errors.order} />
-                            </div>
-
-                            <div className="flex items-center h-full pt-6">
-                                <label className="flex items-center">
-                                    <Checkbox
-                                        name="is_active"
-                                        checked={data.is_active}
-                                        onChange={(e) => setData('is_active', e.target.checked)}
-                                    />
-                                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                                        Émission active
-                                    </span>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div className="md:col-span-2">
+                                <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">
+                                    Nom
                                 </label>
+                                <input
+                                    type="text"
+                                    value={form.data.name}
+                                    onChange={(e) => form.setData('name', e.target.value)}
+                                    required
+                                    className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                />
+                                {form.errors.name && (
+                                    <p className="mt-1 text-xs text-red-600">{form.errors.name}</p>
+                                )}
                             </div>
+                            <div className="md:col-span-2">
+                                <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">
+                                    Description
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    value={form.data.description}
+                                    onChange={(e) => form.setData('description', e.target.value)}
+                                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">
+                                    Lien playlist YouTube
+                                </label>
+                                <input
+                                    type="url"
+                                    value={form.data.playlist_url}
+                                    onChange={(e) => form.setData('playlist_url', e.target.value)}
+                                    required
+                                    className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 font-mono text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                />
+                                {form.errors.playlist_url && (
+                                    <p className="mt-1 text-xs text-red-600">{form.errors.playlist_url}</p>
+                                )}
+                            </div>
+                            <div className="md:col-span-2 space-y-3">
+                                <CloudinaryUpload
+                                    label="Image de couverture"
+                                    onUpload={(url) => {
+                                        form.setData('image_url', url);
+                                        form.setData('image', null);
+                                    }}
+                                    defaultImage={form.data.image_url || undefined}
+                                />
+                                <p className="text-xs text-gray-500 dark:text-white/60">
+                                    Uploader ou choisir depuis la mediatheque.
+                                </p>
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">
+                                    Ordre d'affichage
+                                </label>
+                                <input
+                                    type="number"
+                                    value={form.data.order}
+                                    onChange={(e) => form.setData('order', parseInt(e.target.value) || 0)}
+                                    className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                />
+                            </div>
+                            <label className="flex items-center gap-2 pt-7 text-sm font-bold text-gray-700 dark:text-white/80">
+                                <input
+                                    type="checkbox"
+                                    checked={form.data.is_active}
+                                    onChange={(e) => form.setData('is_active', e.target.checked)}
+                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                Emission active
+                            </label>
                         </div>
+                    </AdminCard>
 
-                        <div className="flex justify-end pt-4">
-                            <Button type="submit" disabled={processing}>
-                                <Save className="mr-2 h-4 w-4" />
-                                Enregistrer les modifications
-                            </Button>
-                        </div>
-                    </form>
-                </div>
+                    <div className="flex justify-end gap-2">
+                        <AdminLinkButton
+                            href={route('dashboard.emissions.index')}
+                            variant="ghost"
+                        >
+                            Annuler
+                        </AdminLinkButton>
+                        <AdminButton
+                            type="submit"
+                            variant="primary"
+                            disabled={form.processing}
+                            icon={<Check className="h-4 w-4" />}
+                        >
+                            Enregistrer
+                        </AdminButton>
+                    </div>
+                </form>
             </div>
         </DashboardLayout>
     );

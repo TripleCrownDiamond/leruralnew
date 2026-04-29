@@ -17,10 +17,18 @@ class Payment extends Model
         'type',
         'related_id',
         'meta_data',
+        'description',
+        'paid_at',
+        'receipt_image',
+        'phone_number',
+        'provider',
+        'reference',
     ];
 
     protected $casts = [
         'meta_data' => 'array',
+        'paid_at' => 'datetime',
+        'amount' => 'decimal:2',
     ];
 
     public function user()

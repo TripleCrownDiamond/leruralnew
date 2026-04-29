@@ -1,0 +1,37 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">LE RURAL Placeholder</title>
+  <desc id="desc">Image de remplacement pour article sans illustration</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f2010"/>
+      <stop offset="55%" stop-color="#1c3f15"/>
+      <stop offset="100%" stop-color="#2f6a11"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <g opacity="0.15" fill="#ffffff">
+    <circle cx="160" cy="110" r="3"/>
+    <circle cx="330" cy="140" r="2"/>
+    <circle cx="520" cy="100" r="2"/>
+    <circle cx="860" cy="120" r="3"/>
+    <circle cx="1020" cy="95" r="2"/>
+    <circle cx="240" cy="520" r="2"/>
+    <circle cx="420" cy="560" r="3"/>
+    <circle cx="780" cy="540" r="2"/>
+    <circle cx="980" cy="570" r="3"/>
+  </g>
+  <g transform="translate(160 196)">
+    <rect x="0" y="0" width="880" height="284" rx="24" fill="#ffffff" opacity="0.08"/>
+    <rect x="38" y="52" width="186" height="20" rx="10" fill="#ffffff" opacity="0.75"/>
+    <rect x="38" y="100" width="550" height="18" rx="9" fill="#ffffff" opacity="0.65"/>
+    <rect x="38" y="132" width="615" height="18" rx="9" fill="#ffffff" opacity="0.55"/>
+    <rect x="38" y="164" width="468" height="18" rx="9" fill="#ffffff" opacity="0.45"/>
+    <rect x="38" y="218" width="236" height="16" rx="8" fill="#ffffff" opacity="0.35"/>
+    <circle cx="760" cy="142" r="72" fill="#ffffff" opacity="0.16"/>
+    <path d="M717 164l26-30a16 16 0 0 1 23 0l13 14 18-21a16 16 0 0 1 23 0l35 37" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+  </g>
+  <g transform="translate(160 96)">
+    <circle cx="11" cy="11" r="11" fill="#7cd35e"/>
+    <text x="36" y="17" fill="#ffffff" font-family="Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="3">LE RURAL</text>
+  </g>
+</svg>

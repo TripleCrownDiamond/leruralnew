@@ -1,9 +1,8 @@
-import DangerButton from '@/Components/DangerButton';
-import InputError from '@/Components/InputError';
+﻿import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
-import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import { AdminButton } from '@/Components/Dashboard/AdminButton';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef, useState } from 'react';
 
@@ -44,7 +43,6 @@ export default function DeleteUserForm({
 
     const closeModal = () => {
         setConfirmingUserDeletion(false);
-
         clearErrors();
         reset();
     };
@@ -52,64 +50,51 @@ export default function DeleteUserForm({
     return (
         <section className={`space-y-6 ${className}`}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                    Supprimer le compte
+                <h2 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">
+                    Zone de danger
                 </h2>
-
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Une fois votre compte supprimé, toutes ses ressources et données seront définitivement supprimées. Avant de supprimer votre compte, veuillez télécharger toutes les données ou informations que vous souhaitez conserver.
+                    Cette action supprime definitivement votre compte et toutes vos donnees.
                 </p>
             </header>
 
-            <DangerButton onClick={confirmUserDeletion}>
+            <AdminButton variant="danger" onClick={confirmUserDeletion}>
                 Supprimer le compte
-            </DangerButton>
+            </AdminButton>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
                 <form onSubmit={deleteUser} className="p-6">
-                    <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                        Êtes-vous sûr de vouloir supprimer votre compte ?
+                    <h2 className="text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white">
+                        Confirmer la suppression
                     </h2>
 
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Une fois votre compte supprimé, toutes ses ressources et données seront définitivement supprimées. Veuillez saisir votre mot de passe pour confirmer que vous souhaitez supprimer définitivement votre compte.
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        Entrez votre mot de passe pour confirmer la suppression definitive.
                     </p>
 
                     <div className="mt-6">
-                        <InputLabel
-                            htmlFor="password"
-                            value="Mot de passe"
-                            className="sr-only"
-                        />
-
+                        <InputLabel htmlFor="password" value="Mot de passe" className="sr-only" />
                         <TextInput
                             id="password"
                             type="password"
                             name="password"
                             ref={passwordInput}
                             value={data.password}
-                            onChange={(e) =>
-                                setData('password', e.target.value)
-                            }
-                            className="mt-1 block w-3/4"
+                            onChange={(e) => setData('password', e.target.value)}
+                            className="mt-1 block w-full"
                             isFocused
                             placeholder="Mot de passe"
                         />
-
-                        <InputError
-                            message={errors.password}
-                            className="mt-2"
-                        />
+                        <InputError message={errors.password} className="mt-2" />
                     </div>
 
-                    <div className="mt-6 flex justify-end">
-                        <SecondaryButton onClick={closeModal}>
+                    <div className="mt-6 flex justify-end gap-2">
+                        <AdminButton type="button" variant="secondary" onClick={closeModal}>
                             Annuler
-                        </SecondaryButton>
-
-                        <DangerButton className="ms-3" disabled={processing}>
-                            Supprimer le compte
-                        </DangerButton>
+                        </AdminButton>
+                        <AdminButton variant="danger" disabled={processing}>
+                            Supprimer
+                        </AdminButton>
                     </div>
                 </form>
             </Modal>
