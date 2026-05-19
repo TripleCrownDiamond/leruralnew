@@ -6,6 +6,16 @@ export interface User {
     email: string;
     email_verified_at?: string;
     role: string;
+    permissions?: string[];
+}
+
+export interface SeoData {
+    title?: string;
+    description?: string;
+    image?: string;
+    url?: string;
+    type?: string;
+    locale?: string;
 }
 
 export type PageProps<
@@ -15,5 +25,6 @@ export type PageProps<
         user: User;
         has_active_subscription?: boolean;
     };
+    seo?: SeoData;
     ziggy: Config & { location: string };
 };

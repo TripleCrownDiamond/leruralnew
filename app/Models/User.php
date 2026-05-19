@@ -17,7 +17,7 @@ class User extends Authenticatable implements MustVerifyEmail
     const ROLE_CLIENT = 'client';
     const ROLE_USER = 'user';
 
-    protected $fillable = [
+        protected $fillable = [
         'name',
         'email',
         'password',
@@ -29,6 +29,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'invitation_expires_at',
         'email_verified_at',
         'last_login_at',
+        'notify_live_start',
+        'notify_new_content',
     ];
 
     protected $hidden = [
@@ -37,7 +39,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'invitation_token',
     ];
 
-    protected function casts(): array
+        protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
@@ -45,6 +47,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'permissions' => 'array',
             'invitation_expires_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'notify_live_start' => 'boolean',
+            'notify_new_content' => 'boolean',
         ];
     }
 
@@ -61,6 +65,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isClient(): bool
     {
         return $this->role === self::ROLE_CLIENT;
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return in_array($permission, $this->permissions ?? [], true);
     }
 
     public function articles()
@@ -98,8 +107,29 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(CommentLike::class);
     }
 
-    public function followedCategories()
+        public function followedCategories()
     {
         return $this->belongsToMany(Category::class, 'category_user_follows')->withTimestamps();
+    }
+
+    public function notificationPreferences()
+    {
+        return $this->hasOne(UserNotificationPreference::class);
+    }
+
+    /**
+     * Récupère les notifications non lues
+     */
+    public function unreadNotificationsCount(): int
+    {
+        return $this->unreadNotifications()->count();
+    }
+
+    /**
+     * Récupère les notifications récentes (lues et non lues)
+     */
+    public function recentNotifications(int $limit = 20)
+    {
+        return $this->notifications()->latest()->take($limit)->get();
     }
 }

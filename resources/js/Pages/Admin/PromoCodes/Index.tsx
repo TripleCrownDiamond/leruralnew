@@ -466,18 +466,10 @@ export default function Index({ promoCodes, subscriptionPlans, filters }: Props)
                                                 </td>
                                                 <td className="px-5 py-4">
                                                     <div className="flex justify-end gap-2">
-                                                        <AdminButton size="sm" variant={promo.is_active ? 'ghost' : 'primary'} onClick={() => toggleActive(promo)}>
-                                                            {promo.is_active ? 'Desactiver' : 'Activer'}
-                                                        </AdminButton>
-                                                        <AdminButton size="sm" variant={promo.is_featured ? 'primary' : 'ghost'} onClick={() => toggleFeatured(promo)} icon={<Star className="h-3.5 w-3.5" />}>
-                                                            {promo.is_featured ? 'Masquer Welcome' : 'Afficher Welcome'}
-                                                        </AdminButton>
-                                                        <AdminButton size="sm" variant="ghost" icon={<Pencil className="h-3.5 w-3.5" />} onClick={() => startEdit(promo)}>
-                                                            Editer
-                                                        </AdminButton>
-                                                        <AdminButton size="sm" variant="danger" icon={<Trash2 className="h-3.5 w-3.5" />} onClick={() => remove(promo.id)}>
-                                                            Supprimer
-                                                        </AdminButton>
+                                                        <AdminButton size="icon" variant={promo.is_active ? 'ghost' : 'primary'} onClick={() => toggleActive(promo)} icon={promo.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />} title={promo.is_active ? 'Désactiver' : 'Activer'} />
+                                                        <AdminButton size="icon" variant={promo.is_featured ? 'primary' : 'ghost'} onClick={() => toggleFeatured(promo)} icon={<Star className="h-4 w-4" />} title={promo.is_featured ? 'Masquer Welcome' : 'Afficher Welcome'} />
+                                                        <AdminButton size="icon" variant="ghost" icon={<Pencil className="h-4 w-4" />} onClick={() => startEdit(promo)} title="Éditer" />
+                                                        <AdminButton size="icon" variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => remove(promo.id)} title="Supprimer" />
                                                     </div>
                                                 </td>
                                             </tr>

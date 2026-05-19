@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\InvalidatesSharedContentCache;
 use Illuminate\Database\Eloquent\Model;
 
 class PressPaper extends Model
 {
+    use InvalidatesSharedContentCache;
+
     protected $fillable = [
         'title',
         'slug',
@@ -56,15 +59,16 @@ class PressPaper extends Model
             return null;
         }
 
-        return asset('storage/' . $normalized);
+        return url('/public-media/' . ltrim($normalized, '/'));
     }
 
     public function scopePublished($query)
     {
         return $query
             ->where('is_active', true)
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now());
+            ->where(function ($subQuery) {
+                $subQuery->whereNull('published_at')
+                    ->orWhere('published_at', '<=', now());
+            });
     }
 }
-

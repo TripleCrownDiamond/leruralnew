@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Services\AnnouncementLinkResolver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,12 +18,12 @@ class AnnouncementController extends AdminController
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, AnnouncementLinkResolver $linkResolver)
     {
         $data = $request->validate([
             'label' => ['nullable', 'string', 'max:100'],
             'message' => ['required', 'string', 'max:255'],
-            'link_url' => ['nullable', 'url', 'max:255'],
+            'link_url' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
         ]);
@@ -30,7 +31,7 @@ class AnnouncementController extends AdminController
         Announcement::create([
             'label' => filled($data['label'] ?? null) ? trim($data['label']) : null,
             'message' => trim($data['message']),
-            'link_url' => filled($data['link_url'] ?? null) ? trim($data['link_url']) : null,
+            'link_url' => $linkResolver->normalize($data['link_url'] ?? null),
             'sort_order' => $data['sort_order'] ?? 0,
             'is_active' => !empty($data['is_active']),
         ]);
@@ -38,12 +39,12 @@ class AnnouncementController extends AdminController
         return back()->with('success', 'Annonce ajoutee.');
     }
 
-    public function update(Request $request, Announcement $announcement)
+    public function update(Request $request, Announcement $announcement, AnnouncementLinkResolver $linkResolver)
     {
         $data = $request->validate([
             'label' => ['nullable', 'string', 'max:100'],
             'message' => ['required', 'string', 'max:255'],
-            'link_url' => ['nullable', 'url', 'max:255'],
+            'link_url' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
         ]);
@@ -51,7 +52,7 @@ class AnnouncementController extends AdminController
         $announcement->update([
             'label' => filled($data['label'] ?? null) ? trim($data['label']) : null,
             'message' => trim($data['message']),
-            'link_url' => filled($data['link_url'] ?? null) ? trim($data['link_url']) : null,
+            'link_url' => $linkResolver->normalize($data['link_url'] ?? null),
             'sort_order' => $data['sort_order'] ?? 0,
             'is_active' => !empty($data['is_active']),
         ]);

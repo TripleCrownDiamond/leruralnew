@@ -1,3 +1,4 @@
+import { getCsrfHeaders, getCsrfToken, isCsrfError, handleCsrfError } from '@/lib/csrf';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -125,23 +126,26 @@ export default function TiptapEditor({ value, onChange, placeholder, className =
     });
 
     const uploadFile = useCallback(async (file: File) => {
-        const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-        const cookieMatch = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
-        const token = metaToken || (cookieMatch ? decodeURIComponent(cookieMatch[1]) : '');
+        const csrf = getCsrfToken();
         const formData = new FormData();
         formData.append('file', file);
+        if (csrf.token) {
+            formData.append('_token', csrf.token);
+        }
 
         try {
             const response = await fetch(route('dashboard.media.store', undefined, false), {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': token,
-                },
+                headers: getCsrfHeaders(),
                 body: formData,
                 credentials: 'same-origin',
             });
+
+            // Gestion spécifique du CSRF token mismatch (419)
+            if (isCsrfError(response.status)) {
+                handleCsrfError();
+                return null;
+            }
 
             const data = await response.json();
             if (!response.ok) {

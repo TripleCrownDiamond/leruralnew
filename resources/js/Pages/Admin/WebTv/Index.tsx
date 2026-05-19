@@ -1,4 +1,4 @@
-﻿import DashboardLayout from '@/Layouts/DashboardLayout';
+import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Play, Plus, Pencil, Trash2, Check, X, Star } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
@@ -54,12 +54,16 @@ const emptyForm = {
 };
 
 export default function Index({ videos, filters }: Props) {
+    const csrfToken = typeof document !== 'undefined'
+        ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
+        : '';
+
     const [search, setSearch] = useState(filters.search ?? '');
     const [featured, setFeatured] = useState(filters.featured ?? 'all');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [isCreating, setIsCreating] = useState(false);
 
-    const form = useForm<any>(emptyForm);
+    const form = useForm<any>({ ...emptyForm, _token: csrfToken });
 
     useEffect(() => {
         if (search === (filters.search ?? '') && featured === (filters.featured ?? 'all')) return;
@@ -93,6 +97,7 @@ export default function Index({ videos, filters }: Props) {
             thumbnail_url: v.thumbnail ?? '',
             emission_image_upload: null,
             emission_image: v.emission_image ?? '',
+            _token: csrfToken,
         });
     };
 
@@ -106,7 +111,7 @@ export default function Index({ videos, filters }: Props) {
         setEditingId(null);
         setIsCreating(true);
         form.reset();
-        form.setData(emptyForm);
+        form.setData({ ...emptyForm, _token: csrfToken });
     };
 
     const submit = (e: FormEvent) => {

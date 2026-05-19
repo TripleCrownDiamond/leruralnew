@@ -455,7 +455,7 @@ class MediaUploadService
 
         return [
             'disk' => 'public',
-            'url' => Storage::disk('public')->url($relativePath),
+            'url' => $this->publicMediaUrl($relativePath),
             'path' => $relativePath,
             'mime_type' => $prepared['mime'],
             'size' => $prepared['size'],
@@ -466,6 +466,14 @@ class MediaUploadService
                 'provider' => 'storage',
             ],
         ];
+    }
+
+    private function publicMediaUrl(string $relativePath): string
+    {
+        $normalized = ltrim($relativePath, '/');
+
+        return url('/public-media/' . ltrim($normalized, '/'));
+
     }
 
     private function buildFileName(string $originalName, string $extension): string
@@ -619,6 +627,8 @@ class MediaUploadService
         return 'other';
     }
 }
+
+
 
 
 

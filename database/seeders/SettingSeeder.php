@@ -13,10 +13,20 @@ class SettingSeeder extends Seeder
     public function run(): void
     {
         $settings = [
+            // Contact
             'contact_phone' => '+229 0190350490',
             'contact_email' => 'secretariat@lerural.bj',
             'contact_address' => 'Abomey Calavi',
+            
+            // SEO & Partage Social
+            'site_slogan' => '1er groupe de presse agricole en Afrique de l\'Ouest',
+            'seo_default_description' => 'LE RURAL - 1er groupe de presse agricole en Afrique de l\'Ouest. Actualités, analyses et informations sur l\'agriculture, l\'élevage et le monde rural.',
+            'seo_default_image' => '/logos/logo.png', // Recommandé: image 1200x630px pour un affichage optimal sur les réseaux sociaux
+            
+            // Modération
             'comment_moderation' => 'auto',
+            
+            // Réseaux sociaux
             'social_facebook_url' => null,
             'social_x_url' => null,
             'social_instagram_url' => null,

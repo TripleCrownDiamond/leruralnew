@@ -7,19 +7,26 @@ import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 interface Props {
     roles: Array<{ value: string; label: string }>;
     permissions: Array<{ value: string; label: string }>;
+    role_permissions: Record<string, string[]>;
 }
 
-export default function Create({ roles, permissions }: Props) {
+export default function Create({ roles, permissions, role_permissions }: Props) {
+    const getRolePermissions = (role: string) => role_permissions[role] ?? [];
+
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
         role: 'user',
-        permissions: [] as string[],
+        permissions: getRolePermissions('user'),
         send_invitation: true,
         custom_message: '',
     });
 
     const togglePermission = (permission: string) => {
+        if (getRolePermissions(data.role).includes(permission)) {
+            return;
+        }
+
         const next = data.permissions.includes(permission)
             ? data.permissions.filter((item) => item !== permission)
             : [...data.permissions, permission];
@@ -103,7 +110,11 @@ export default function Create({ roles, permissions }: Props) {
                                     <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">Role principal *</label>
                                     <select
                                         value={data.role}
-                                        onChange={(e) => setData('role', e.target.value)}
+                                        onChange={(e) => {
+                                            const nextRole = e.target.value;
+                                            setData('role', nextRole);
+                                            setData('permissions', getRolePermissions(nextRole));
+                                        }}
                                         className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                                     >
                                         {roles.map((item) => (
@@ -112,6 +123,7 @@ export default function Create({ roles, permissions }: Props) {
                                             </option>
                                         ))}
                                     </select>
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-white/50">Les permissions du role sont cochees automatiquement.</p>
                                     {errors.role && <p className="mt-1 text-xs text-red-600">{errors.role}</p>}
                                 </div>
 
@@ -126,8 +138,9 @@ export default function Create({ roles, permissions }: Props) {
                                                 <input
                                                     type="checkbox"
                                                     checked={data.permissions.includes(permission.value)}
+                                                    disabled={getRolePermissions(data.role).includes(permission.value)}
                                                     onChange={() => togglePermission(permission.value)}
-                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
                                                 />
                                                 {permission.label}
                                             </label>

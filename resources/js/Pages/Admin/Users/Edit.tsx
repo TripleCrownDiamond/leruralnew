@@ -20,24 +20,31 @@ interface Props {
     user: UserItem;
     roles: Array<{ value: string; label: string }>;
     permissions: Array<{ value: string; label: string }>;
+    role_permissions: Record<string, string[]>;
 }
 
-export default function Edit({ user, roles, permissions }: Props) {
+export default function Edit({ user, roles, permissions, role_permissions }: Props) {
     const page = usePage<any>();
     const currentUser = page.props.auth?.user as { id: number } | undefined;
     const isSelf = Boolean(currentUser?.id && currentUser.id === user.id);
+
+    const getRolePermissions = (role: string) => role_permissions[role] ?? [];
 
     const { data, setData, patch, processing, errors } = useForm({
         name: user.name,
         email: user.email,
         role: user.role || 'user',
-        permissions: user.permissions || [],
+        permissions: Array.from(new Set([...(getRolePermissions(user.role || 'user')), ...((user.permissions || []))])),
         status: user.status || 'active',
         send_notification: false,
         custom_message: '',
     });
 
     const togglePermission = (permission: string) => {
+        if (getRolePermissions(data.role).includes(permission)) {
+            return;
+        }
+
         const next = data.permissions.includes(permission)
             ? data.permissions.filter((item) => item !== permission)
             : [...data.permissions, permission];
@@ -109,11 +116,12 @@ export default function Edit({ user, roles, permissions }: Props) {
                                     <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">Nom complet *</label>
                                     <input
                                         type="text"
-                                        className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                        className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 opacity-90 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:opacity-70"
                                         value={data.name}
-                                        onChange={(e) => setData('name', e.target.value)}
-                                        required
+                                        readOnly
+                                        aria-readonly="true"
                                     />
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-white/50">Le nom n'est pas modifiable depuis cet ecran.</p>
                                     {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
                                 </div>
 
@@ -121,11 +129,12 @@ export default function Edit({ user, roles, permissions }: Props) {
                                     <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">Email *</label>
                                     <input
                                         type="email"
-                                        className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                        className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700 opacity-90 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:opacity-70"
                                         value={data.email}
-                                        onChange={(e) => setData('email', e.target.value)}
-                                        required
+                                        readOnly
+                                        aria-readonly="true"
                                     />
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-white/50">L'email n'est pas modifiable depuis cet ecran.</p>
                                     {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
                                 </div>
                             </div>
@@ -140,7 +149,11 @@ export default function Edit({ user, roles, permissions }: Props) {
                                         <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">Role</label>
                                         <select
                                             value={data.role}
-                                            onChange={(e) => setData('role', e.target.value)}
+                                            onChange={(e) => {
+                                                const nextRole = e.target.value;
+                                                setData('role', nextRole);
+                                                setData('permissions', getRolePermissions(nextRole));
+                                            }}
                                             disabled={isSelf}
                                             className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white"
                                         >
@@ -185,9 +198,9 @@ export default function Edit({ user, roles, permissions }: Props) {
                                                 <input
                                                     type="checkbox"
                                                     checked={data.permissions.includes(permission.value)}
-                                                    disabled={isSelf}
+                                                    disabled={isSelf || getRolePermissions(data.role).includes(permission.value)}
                                                     onChange={() => togglePermission(permission.value)}
-                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
                                                 />
                                                 {permission.label}
                                             </label>

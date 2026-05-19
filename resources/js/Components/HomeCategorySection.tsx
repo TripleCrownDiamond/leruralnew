@@ -48,7 +48,7 @@ export default function HomeCategorySection({
                     <span className="inline-block h-2 w-2 rounded-full bg-primary shadow-[0_0_0_4px_rgba(47,106,17,0.15)]" />
                     <span>LE RURAL</span>
                     <span className="h-px w-8 bg-primary/30" />
-                    <span className="text-gray-400 dark:text-gray-500">Rubrique Ã‚Â· {count} {count > 1 ? 'articles' : 'article'}</span>
+                    <span className="text-gray-400 dark:text-gray-500">Rubrique · {count} {count > 1 ? 'articles' : 'article'}</span>
                 </div>
 
                 <div className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-gray-900 pb-5 dark:border-white">

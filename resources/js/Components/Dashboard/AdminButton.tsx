@@ -3,7 +3,7 @@ import { Link } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type Size = 'sm' | 'md' | 'lg';
+type Size = 'sm' | 'md' | 'lg' | 'icon';
 
 const variants: Record<Variant, string> = {
     primary:
@@ -20,6 +20,7 @@ const sizes: Record<Size, string> = {
     sm: 'h-9 px-3 text-[11px]',
     md: 'h-11 px-4 text-xs',
     lg: 'h-12 px-5 text-xs',
+    icon: 'h-9 w-9 p-0',
 };
 
 const baseClass =
@@ -31,15 +32,17 @@ interface CommonProps {
     icon?: ReactNode;
     children?: ReactNode;
     className?: string;
+    title?: string;
 }
 
 type AdminButtonProps = CommonProps & ComponentPropsWithoutRef<'button'>;
 
 export const AdminButton = forwardRef<HTMLButtonElement, AdminButtonProps>(
-    ({ variant = 'primary', size = 'md', icon, children, className, type = 'button', ...rest }, ref) => (
+    ({ variant = 'primary', size = 'md', icon, children, className, type = 'button', title, ...rest }, ref) => (
         <button
             ref={ref}
             type={type}
+            title={title}
             className={cn(baseClass, variants[variant], sizes[size], className)}
             {...rest}
         >
@@ -67,12 +70,13 @@ export function AdminLinkButton({
     className,
     target,
     rel,
-}: AdminLinkButtonProps) {
+    title,
+}: AdminLinkButtonProps & { title?: string }) {
     const classes = cn(baseClass, variants[variant], sizes[size], className);
 
     if (as === 'a') {
         return (
-            <a href={href} target={target} rel={rel} className={classes}>
+            <a href={href} target={target} rel={rel} className={classes} title={title}>
                 {icon}
                 {children}
             </a>
@@ -80,7 +84,7 @@ export function AdminLinkButton({
     }
 
     return (
-        <Link href={href} className={classes}>
+        <Link href={href} className={classes} title={title}>
             {icon}
             {children}
         </Link>

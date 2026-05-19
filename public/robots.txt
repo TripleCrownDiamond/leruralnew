@@ -1,2 +1,7 @@
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /dashboard/
+Disallow: /profile
+Disallow: /checkout
+Disallow: /payment/
+Sitemap: https://lerural.bj/sitemap.xml

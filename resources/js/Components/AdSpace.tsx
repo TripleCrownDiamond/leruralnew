@@ -1,6 +1,8 @@
-import useSharedContent from '@/Hooks/useSharedContent';
+﻿import useSharedContent from '@/Hooks/useSharedContent';
+import ImageWithFallback from '@/Components/ImageWithFallback';
 import { asBool } from '@/lib/siteSettings';
 import { Link, usePage } from '@inertiajs/react';
+import { useEffect, useRef } from 'react';
 import { ExternalLink, Megaphone, Settings2 } from 'lucide-react';
 import type { PageProps } from '@/types';
 
@@ -55,6 +57,33 @@ export default function AdSpace({
     const heightValue = toNumber(height);
     const compactPreview = (heightValue !== null && heightValue <= 170) || (widthValue !== null && widthValue <= 320);
     const advertisementsHref = resolveAdminAdvertisementsHref();
+    const viewSentRef = useRef(false);
+
+    useEffect(() => {
+        if (isAdmin || !advertisement || viewSentRef.current) {
+            return;
+        }
+
+        const key = `ad:view:${locationId}:${advertisement.id}`;
+
+        try {
+            if (window.sessionStorage.getItem(key) === '1') {
+                viewSentRef.current = true;
+                return;
+            }
+            window.sessionStorage.setItem(key, '1');
+        } catch {
+            // Ignore blocked storage.
+        }
+
+        viewSentRef.current = true;
+        void fetch(route('public-advertisements.view', advertisement.id), {
+            method: 'GET',
+            credentials: 'same-origin',
+            cache: 'no-store',
+            keepalive: true,
+        }).catch(() => undefined);
+    }, [advertisement, isAdmin, locationId]);
 
     if (!showAds && !isAdmin) {
         return null;
@@ -135,7 +164,14 @@ export default function AdSpace({
 
     const content = (
         <div className={`group relative overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900 ${className}`} style={{ width, height }}>
-            <img src={advertisement.image_url} alt={advertisement.title || label} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" loading="lazy" decoding="async" />
+            <ImageWithFallback
+                src={advertisement.image_url}
+                fallbackSrc="/images/article-placeholder.svg"
+                alt={advertisement.title || label}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                loading="lazy"
+                decoding="async"
+            />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 text-white">
                 <div className="min-w-0">
@@ -161,7 +197,7 @@ export default function AdSpace({
 
     if (advertisement.redirect_url) {
         return (
-            <a href={advertisement.redirect_url} target="_blank" rel="noreferrer noopener" className="block">
+            <a href={`/public-advertisements/${advertisement.id}/click`} target="_blank" rel="noreferrer noopener" className="block">
                 {content}
             </a>
         );
@@ -169,6 +205,7 @@ export default function AdSpace({
 
     return content;
 }
+
 
 
 

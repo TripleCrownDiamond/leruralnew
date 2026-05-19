@@ -1,4 +1,4 @@
-﻿import { Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { Clock, MessageCircle, Eye, ThumbsUp, ArrowUpRight } from 'lucide-react';
 import ImageWithFallback from './ImageWithFallback';
 
@@ -116,7 +116,6 @@ export default function ArticleCard({
 
     const displayedLikes = likesCount ?? (data.likes_count ?? 0) + (liked ? 1 : 0);
     const isList = mode === 'list';
-    const categoryName = data.categories?.[0]?.name || (typeof data.category === 'string' ? data.category : null);
     const imagePositionX = Number(data.image_position_x ?? 50);
     const imagePositionY = Number(data.image_position_y ?? 50);
 
@@ -145,13 +144,6 @@ export default function ArticleCard({
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
-                {categoryName && (
-                    <div className="absolute top-4 left-4 z-10 flex items-center gap-2 rounded-full bg-white/95 dark:bg-gray-900/95 px-3 py-1.5 backdrop-blur-md shadow-lg">
-                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-900 dark:text-white">{categoryName}</span>
-                    </div>
-                )}
 
                 <div className="absolute bottom-4 right-4 z-10">
                     {data.premium ? (

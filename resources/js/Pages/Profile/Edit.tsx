@@ -2,9 +2,10 @@
 import { PageProps } from '@/types';
 import { Head } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
+import NotificationPreferencesForm from './Partials/NotificationPreferencesForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
-import { Lock, Trash2, User } from 'lucide-react';
+import { Bell, Lock, Trash2, User } from 'lucide-react';
 import { useState } from 'react';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import AdminCard from '@/Components/Dashboard/AdminCard';
@@ -13,7 +14,7 @@ export default function Edit({
     mustVerifyEmail,
     status,
 }: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
-    const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'delete'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'password' | 'delete'>('profile');
 
     return (
         <DashboardLayout title="Mon profil">
@@ -41,6 +42,19 @@ export default function Edit({
                             >
                                 <User className="h-4 w-4" />
                                 Informations
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('notifications')}
+                                className={`flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-left text-sm font-bold transition-colors ${
+                                    activeTab === 'notifications'
+                                        ? 'bg-primary text-white'
+                                        : 'text-gray-700 hover:bg-gray-100 dark:text-white/75 dark:hover:bg-white/5'
+                                }`}
+                            >
+                                <Bell className="h-4 w-4" />
+                                Notifications
                             </button>
 
                             <button
@@ -79,6 +93,8 @@ export default function Edit({
                                 className="max-w-2xl"
                             />
                         )}
+
+                        {activeTab === 'notifications' && <NotificationPreferencesForm />}
 
                         {activeTab === 'password' && <UpdatePasswordForm className="max-w-2xl" />}
 

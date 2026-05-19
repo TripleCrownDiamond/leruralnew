@@ -1,4 +1,4 @@
-﻿import EmptySectionState from '@/Components/EmptySectionState';
+import EmptySectionState from '@/Components/EmptySectionState';
 import ImageWithFallback from '@/Components/ImageWithFallback';
 import CloudinaryUpload from '@/Components/CloudinaryUpload';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
@@ -33,13 +33,17 @@ const emptyForm = {
 };
 
 export default function Index({ pressPapers }: { pressPapers: PressPaper[] }) {
-    const form = useForm({ ...(emptyForm as any), id: null as number | null });
+    const csrfToken = typeof document !== 'undefined'
+        ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
+        : '';
+
+    const form = useForm({ ...(emptyForm as any), id: null as number | null, _token: csrfToken });
     const isEditing = Boolean(form.data.id);
 
     const resetForm = () => {
         form.reset();
         form.clearErrors();
-        form.setData({ ...(emptyForm as any), id: null });
+        form.setData({ ...(emptyForm as any), id: null, _token: csrfToken });
     };
 
     const startEdit = (paper: PressPaper) => {
@@ -54,6 +58,7 @@ export default function Index({ pressPapers }: { pressPapers: PressPaper[] }) {
             price: paper.price,
             is_active: paper.is_active,
             published_at: paper.published_at ?? '',
+            _token: csrfToken,
         });
     };
 
@@ -82,7 +87,7 @@ export default function Index({ pressPapers }: { pressPapers: PressPaper[] }) {
 
             <div className="space-y-8">
                 <AdminPageHeader
-                    eyebrow="Commerce"
+                    eyebrow="Redaction"
                     title="Nos parutions"
                     subtitle="Gerez les editions papier avec leur scan de premiere page, le PDF complet et le prix associe."
                     icon={<BookOpen className="h-6 w-6" />}
@@ -228,23 +233,20 @@ export default function Index({ pressPapers }: { pressPapers: PressPaper[] }) {
                                             PDF complet
                                         </a>
 
-                                        <div className="mt-4 flex flex-wrap gap-2">
-                                            <AdminButton type="button" variant="secondary" size="sm" icon={<Pencil className="h-3.5 w-3.5" />} onClick={() => startEdit(paper)}>
-                                                Modifier
-                                            </AdminButton>
+                                                                                <div className="mt-4 flex flex-wrap gap-2">
+                                            <AdminButton type="button" variant="secondary" size="icon" icon={<Pencil className="h-4 w-4" />} onClick={() => startEdit(paper)} title="Modifier" />
                                             <AdminButton
                                                 type="button"
                                                 variant="danger"
-                                                size="sm"
-                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                size="icon"
+                                                icon={<Trash2 className="h-4 w-4" />}
                                                 onClick={() => {
-                                                    if (confirm('Supprimer ce num?ro ?')) {
+                                                    if (confirm('Supprimer ce numéro ?')) {
                                                         router.delete(route('dashboard.press-papers.destroy', paper.id), { preserveScroll: true });
                                                     }
                                                 }}
-                                            >
-                                                Supprimer
-                                            </AdminButton>
+                                                title="Supprimer"
+                                            />
                                         </div>
                                     </div>
                                 </article>

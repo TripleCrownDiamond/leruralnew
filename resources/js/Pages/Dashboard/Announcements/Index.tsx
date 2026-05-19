@@ -1,4 +1,4 @@
-﻿import AdminCard, { AdminEmptyState, AdminStatusPill } from '@/Components/Dashboard/AdminCard';
+import AdminCard, { AdminEmptyState, AdminStatusPill } from '@/Components/Dashboard/AdminCard';
 import { AdminButton } from '@/Components/Dashboard/AdminButton';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import AdminSearchBar from '@/Components/Dashboard/AdminSearchBar';
@@ -215,15 +215,16 @@ export default function Index({ announcements }: { announcements: Announcement[]
 
                             <div>
                                 <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">
-                                    Lien
+                                    Lien ou ancre
                                 </label>
                                 <input
-                                    type="url"
+                                    type="text"
                                     value={form.data.link_url}
                                     onChange={(event) => form.setData('link_url', event.target.value)}
-                                    placeholder="https://..."
+                                    placeholder="#actualites, /nos-journaux, https://..."
                                     className="h-11 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-900 outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
                                 />
+                                <p className="mt-2 text-xs text-gray-500 dark:text-white/50">Exemples: <span className="font-semibold">/#abonnement</span>, <span className="font-semibold">/nos-journaux</span>, <span className="font-semibold">https://lerural.bj/article/123</span></p>
                                 <InputError message={form.errors.link_url} className="mt-2" />
                             </div>
 
@@ -318,21 +319,19 @@ export default function Index({ announcements }: { announcements: Announcement[]
                                                         <AdminButton
                                                             type="button"
                                                             variant="secondary"
-                                                            size="sm"
-                                                            icon={<Pencil className="h-3.5 w-3.5" />}
+                                                            size="icon"
+                                                            icon={<Pencil className="h-4 w-4" />}
                                                             onClick={() => startEdit(announcement)}
-                                                        >
-                                                            Modifier
-                                                        </AdminButton>
+                                                            title="Modifier"
+                                                        />
                                                         <AdminButton
                                                             type="button"
                                                             variant="danger"
-                                                            size="sm"
-                                                            icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                            size="icon"
+                                                            icon={<Trash2 className="h-4 w-4" />}
                                                             onClick={() => handleDelete(announcement.id)}
-                                                        >
-                                                            Suppr.
-                                                        </AdminButton>
+                                                            title="Supprimer"
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>

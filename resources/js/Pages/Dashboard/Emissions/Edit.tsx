@@ -1,4 +1,4 @@
-import CloudinaryUpload from '@/Components/CloudinaryUpload';
+﻿import CloudinaryUpload from '@/Components/CloudinaryUpload';
 import AdminCard from '@/Components/Dashboard/AdminCard';
 import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
@@ -34,14 +34,14 @@ export default function Edit({ emission }: { emission: Emission }) {
     };
 
     return (
-        <DashboardLayout title={`Modifier · ${emission.name}`}>
-            <Head title={`Modifier · ${emission.name}`} />
+        <DashboardLayout title={`Modifier Â· ${emission.name}`}>
+            <Head title={`Modifier Â· ${emission.name}`} />
 
             <div className="space-y-6">
                 <AdminPageHeader
                     eyebrow="Modification"
                     title={emission.name}
-                    subtitle="Ajustez la fiche de l'emission, sa playlist et son statut."
+                    subtitle="Ajustez la fiche de l'emission, sa source YouTube (video ou playlist) et son statut."
                     icon={<Tv className="h-6 w-6" />}
                     actions={
                         <AdminLinkButton
@@ -88,7 +88,7 @@ export default function Edit({ emission }: { emission: Emission }) {
                             </div>
                             <div className="md:col-span-2">
                                 <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">
-                                    Lien playlist YouTube
+                                    Lien YouTube (video ou playlist)
                                 </label>
                                 <input
                                     type="url"

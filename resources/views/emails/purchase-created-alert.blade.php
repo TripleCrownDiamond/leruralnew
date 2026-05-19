@@ -1,4 +1,4 @@
-﻿@component('emails.layouts.base', ['headline' => 'Nouvel achat enregistre', 'eyebrow' => 'LE RURAL / Paiements'])
+@component('emails.layouts.base', ['headline' => 'Nouvel achat enregistre', 'eyebrow' => 'LE RURAL / Paiements'])
 <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">Un nouvel achat a ete enregistre sur la plateforme.</p>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
 <tr><td style="padding:8px 0;border-bottom:1px solid #eef2f7;font-size:13px;"><strong>ID paiement:</strong> #{{ $payment->id }}</td></tr>

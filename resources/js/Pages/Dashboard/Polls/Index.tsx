@@ -306,31 +306,28 @@ export default function Index({ polls, filters = {} }: Props) {
                                                         </AdminStatusPill>
                                                     </td>
                                                     <td className="px-5 py-4">
-                                                        <div className="flex items-center justify-end gap-2">
+                                                                                                                <div className="flex items-center justify-end gap-2">
                                                             <AdminLinkButton
                                                                 href={resolvePollResultsHref(poll.id)}
                                                                 variant="ghost"
-                                                                size="sm"
-                                                                icon={<Eye className="h-3.5 w-3.5" />}
-                                                            >
-                                                                Resultats
-                                                            </AdminLinkButton>
+                                                                size="icon"
+                                                                icon={<Eye className="h-4 w-4" />}
+                                                                title="Voir les résultats"
+                                                            />
                                                             <AdminLinkButton
                                                                 href={route('dashboard.polls.edit', poll.id)}
                                                                 variant="secondary"
-                                                                size="sm"
-                                                                icon={<Pencil className="h-3.5 w-3.5" />}
-                                                            >
-                                                                Modifier
-                                                            </AdminLinkButton>
+                                                                size="icon"
+                                                                icon={<Pencil className="h-4 w-4" />}
+                                                                title="Modifier"
+                                                            />
                                                             <AdminButton
                                                                 variant="danger"
-                                                                size="sm"
-                                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                size="icon"
+                                                                icon={<Trash2 className="h-4 w-4" />}
                                                                 onClick={() => handleDelete(poll.id)}
-                                                            >
-                                                                Suppr.
-                                                            </AdminButton>
+                                                                title="Supprimer"
+                                                            />
                                                         </div>
                                                     </td>
                                                 </tr>

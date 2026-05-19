@@ -1,12 +1,14 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
+import type { PageProps } from '@/types';
 import { Pencil, Trash2, Plus, ExternalLink, Tv, ArrowUpDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import ImageWithFallback from '@/Components/ImageWithFallback';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import AdminSearchBar from '@/Components/Dashboard/AdminSearchBar';
 import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
 import AdminCard, { AdminEmptyState, AdminStatusPill } from '@/Components/Dashboard/AdminCard';
+
 
 interface Emission {
     id: number;
@@ -23,6 +25,8 @@ interface Props {
 }
 
 export default function Index({ emissions }: Props) {
+    const { props } = usePage<PageProps<{ settings?: Record<string, string | null | undefined> }>>();
+    const fallbackVideoUrl = props.settings?.live_fallback_video_url?.trim() || 'https://www.youtube.com/playlist?list=PLbG50jPcxecnHpAmGv6XBaQ4mgbPyRAN5';
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
@@ -31,35 +35,34 @@ export default function Index({ emissions }: Props) {
             ? e.name.toLowerCase().includes(search.toLowerCase()) ||
               (e.description?.toLowerCase().includes(search.toLowerCase()) ?? false)
             : true;
-        const matchesStatus =
-            status === 'all' ? true : status === 'active' ? e.is_active : !e.is_active;
+        const matchesStatus = status === 'all' ? true : status === 'active' ? e.is_active : !e.is_active;
         return matchesSearch && matchesStatus;
     });
 
     const handleDelete = (id: number) => {
-        if (confirm('Supprimer cette émission ?')) {
+        if (confirm('Supprimer cette emission ?')) {
             router.delete(route('dashboard.emissions.destroy', id), { preserveScroll: true });
         }
     };
 
     return (
-        <DashboardLayout title="Émissions">
-            <Head title="Émissions" />
+        <DashboardLayout title="Emissions">
+            <Head title="Emissions" />
 
             <div className="space-y-6">
                 <AdminPageHeader
                     eyebrow="Diffusion"
-                    title="Émissions TV"
-                    subtitle="Programmez les émissions régulières et leurs playlists YouTube."
+                    title="Emissions TV"
+                    subtitle="Programmez les emissions regulieres avec une source YouTube (video ou playlist). Le jingle du direct se gere dans Widgets."
                     icon={<Tv className="h-6 w-6" />}
-                    meta={`${emissions.length} émissions`}
+                    meta={`${emissions.length} emissions`}
                     actions={
                         <AdminLinkButton
                             href={route('dashboard.emissions.create')}
                             variant="primary"
                             icon={<Plus className="h-4 w-4" />}
                         >
-                            Nouvelle émission
+                            Nouvelle emission
                         </AdminLinkButton>
                     }
                 />
@@ -67,7 +70,7 @@ export default function Index({ emissions }: Props) {
                 <AdminSearchBar
                     value={search}
                     onChange={setSearch}
-                    placeholder="Rechercher une émission…"
+                    placeholder="Rechercher une emission..."
                     filters={
                         <div className="flex gap-1 rounded-full border border-gray-200 bg-gray-50 p-1 text-[10px] font-black uppercase tracking-[0.14em] dark:border-white/10 dark:bg-white/5">
                             {[
@@ -92,19 +95,37 @@ export default function Index({ emissions }: Props) {
                     }
                 />
 
+                <AdminCard padded className="flex flex-col gap-4 border border-primary/15 bg-primary/5 dark:border-primary/20 dark:bg-primary/10 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Jingle direct</p>
+                        <h3 className="mt-2 text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white">
+                            Video de secours / jingle
+                        </h3>
+                        <p className="mt-2 max-w-2xl text-sm text-gray-600 dark:text-gray-300">
+                            Definie la video qui tourne en boucle sur la page Direct quand aucune emission n'est programmee.
+                        </p>
+                        <p className="mt-2 break-all text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            Actuel: {fallbackVideoUrl}
+                        </p>
+                    </div>
+                    <AdminLinkButton href={route('dashboard.widgets.index')} variant="primary" icon={<ExternalLink className="h-4 w-4" />}>
+                        Gerer dans Widgets
+                    </AdminLinkButton>
+                </AdminCard>
+
                 <AdminCard>
                     {filtered.length === 0 ? (
                         <AdminEmptyState
                             icon={<Tv className="h-7 w-7" />}
-                            title="Aucune émission"
-                            subtitle="Créez votre première émission pour alimenter la programmation."
+                            title="Aucune emission"
+                            subtitle="Creez votre premiere emission pour alimenter la programmation."
                             action={
                                 <AdminLinkButton
                                     href={route('dashboard.emissions.create')}
                                     variant="primary"
                                     icon={<Plus className="h-4 w-4" />}
                                 >
-                                    Créer
+                                    Creer
                                 </AdminLinkButton>
                             }
                         />
@@ -113,8 +134,8 @@ export default function Index({ emissions }: Props) {
                             <table className="w-full text-left text-sm">
                                 <thead className="border-b border-gray-100 bg-gray-50/60 text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:border-white/5 dark:bg-white/[0.02] dark:text-white/50">
                                     <tr>
-                                        <th className="px-5 py-3">Émission</th>
-                                        <th className="px-5 py-3">Playlist</th>
+                                        <th className="px-5 py-3">Emission</th>
+                                        <th className="px-5 py-3">Source</th>
                                         <th className="px-5 py-3">
                                             <span className="inline-flex items-center gap-1">
                                                 <ArrowUpDown className="h-3 w-3" /> Ordre
@@ -126,17 +147,14 @@ export default function Index({ emissions }: Props) {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                                     {filtered.map((emission) => (
-                                        <tr
-                                            key={emission.id}
-                                            className="transition-colors hover:bg-primary/[0.03] dark:hover:bg-white/[0.02]"
-                                        >
+                                        <tr key={emission.id} className="transition-colors hover:bg-primary/[0.03] dark:hover:bg-white/[0.02]">
                                             <td className="px-5 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-14 w-20 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 to-emerald-500/10 ring-1 ring-black/5 dark:ring-white/10">
+                                                    <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 to-emerald-500/10 ring-1 ring-black/5 dark:ring-white/10">
                                                         <ImageWithFallback
                                                             src={emission.image || undefined}
                                                             alt={emission.name}
-                                                            className="h-full w-full object-cover"
+                                                            className="absolute inset-0 h-full w-full object-cover"
                                                         />
                                                     </div>
                                                     <div className="min-w-0">
@@ -166,9 +184,7 @@ export default function Index({ emissions }: Props) {
                                                 {emission.order}
                                             </td>
                                             <td className="px-5 py-4">
-                                                <AdminStatusPill
-                                                    tone={emission.is_active ? 'success' : 'neutral'}
-                                                >
+                                                <AdminStatusPill tone={emission.is_active ? 'success' : 'neutral'}>
                                                     {emission.is_active ? 'Active' : 'Inactive'}
                                                 </AdminStatusPill>
                                             </td>
@@ -177,19 +193,17 @@ export default function Index({ emissions }: Props) {
                                                     <AdminLinkButton
                                                         href={route('dashboard.emissions.edit', emission.id)}
                                                         variant="secondary"
-                                                        size="sm"
-                                                        icon={<Pencil className="h-3.5 w-3.5" />}
-                                                    >
-                                                        Modifier
-                                                    </AdminLinkButton>
+                                                        size="icon"
+                                                        icon={<Pencil className="h-4 w-4" />}
+                                                        title="Modifier"
+                                                    />
                                                     <AdminButton
                                                         variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                        size="icon"
+                                                        icon={<Trash2 className="h-4 w-4" />}
                                                         onClick={() => handleDelete(emission.id)}
-                                                    >
-                                                        Suppr.
-                                                    </AdminButton>
+                                                        title="Supprimer"
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>
@@ -203,3 +217,4 @@ export default function Index({ emissions }: Props) {
         </DashboardLayout>
     );
 }
+

@@ -372,33 +372,30 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                                     </td>
                                                     <td className="px-5 py-4">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <AdminButton
+                                                                                                                        <AdminButton
                                                                 type="button"
                                                                 variant="secondary"
-                                                                size="sm"
-                                                                icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                                                                size="icon"
+                                                                icon={<CheckCircle2 className="h-4 w-4" />}
                                                                 onClick={() => handleApprove(comment.id)}
-                                                            >
-                                                                Approuver
-                                                            </AdminButton>
+                                                                title="Approuver"
+                                                            />
                                                             <AdminButton
                                                                 type="button"
                                                                 variant="ghost"
-                                                                size="sm"
-                                                                icon={<XCircle className="h-3.5 w-3.5" />}
+                                                                size="icon"
+                                                                icon={<XCircle className="h-4 w-4" />}
                                                                 onClick={() => handleReject(comment.id)}
-                                                            >
-                                                                Rejeter
-                                                            </AdminButton>
+                                                                title="Rejeter"
+                                                            />
                                                             <AdminButton
                                                                 type="button"
                                                                 variant="danger"
-                                                                size="sm"
-                                                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                                size="icon"
+                                                                icon={<Trash2 className="h-4 w-4" />}
                                                                 onClick={() => handleDelete(comment.id)}
-                                                            >
-                                                                Suppr.
-                                                            </AdminButton>
+                                                                title="Supprimer"
+                                                            />
                                                         </div>
                                                     </td>
                                                 </tr>

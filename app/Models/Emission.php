@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\InvalidatesSharedContentCache;
 use Illuminate\Database\Eloquent\Model;
 
 class Emission extends Model
 {
+    use InvalidatesSharedContentCache;
+
     protected $fillable = [
         'name',
         'description',

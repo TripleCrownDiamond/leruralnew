@@ -238,19 +238,17 @@ export default function Index({ plans, filters = {} }: Props) {
                                                         <AdminLinkButton
                                                             href={route('dashboard.subscription-plans.edit', plan.id)}
                                                             variant="secondary"
-                                                            size="sm"
-                                                            icon={<Edit className="h-3.5 w-3.5" />}
-                                                        >
-                                                            Modifier
-                                                        </AdminLinkButton>
+                                                            size="icon"
+                                                            icon={<Edit className="h-4 w-4" />}
+                                                            title="Modifier"
+                                                        />
                                                         <AdminButton
                                                             variant="danger"
-                                                            size="sm"
-                                                            icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                            size="icon"
+                                                            icon={<Trash2 className="h-4 w-4" />}
                                                             onClick={() => handleDelete(plan.id)}
-                                                        >
-                                                            Suppr.
-                                                        </AdminButton>
+                                                            title="Supprimer"
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>

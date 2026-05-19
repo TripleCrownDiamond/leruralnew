@@ -1,87 +1,353 @@
-import EmptySectionState from '@/Components/EmptySectionState';
+﻿import EmptySectionState from '@/Components/EmptySectionState';
+import ImageWithFallback from '@/Components/ImageWithFallback';
 import { cn } from '@/lib/utils';
-import { BadgeCheck, PlayCircle, Video } from 'lucide-react';
+import { ArrowRight, Clock3, Radio, Tv2 } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface LiveStream {
     id: number;
-    platform: 'tiktok' | 'youtube' | 'twitch';
+    platform: 'youtube' | 'facebook' | 'tiktok' | 'twitch' | 'obs' | 'streamyard' | 'custom';
     title: string;
     stream_url: string;
     embed_url?: string | null;
+    thumbnail_url?: string | null;
+    fallback_image_url?: string | null;
+    starts_at?: string | null;
+    ends_at?: string | null;
 }
 
-const platformStyles: Record<string, string> = {
-    youtube: 'from-[#ff0000] to-[#b20000]',
-    tiktok: 'from-[#00f2ea] to-[#ff0050]',
-    twitch: 'from-[#9146ff] to-[#5b2ba8]',
+interface EmissionSource {
+    id: number;
+    name: string;
+    playlist_url?: string | null;
+}
+
+const platformLabels: Record<string, string> = {
+    youtube: 'YouTube',
+    facebook: 'Facebook',
+    tiktok: 'TikTok',
+    twitch: 'Twitch',
+    obs: 'OBS',
+    streamyard: 'StreamYard',
+    custom: 'Personnalise',
 };
 
-export default function LiveStreamsSection({ streams, className }: { streams: LiveStream[]; className?: string }) {
-    if (!streams.length) {
+function toDate(value?: string | null): Date | null {
+    if (!value) {
+        return null;
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatClock(value?: string | null): string {
+    const date = toDate(value);
+    if (!date) {
+        return 'Bientot';
+    }
+
+    return date.toLocaleString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: 'short',
+    });
+}
+
+function formatCountdown(ms: number): string {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function getStreamStatus(stream: LiveStream, now: number): 'current' | 'ended' | 'upcoming' {
+    const startsAt = toDate(stream.starts_at);
+    const endsAt = toDate(stream.ends_at);
+
+    if (startsAt && startsAt.getTime() <= now && (!endsAt || endsAt.getTime() >= now)) {
+        return 'current';
+    }
+
+    if (endsAt && endsAt.getTime() < now) {
+        return 'ended';
+    }
+
+    return 'upcoming';
+}
+
+function extractYouTubeId(url?: string | null): string | null {
+    if (!url) return null;
+
+    const match =
+        url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i) ??
+        url.match(/[?&]v=([A-Za-z0-9_-]{11})/i);
+
+    return match?.[1] ?? null;
+}
+
+function extractYouTubePlaylistId(url?: string | null): string | null {
+    if (!url) return null;
+
+    const match = url.match(/[?&]list=([A-Za-z0-9_-]+)/i);
+
+    return match?.[1] ?? null;
+}
+
+function buildYouTubeEmbed(videoId: string): string {
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&playsinline=1&modestbranding=1`;
+}
+
+function buildYouTubePlaylistEmbed(playlistId: string): string {
+    return `https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(playlistId)}&autoplay=1&mute=1&rel=0&playsinline=1&modestbranding=1`;
+}
+
+function resolvePlayableSourceUrl(source?: string | null): string | null {
+    if (!source) {
+        return null;
+    }
+
+    const trimmed = source.trim();
+
+    if (!trimmed) {
+        return null;
+    }
+
+    const youtubeId = extractYouTubeId(trimmed);
+    if (youtubeId) {
+        return buildYouTubeEmbed(youtubeId);
+    }
+
+    const playlistId = extractYouTubePlaylistId(trimmed);
+    if (playlistId) {
+        return buildYouTubePlaylistEmbed(playlistId);
+    }
+
+    if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('//')) {
+        return trimmed.startsWith('//') ? `https:${trimmed}` : trimmed;
+    }
+
+    return null;
+}
+
+function resolveLivePlayerUrl(stream?: LiveStream | null): string | null {
+    if (!stream) {
+        return null;
+    }
+
+    return resolvePlayableSourceUrl(stream.embed_url || stream.stream_url || null);
+}
+
+export default function LiveStreamsSection({
+    streams,
+    emissions = [],
+    fallbackVideoUrl = null,
+    className,
+}: {
+    streams: LiveStream[];
+    emissions?: EmissionSource[];
+    fallbackVideoUrl?: string | null;
+    className?: string;
+}) {
+    const [now, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(Date.now()), 1000);
+        return () => window.clearInterval(timer);
+    }, []);
+
+    const orderedStreams = useMemo(
+        () =>
+            [...streams].sort((a, b) => {
+                const startA = toDate(a.starts_at)?.getTime() ?? Number.POSITIVE_INFINITY;
+                const startB = toDate(b.starts_at)?.getTime() ?? Number.POSITIVE_INFINITY;
+
+                if (startA !== startB) {
+                    return startA - startB;
+                }
+
+                return a.id - b.id;
+            }),
+        [streams],
+    );
+
+    const currentStream = useMemo(
+        () => orderedStreams.find((stream) => getStreamStatus(stream, now) === 'current') ?? null,
+        [now, orderedStreams],
+    );
+
+    const nextStream = useMemo(
+        () => orderedStreams.find((stream) => getStreamStatus(stream, now) === 'upcoming') ?? null,
+        [now, orderedStreams],
+    );
+
+    const visibleStreams = useMemo(
+        () => orderedStreams.filter((stream) => getStreamStatus(stream, now) !== 'ended'),
+        [now, orderedStreams],
+    );
+
+    const displayStream = currentStream ?? nextStream ?? null;
+    const nextStart = toDate(nextStream?.starts_at);
+    const countdown = nextStart ? Math.max(0, nextStart.getTime() - now) : null;
+    const startsSoon = countdown !== null && countdown > 0 && countdown <= 5 * 60 * 1000;
+
+    const fallbackPreviewSource = useMemo(() => {
+        const emissionFallback = emissions.find((emission) => Boolean(emission.playlist_url?.trim()))?.playlist_url ?? null;
+
+        return fallbackVideoUrl || emissionFallback;
+    }, [emissions, fallbackVideoUrl]);
+
+    const previewEmbedUrl = useMemo(() => {
+        if (currentStream) {
+            return resolveLivePlayerUrl(currentStream);
+        }
+
+        return resolvePlayableSourceUrl(fallbackPreviewSource);
+    }, [currentStream, fallbackPreviewSource]);
+
+    const previewLabel = currentStream ? 'Apercu live actif' : 'Apercu jingle / emission';
+
+    if (!orderedStreams.length) {
         return (
             <section className={cn('mx-0 mb-16 md:mx-4', className)}>
                 <EmptySectionState
-                    eyebrow="Lives"
-                    title="Aucun live en ce moment"
-                    description="Aucun direct pour le moment. Revenez bientot pour suivre nos prochaines emissions en live."
+                    eyebrow="Direct"
+                    title="Aucune emission programmee"
+                    description="Les emissions programmees apparaitront ici. La page Direct reste disponible avec lecture continue en attendant."
                     tone="primary"
                 />
+                <div className="mt-4 flex justify-center">
+                    <Link
+                        href={route('live.index')}
+                        className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-primary/30"
+                    >
+                        Voir direct
+                        <ArrowRight className="h-4 w-4" />
+                    </Link>
+                </div>
             </section>
         );
     }
 
     return (
         <section className={cn('mx-0 mb-16 md:mx-4', className)}>
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900 md:p-8">
-                <div className="mb-6 flex items-center justify-between gap-3">
-                    <div>
-                        <div className="mb-2 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-primary">
-                            <PlayCircle className="h-3.5 w-3.5" />
-                            Lives
+            <div className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-[0_24px_60px_-35px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-gray-950">
+                <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
+                    <div className="border-b border-gray-200 p-5 dark:border-white/10 lg:border-b-0 lg:border-r lg:p-6">
+                        <div className="mb-4 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+                            <Radio className="h-4 w-4" />
+                            Emissions programmees
                         </div>
-                        <h2 className="font-heading text-3xl font-black uppercase tracking-tight text-gray-900 dark:text-white">En direct</h2>
-                    </div>
-                    <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-                        {streams.length} actif{streams.length > 1 ? 's' : ''}
-                    </span>
-                </div>
 
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                    {streams.map((stream) => (
-                        <article key={stream.id} className="overflow-hidden rounded-3xl border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-950">
-                            <div className={cn('h-2 bg-gradient-to-r', platformStyles[stream.platform] ?? 'from-primary to-emerald-700')} />
-                            <div className="p-5">
-                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-500 dark:text-white/60">
-                                    <Video className="h-3.5 w-3.5 text-primary" />
-                                    {stream.platform}
+                        <div className="space-y-4">
+                            <div className="overflow-hidden rounded-3xl border border-gray-200 bg-gray-950 dark:border-white/10">
+                                <div className="flex items-center justify-between border-b border-white/10 bg-black/35 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/80">
+                                    <span>{previewLabel}</span>
+                                    <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[9px]">Preview</span>
                                 </div>
-                                <h3 className="mt-2 text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white">{stream.title}</h3>
-
-                                {stream.embed_url ? (
-                                    <div className="mt-3 aspect-video overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10">
-                                        <iframe src={stream.embed_url} title={stream.title} className="h-full w-full" allowFullScreen />
-                                    </div>
-                                ) : (
-                                    <div className="mt-3 rounded-2xl border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-white/20 dark:text-white/60">
-                                        Preview indisponible. Ouvrez le live via le bouton.
-                                    </div>
-                                )}
-
-                                <a
-                                    href={stream.stream_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[11px] font-black uppercase tracking-[0.15em] text-white"
-                                >
-                                    <BadgeCheck className="h-3.5 w-3.5" />
-                                    Voir le live
-                                </a>
+                                <div className="aspect-video bg-black">
+                                    {previewEmbedUrl ? (
+                                        <iframe
+                                            title={currentStream?.title ?? 'Apercu direct LE RURAL'}
+                                            src={previewEmbedUrl}
+                                            className="h-full w-full"
+                                            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                                            allowFullScreen
+                                            referrerPolicy="strict-origin-when-cross-origin"
+                                        />
+                                    ) : (
+                                        <ImageWithFallback
+                                            src={currentStream?.thumbnail_url ?? currentStream?.fallback_image_url ?? undefined}
+                                            alt={currentStream?.title ?? 'Apercu direct'}
+                                            className="h-full w-full object-cover"
+                                            fallbackSrc="/images/article-placeholder.svg"
+                                        />
+                                    )}
+                                </div>
                             </div>
-                        </article>
-                    ))}
+
+                            <div className="rounded-3xl border border-primary/15 bg-primary/10 p-4 dark:border-primary/20 dark:bg-primary/15">
+                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                                    <Clock3 className="h-3.5 w-3.5" />
+                                    {currentStream ? 'Emission en cours' : startsSoon ? 'Compte a rebours' : 'Prochaine diffusion'}
+                                </div>
+                                <h3 className="mt-2 font-heading text-2xl font-black uppercase leading-[0.98] tracking-tight text-gray-950 dark:text-white">
+                                    {displayStream?.title}
+                                </h3>
+                                <p className="mt-2 text-sm leading-relaxed text-gray-700 dark:text-white/75">
+                                    {currentStream
+                                        ? `Diffusion en cours depuis ${formatClock(currentStream.starts_at)}.`
+                                        : startsSoon
+                                          ? `Le direct commence dans ${formatCountdown(countdown ?? 0)}.`
+                                          : `Diffusion prevue le ${formatClock(nextStream?.starts_at)}.`}
+                                </p>
+                                <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-600 dark:text-white/55">
+                                    <span className="rounded-full border border-gray-300 bg-white px-3 py-1 dark:border-white/10 dark:bg-white/5">
+                                        {platformLabels[displayStream?.platform ?? 'custom']}
+                                    </span>
+                                    <span className="rounded-full border border-gray-300 bg-white px-3 py-1 dark:border-white/10 dark:bg-white/5">
+                                        {formatClock(displayStream?.starts_at)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <Link
+                                href={route('live.index')}
+                                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-primary/30"
+                            >
+                                Voir direct
+                                <ArrowRight className="h-4 w-4" />
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="p-5 sm:p-6">
+                        <div className="mb-4 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+                            <Tv2 className="h-4 w-4" />
+                            Autres emissions
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {visibleStreams.slice(0, 4).map((stream) => {
+                                const isCurrent = stream.id === currentStream?.id;
+                                const isNext = stream.id === nextStream?.id;
+
+                                return (
+                                    <article
+                                        key={stream.id}
+                                        className={cn(
+                                            'rounded-2xl border p-3 transition',
+                                            isCurrent
+                                                ? 'border-primary/40 bg-primary/15 ring-2 ring-primary/25'
+                                                : isNext
+                                                  ? 'border-primary/25 bg-primary/10 dark:bg-primary/12'
+                                                  : 'border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/[0.04]',
+                                        )}
+                                    >
+                                        <div className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-500 dark:text-white/55">
+                                            <span>{platformLabels[stream.platform]}</span>
+                                            <span className={isCurrent ? 'text-primary' : 'text-gray-400'}>{isCurrent ? 'En cours' : isNext ? 'A suivre' : 'Programme'}</span>
+                                        </div>
+
+                                        <h4 className={cn('mt-2 line-clamp-2 text-sm font-black leading-snug', isCurrent ? 'text-gray-950 dark:text-white' : 'text-gray-900 dark:text-white')}>
+                                            {stream.title}
+                                        </h4>
+
+                                        <p className="mt-1 text-[11px] text-gray-500 dark:text-white/55">{formatClock(stream.starts_at)}</p>
+                                    </article>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
     );
 }
-

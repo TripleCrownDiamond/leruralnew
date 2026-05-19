@@ -1,6 +1,6 @@
-﻿import MainLayout from '@/Layouts/MainLayout';
-import { Head } from '@inertiajs/react';
 import ImageWithFallback from '@/Components/ImageWithFallback';
+import MainLayout from '@/Layouts/MainLayout';
+import { Head, usePage } from '@inertiajs/react';
 
 interface StaticPageData {
     id: number;
@@ -20,6 +20,35 @@ const categoryLabel: Record<StaticPageData['category'], string> = {
 };
 
 export default function StaticPage({ page }: { page: StaticPageData }) {
+    const { props } = usePage<any>();
+    const baseUrl = (() => {
+        try {
+            return props.ziggy?.location
+                ? new URL(props.ziggy.location).origin
+                : window.location.origin;
+        } catch {
+            return 'https://lerural.bj';
+        }
+    })();
+    const resolveAbsoluteUrl = (value?: string | null) => {
+        if (!value) return `${baseUrl}/logos/logo.png`;
+        if (/^https?:\/\//i.test(value) || value.startsWith('//')) {
+            return value.startsWith('//') ? `https:${value}` : value;
+        }
+        try {
+            return new URL(value, baseUrl).href;
+        } catch {
+            return `${baseUrl}${value.startsWith('/') ? '' : '/'}${value}`;
+        }
+    };
+    const shareDescription =
+        page.meta_description ||
+        page.content?.replace(/<[^>]*>/g, '').slice(0, 180) ||
+        page.title;
+    const shareImage = resolveAbsoluteUrl(
+        page.hero_image_url || '/logos/logo.png',
+    );
+    const shareUrl = props.ziggy?.location || `${baseUrl}/${page.slug}`;
     const updated = new Date(page.updated_at).toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: 'long',
@@ -29,7 +58,59 @@ export default function StaticPage({ page }: { page: StaticPageData }) {
     return (
         <MainLayout>
             <Head title={page.title}>
-                {page.meta_description && <meta name="description" content={page.meta_description} />}
+                <meta
+                    head-key="description"
+                    name="description"
+                    content={shareDescription}
+                />
+                <meta head-key="og:type" property="og:type" content="website" />
+                <meta
+                    head-key="og:site_name"
+                    property="og:site_name"
+                    content="LE RURAL"
+                />
+                <meta
+                    head-key="og:title"
+                    property="og:title"
+                    content={page.title}
+                />
+                <meta
+                    head-key="og:description"
+                    property="og:description"
+                    content={shareDescription}
+                />
+                <meta
+                    head-key="og:image"
+                    property="og:image"
+                    content={shareImage}
+                />
+                <meta
+                    head-key="og:image:secure_url"
+                    property="og:image:secure_url"
+                    content={shareImage}
+                />
+                <meta head-key="og:url" property="og:url" content={shareUrl} />
+                <meta
+                    head-key="twitter:card"
+                    name="twitter:card"
+                    content="summary_large_image"
+                />
+                <meta
+                    head-key="twitter:title"
+                    name="twitter:title"
+                    content={page.title}
+                />
+                <meta
+                    head-key="twitter:description"
+                    name="twitter:description"
+                    content={shareDescription}
+                />
+                <meta
+                    head-key="twitter:image"
+                    name="twitter:image"
+                    content={shareImage}
+                />
+                <link head-key="canonical" rel="canonical" href={shareUrl} />
             </Head>
 
             <article className="mx-auto max-w-5xl space-y-6">
@@ -38,19 +119,27 @@ export default function StaticPage({ page }: { page: StaticPageData }) {
                         aria-hidden
                         className="pointer-events-none absolute inset-0 opacity-10"
                         style={{
-                            backgroundImage: 'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)',
+                            backgroundImage:
+                                'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)',
                             backgroundSize: '22px 22px',
                         }}
                     />
-                    <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/25 blur-3xl" />
+                    <div
+                        aria-hidden
+                        className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/25 blur-3xl"
+                    />
 
                     <div className="relative">
                         <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white/85">
                             <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
                             {categoryLabel[page.category] ?? 'Page'}
                         </p>
-                        <h1 className="mt-4 font-heading text-3xl font-black uppercase tracking-tight sm:text-5xl">{page.title}</h1>
-                        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/70">Mise a jour le {updated}</p>
+                        <h1 className="mt-4 font-heading text-3xl font-black uppercase tracking-tight sm:text-5xl">
+                            {page.title}
+                        </h1>
+                        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/70">
+                            Mise a jour le {updated}
+                        </p>
                     </div>
                 </section>
 
@@ -67,8 +156,12 @@ export default function StaticPage({ page }: { page: StaticPageData }) {
 
                 <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.03] sm:p-8">
                     <div
-                        className="prose prose-gray max-w-none prose-headings:font-heading prose-headings:uppercase prose-headings:tracking-tight prose-headings:text-gray-900 prose-a:text-primary dark:prose-invert dark:prose-headings:text-white"
-                        dangerouslySetInnerHTML={{ __html: page.content ?? '<p>Contenu en cours de redaction.</p>' }}
+                        className="prose prose-gray max-w-none dark:prose-invert prose-headings:font-heading prose-headings:uppercase prose-headings:tracking-tight prose-headings:text-gray-900 prose-a:text-primary dark:prose-headings:text-white"
+                        dangerouslySetInnerHTML={{
+                            __html:
+                                page.content ??
+                                '<p>Contenu en cours de redaction.</p>',
+                        }}
                     />
                 </section>
             </article>

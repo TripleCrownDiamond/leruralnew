@@ -1,4 +1,4 @@
-import CloudinaryUpload from '@/Components/CloudinaryUpload';
+﻿import CloudinaryUpload from '@/Components/CloudinaryUpload';
 import AdminCard from '@/Components/Dashboard/AdminCard';
 import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
@@ -30,7 +30,7 @@ export default function Create() {
                 <AdminPageHeader
                     eyebrow="Creation"
                     title="Nouvelle emission"
-                    subtitle="Ajoutez une emission a la grille de la Web TV avec sa playlist YouTube."
+                    subtitle="Ajoutez une emission a la grille Web TV avec une source YouTube (video ou playlist)."
                     icon={<Tv className="h-6 w-6" />}
                     actions={
                         <AdminLinkButton
@@ -78,14 +78,14 @@ export default function Create() {
                             </div>
                             <div className="md:col-span-2">
                                 <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">
-                                    Lien playlist YouTube
+                                    Lien YouTube (video ou playlist)
                                 </label>
                                 <input
                                     type="url"
                                     value={form.data.playlist_url}
                                     onChange={(e) => form.setData('playlist_url', e.target.value)}
                                     required
-                                    placeholder="https://www.youtube.com/playlist?list=..."
+                                    placeholder="https://www.youtube.com/watch?v=... ou https://www.youtube.com/playlist?list=..."
                                     className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 font-mono text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                                 />
                                 {form.errors.playlist_url && (

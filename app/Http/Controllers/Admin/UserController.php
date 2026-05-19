@@ -72,6 +72,7 @@ class UserController extends AdminController
         return Inertia::render('Admin/Users/Create', [
             'roles' => $this->getRoles(),
             'permissions' => $this->getPermissions(),
+            'role_permissions' => $this->getRolePermissionsMap(),
         ]);
     }
 
@@ -94,7 +95,7 @@ class UserController extends AdminController
             'email' => $validated['email'],
             'password' => Hash::make(Str::random(16)),
             'role' => $validated['role'],
-            'permissions' => $validated['permissions'] ?? [],
+            'permissions' => $this->normalizePermissionsForRole($validated['role'], $validated['permissions'] ?? []),
             'status' => $sendInvitation ? 'invited' : 'active',
             'email_verified_at' => $sendInvitation ? null : now(),
         ]);
@@ -164,6 +165,7 @@ class UserController extends AdminController
             'user' => $user,
             'roles' => $this->getRoles(),
             'permissions' => $this->getPermissions(),
+            'role_permissions' => $this->getRolePermissionsMap(),
             'currentUser' => auth()->user(),
         ]);
     }
@@ -182,11 +184,11 @@ class UserController extends AdminController
         ]);
 
         $user->update([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
+            'name' => $user->name,
+            'email' => $user->email,
             'role' => $validated['role'],
             'status' => $validated['status'],
-            'permissions' => $validated['permissions'] ?? [],
+            'permissions' => $this->normalizePermissionsForRole($validated['role'], $validated['permissions'] ?? []),
         ]);
 
         if (!empty($validated['send_notification'])) {
@@ -289,6 +291,28 @@ class UserController extends AdminController
             ['value' => 'manage_settings', 'label' => 'Gerer les parametres'],
             ['value' => 'view_analytics', 'label' => 'Voir les analytics'],
         ];
+    }
+
+    private function getRolePermissionsMap(): array
+    {
+        $allPermissions = array_column($this->getPermissions(), 'value');
+
+        return [
+            'admin' => $allPermissions,
+            'moderator' => ['moderate_comments', 'view_content', 'comment'],
+            'editor' => ['create_articles', 'edit_articles', 'manage_own_content', 'view_content', 'comment'],
+            'client' => ['view_content', 'comment'],
+            'user' => ['view_content', 'comment'],
+        ];
+    }
+
+    private function normalizePermissionsForRole(string $role, array $permissions = []): array
+    {
+        $allowedPermissions = array_column($this->getPermissions(), 'value');
+        $basePermissions = $this->getRolePermissionsMap()[$role] ?? [];
+        $submittedPermissions = array_values(array_filter($permissions, static fn ($permission) => is_string($permission) && in_array($permission, $allowedPermissions, true)));
+
+        return array_values(array_unique(array_merge($basePermissions, $submittedPermissions)));
     }
 }
 

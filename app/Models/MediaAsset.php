@@ -26,8 +26,41 @@ class MediaAsset extends Model
         'meta' => 'array',
     ];
 
+    public function getUrlAttribute($value): ?string
+    {
+        return $this->resolveMediaUrl($value);
+    }
+
+    private function resolveMediaUrl($value): ?string
+    {
+        $path = trim((string) $value);
+
+        if ($path === '') {
+            return null;
+        }
+
+        if (str_starts_with($path, '//')) {
+            return 'https:' . $path;
+        }
+
+        if (preg_match('/^https?:\/\//i', $path) === 1) {
+            return $path;
+        }
+
+        $normalized = preg_replace('#^/?storage/#', '', $path) ?? $path;
+        $normalized = ltrim((string) preg_replace('#^public/#', '', $normalized), '/');
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        return url('/public-media/' . ltrim($normalized, '/'));
+
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 }
+

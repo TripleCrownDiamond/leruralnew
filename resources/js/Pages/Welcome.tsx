@@ -3,6 +3,7 @@ import JournalShelf from '@/Components/JournalShelf';
 import AuthModal from '@/Components/AuthModal';
 import HomeCategorySection from '@/Components/HomeCategorySection';
 import HomeSidebar from '@/Components/HomeSidebar';
+import AdSpace from '@/Components/AdSpace';
 import IntroLoader from '@/Components/IntroLoader';
 import ImageWithFallback from '@/Components/ImageWithFallback';
 import RelaunchSplash from '@/Components/RelaunchSplash';
@@ -333,149 +334,151 @@ export default function Welcome() {
             />
 
             <div className={`transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-                <section onMouseEnter={() => setIsFeaturedPaused(true)} onMouseLeave={() => setIsFeaturedPaused(false)} className="relative mx-3 mb-10 mt-3 overflow-hidden rounded-2xl shadow-2xl md:mx-4 md:mb-14 md:mt-4 md:rounded-3xl">
-                    <div className="relative h-[560px] w-full bg-gray-950 text-white md:h-[680px]">
-                        {featured.length > 0 && (
-                            <ImageWithFallback
-                                key={featuredIndex}
-                                src={featured[featuredIndex].image || undefined}
-                                alt={featured[featuredIndex].title}
-                                className="absolute inset-0 h-full w-full animate-in zoom-in-[102] fade-in duration-1000 object-cover"
-                                fallbackSrc="/images/article-placeholder.svg"
-                                loading="eager"
-                            />
-                        )}
+                <section onMouseEnter={() => setIsFeaturedPaused(true)} onMouseLeave={() => setIsFeaturedPaused(false)} className="mx-3 mb-10 mt-3 md:mx-4 md:mb-14 md:mt-4">
+                    <div className="overflow-hidden rounded-[2rem] border border-stone-200/80 bg-gray-950 shadow-[0_26px_70px_-42px_rgba(15,23,42,0.45)] dark:border-white/10">
+                        {featured.length > 0 ? (
+                            <div className="relative aspect-[16/9] min-h-[260px] w-full overflow-hidden sm:min-h-[300px] md:min-h-[340px]">
+                                <ImageWithFallback
+                                    key={featuredIndex}
+                                    src={featured[featuredIndex].image || undefined}
+                                    alt={featured[featuredIndex].title}
+                                    className="absolute inset-0 h-full w-full animate-in zoom-in-[102] fade-in duration-1000 object-cover"
+                                    fallbackSrc="/images/article-placeholder.svg"
+                                    loading="eager"
+                                />
 
-                        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/85 to-gray-950/10" />
-                        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent" />
-                        <div
-                            aria-hidden="true"
-                            className="pointer-events-none absolute inset-0 opacity-[0.08]"
-                            style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)', backgroundSize: '28px 28px' }}
-                        />
-                        <div aria-hidden="true" className="pointer-events-none absolute -left-40 top-1/3 h-96 w-96 rounded-full bg-primary/30 blur-3xl" />
+                                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-br from-gray-950/64 via-gray-950/24 to-transparent" />
+                                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-gray-950/54 via-transparent to-transparent" />
 
-                        <div className="absolute left-0 right-0 top-0 z-20 flex items-center gap-3 border-b border-white/10 bg-gray-950/40 px-5 py-3 text-[10px] font-black uppercase tracking-[0.32em] text-white/70 backdrop-blur sm:px-10">
-                            <span className="flex h-1.5 w-1.5 rounded-full bg-primary" />
-                            <span>LE RURAL</span>
-                            <span className="text-white/20">/</span>
-                            <span>A la une</span>
-                            <span className="ml-auto hidden tracking-[0.25em] text-white/50 sm:inline">Edition du {editionDate}</span>
-                        </div>
+                                <div className="absolute left-0 right-0 top-0 z-20 border-b border-white/10 bg-gray-950/80 px-5 py-3 text-[10px] font-black uppercase tracking-[0.32em] text-white/85 sm:px-10">
+                                    <span className="flex items-center gap-3">
+                                        <span className="flex h-1.5 w-1.5 rounded-full bg-primary" />
+                                        <span>LE RURAL</span>
+                                        <span className="text-white/20">/</span>
+                                        <span>MIS EN AVANT</span>
+                                    </span>
+                                </div>
 
-                        <div className="relative z-10 mx-auto flex h-full max-w-7xl items-end px-5 pb-14 pt-16 sm:px-8 sm:pt-20 lg:px-12">
-                            {featured.length > 0 ? (
-                                <div className="w-full max-w-3xl animate-in slide-in-from-bottom-6 fade-in duration-700">
-                                    <div className="mb-6 flex items-center gap-3">
-                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-primary/30">
-                                            <Star className="h-3 w-3" />
-                                            A la une
-                                        </span>
-                                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/60">
-                                            No {String(featuredIndex + 1).padStart(2, '0')} / {String(featuredCount).padStart(2, '0')}
-                                        </span>
-                                    </div>
-
-                                    <h1 className={isFeaturedTitleLong ? 'font-heading font-black leading-[1.07] tracking-tight text-white break-words line-clamp-2 text-2xl sm:line-clamp-3 sm:text-4xl md:text-5xl lg:text-[3.75rem]' : 'font-heading font-black leading-[1.06] tracking-tight text-white break-words line-clamp-2 text-3xl sm:line-clamp-3 sm:text-5xl md:text-6xl lg:text-[4.5rem]'}>
-                                        {featuredTitle}
-                                    </h1>
-
-                                    <p className="mt-5 max-w-2xl line-clamp-2 text-sm leading-relaxed text-gray-300 sm:mt-6 sm:text-lg">
-                                        {featuredExcerpt}
-                                    </p>
-
-                                    {featured[featuredIndex].premium && (
-                                        <div className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-amber-300/30 bg-amber-500/15 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-amber-100">
-                                            <span>Article premium</span>
-                                            <span className="text-amber-200/70">|</span>
-                                            <span>{minSubscriptionPrice ? `Abonnement des ${formatCfa(minSubscriptionPrice)}` : 'Abonnement disponible'}</span>
-                                        </div>
-                                    )}
-
-                                    <div className="mt-7 flex flex-wrap items-center gap-5 text-sm text-gray-300">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-emerald-700 text-sm font-black text-white ring-2 ring-white/20">
-                                                {featured[featuredIndex].author.charAt(0)}
-                                            </div>
-                                            <div className="leading-tight">
-                                                <div className="text-[10px] font-bold uppercase tracking-widest text-white/50">Par</div>
-                                                <div className="text-sm font-bold text-white">{featured[featuredIndex].author}</div>
-                                            </div>
-                                        </div>
-                                        <span className="h-5 w-px bg-white/20" />
-                                        <span className="flex items-center gap-1.5 text-white/80">
-                                            <Clock className="h-3.5 w-3.5" />
-                                            {featured[featuredIndex].published_human}
-                                        </span>
-                                    </div>
-
-                                    <div className="mt-9 flex flex-wrap items-center gap-3 sm:gap-4">
-                                        <Link
-                                            href={featured[featuredIndex]?.slug ? `/article/${featured[featuredIndex].slug}` : '#'}
-                                            className="group inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-primary/40 transition-transform hover:scale-[1.03]"
-                                        >
-                                            Lire l'article
-                                            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                        </Link>
-                                        {featured[featuredIndex].premium && !isElevatedUser && (
-                                            <button
-                                                type="button"
-                                                onClick={handleSubscriptionCta}
-                                                className="inline-flex min-h-11 items-center justify-center rounded-full border border-amber-300/40 bg-amber-400/20 px-5 py-3 text-[11px] font-black uppercase tracking-[0.14em] text-amber-50 backdrop-blur transition-all hover:scale-[1.02] hover:border-amber-200/70 hover:bg-amber-400/30"
-                                            >
-                                                {hasActiveSubscription ? 'Tableau de bord' : "S'abonner"}
-                                            </button>
-                                        )}
+                                {featuredCount > 1 && (
+                                    <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between gap-3 px-4 pb-4 pt-14 sm:px-6 sm:pb-6">
                                         <button
                                             type="button"
                                             onClick={() => setFeaturedIndex((prev) => (prev - 1 + featuredCount) % featuredCount)}
-                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white backdrop-blur transition-all hover:border-white/40 hover:bg-white/10"
+                                            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/35 text-white backdrop-blur-sm transition-all hover:border-primary/60 hover:bg-black/55 hover:text-primary"
                                             aria-label="Precedent"
                                         >
                                             <ChevronLeft className="h-4 w-4" />
                                         </button>
+
+                                        <div className="flex flex-1 items-center justify-center gap-1.5">
+                                            {featured.map((_, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => setFeaturedIndex(idx)}
+                                                    className={`h-1 rounded-full transition-all duration-500 ${idx === featuredIndex ? 'w-10 bg-primary' : 'w-5 bg-gray-300 hover:bg-gray-400 dark:bg-white/30 dark:hover:bg-white/50'}`}
+                                                    aria-label={`Aller a la mise en avant ${idx + 1}`}
+                                                />
+                                            ))}
+                                        </div>
+
                                         <button
                                             type="button"
                                             onClick={() => setFeaturedIndex((prev) => (prev + 1) % featuredCount)}
-                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white backdrop-blur transition-all hover:border-white/40 hover:bg-white/10"
+                                            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/35 text-white backdrop-blur-sm transition-all hover:border-primary/60 hover:bg-black/55 hover:text-primary"
                                             aria-label="Suivant"
                                         >
                                             <ChevronRight className="h-4 w-4" />
                                         </button>
                                     </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="relative flex min-h-[260px] items-center justify-center overflow-hidden sm:min-h-[300px] md:min-h-[340px]">
+                                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-br from-gray-950/64 via-gray-950/24 to-transparent" />
+                                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-gray-950/54 via-transparent to-transparent" />
+                                <div className="relative z-10 mx-auto max-w-xl px-5 text-center sm:px-8">
+                                    <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.26em] text-white/85">
+                                        <Star className="h-3.5 w-3.5" />
+                                        MIS EN AVANT
+                                    </div>
+                                    <p className="mt-4 text-sm leading-relaxed text-white/80">
+                                        Aucune une disponible pour le moment.
+                                    </p>
                                 </div>
-                            ) : (
-                                <div className="w-full max-w-3xl animate-in slide-in-from-bottom-6 fade-in duration-700">
-                                    <EmptySectionState
-                                        eyebrow="A la une"
-                                        title="Aucun contenu mis en avant"
-                                        description="La une s'affichera ici des qu'un article featured sera publie dans la base de donnees."
-                                        tone="amber"
-                                        theme="dark"
-                                        className="border-white/10 bg-white/[0.08] shadow-[0_28px_70px_-40px_rgba(0,0,0,0.85)]"
-                                    />
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
+                    </div>
 
-                        {featured.length > 1 && (
-                            <div className="absolute bottom-6 right-6 z-20 flex items-center gap-1.5 sm:bottom-8 sm:right-8">
-                                {featured.map((_, idx) => (
-                                    <button
-                                        key={idx}
-                                        type="button"
-                                        onClick={() => setFeaturedIndex(idx)}
-                                        className={`h-1 rounded-full transition-all duration-500 ${
-                                            idx === featuredIndex ? 'w-10 bg-primary' : 'w-5 bg-white/25 hover:bg-white/40'
-                                        }`}
-                                        aria-label={`Aller a la mise en avant ${idx + 1}`}
-                                    />
-                                ))}
+                    <div className="mt-6 px-4 py-2 text-center sm:px-6 sm:py-3">
+                        {featured.length > 0 ? (
+                            <div className="mx-auto flex max-w-3xl flex-col items-center">
+                                <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.26em] text-primary">
+                                    <Star className="h-3.5 w-3.5" />
+                                    MIS EN AVANT
+                                </div>
+
+                                <h1
+                                    className={
+                                        isFeaturedTitleLong
+                                            ? 'mt-4 w-full font-heading text-2xl font-black uppercase leading-[1.06] tracking-tight text-gray-900 dark:text-white sm:text-3xl md:text-4xl'
+                                            : 'mt-4 w-full font-heading text-2xl font-black uppercase leading-[1.06] tracking-tight text-gray-900 dark:text-white sm:text-3xl md:text-[3rem]'
+                                    }
+                                >
+                                    {featuredTitle}
+                                </h1>
+
+                                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 dark:text-white/72 sm:text-base">
+                                    {featuredExcerpt}
+                                </p>
+
+                                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                                    <Link
+                                        href={featured[featuredIndex]?.slug ? `/article/${featured[featuredIndex].slug}` : '#'}
+                                        className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-primary/25 transition-transform hover:scale-[1.02]"
+                                    >
+                                        Lire
+                                        <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                    </Link>
+                                    {featured[featuredIndex].premium && !isElevatedUser && (
+                                        <button
+                                            type="button"
+                                            onClick={handleSubscriptionCta}
+                                            className="inline-flex min-h-10 items-center justify-center rounded-full border border-amber-300/30 bg-amber-400/15 px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-amber-700 transition-all hover:scale-[1.02] hover:border-amber-200/60 hover:bg-amber-400/25 dark:text-amber-50"
+                                        >
+                                            {hasActiveSubscription ? 'Tableau de bord' : "S'abonner"}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {featuredCount > 1 && (
+                                    <div className="mt-6 flex w-full items-center justify-center gap-1.5">
+                                        {featured.map((_, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => setFeaturedIndex(idx)}
+                                                className={`h-1 rounded-full transition-all duration-500 ${idx === featuredIndex ? 'w-10 bg-primary' : 'w-5 bg-gray-300 hover:bg-gray-400 dark:bg-white/25 dark:hover:bg-white/40'}`}
+                                                aria-label={`Aller a la mise en avant ${idx + 1}`}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="mx-auto max-w-3xl animate-in fade-in duration-700">
+                                <EmptySectionState
+                                    eyebrow="MIS EN AVANT"
+                                    title="Aucun contenu mis en avant"
+                                    description="La une s'affichera ici des qu'un article featured sera publie dans la base de donnees."
+                                    tone="amber"
+                                    theme="auto"
+                                    className="border-stone-200/80 bg-white/90 shadow-[0_28px_70px_-40px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-white/5"
+                                />
                             </div>
                         )}
                     </div>
                 </section>
-
                 <div className="mx-auto max-w-7xl animate-in fade-in duration-700 px-4 sm:px-6 lg:px-8">
                     {promoOffer && !isAdminUser && !(authUser && hasActiveSubscription) && (
                         <section className="mb-6 overflow-hidden rounded-3xl border border-amber-300/30 bg-gradient-to-r from-amber-100/90 via-orange-50 to-amber-100/90 p-[1px] shadow-[0_20px_50px_-30px_rgba(180,83,9,0.55)] dark:border-amber-500/25 dark:from-amber-500/20 dark:via-orange-500/10 dark:to-amber-500/20">
@@ -509,6 +512,17 @@ export default function Welcome() {
                         </section>
                     )}
 
+                    <div className="mb-12 flex justify-center overflow-hidden">
+                        <AdSpace
+                            width="100%"
+                            height={250}
+                            locationId="home_inline_feature"
+                            label="Publicite mise en avant"
+                            className="w-full rounded-3xl"
+                            hideWhenEmpty
+                        />
+                    </div>
+
                     <JournalShelf
                         items={pressPapers.map((paper: any) => ({
                             id: paper.id,
@@ -520,17 +534,17 @@ export default function Welcome() {
                             action_label: paper.action_label,
                             badge: paper.badge,
                         }))}
-                        eyebrow="La une de LE RURAL"
-                        title="La une de LE RURAL"
-                        description="Une selection des dernieres unes imprimees avec apercu de couverture et acces direct vers la page dediee."
-                        emptyTitle="Aucune une disponible"
-                        emptyDescription="La une de LE RURAL apparaitra ici des qu'une edition papier sera publiee."
+                        eyebrow="Nos parutions"
+                        title="Nos parutions"
+                        description="Apercu des dernieres couvertures imprimees avec acces rapide au PDF ou au checkout."
+                        emptyTitle="Aucune parution disponible"
+                        emptyDescription="Nos parutions apparaitront ici des qu'une edition papier sera publiee."
                         tone="dark"
                         className="mb-12"
                     />
 
                     {!isElevatedUser && (
-                        <section className="mb-12 overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-primary via-emerald-700 to-emerald-800 p-[1px] shadow-[0_24px_70px_-30px_rgba(47,106,17,0.5)] animate-in fade-in slide-in-from-bottom-3 duration-700">
+                        <section id="abonnement" className="mb-12 overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-primary via-emerald-700 to-emerald-800 p-[1px] shadow-[0_24px_70px_-30px_rgba(47,106,17,0.5)] animate-in fade-in slide-in-from-bottom-3 duration-700">
                             <div className="relative rounded-3xl bg-gray-950 px-6 py-8 text-white sm:px-8 md:px-10 md:py-10">
                                 <div aria-hidden="true" className="pointer-events-none absolute -top-24 right-0 h-64 w-64 rounded-full bg-primary/30 blur-3xl" />
                                 <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 left-4 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
@@ -584,12 +598,12 @@ export default function Welcome() {
                             <span className="text-gray-500 dark:text-white/50">Acces rapide</span>
                             <a href="#home-widgets" className="rounded-full bg-primary/10 px-3 py-1 text-primary transition hover:bg-primary/20">Widgets</a>
                             <a href="#home-webtv" className="rounded-full bg-primary/10 px-3 py-1 text-primary transition hover:bg-primary/20">Web TV</a>
-                            <a href="#home-live" className="rounded-full bg-primary/10 px-3 py-1 text-primary transition hover:bg-primary/20">Lives</a>
+                            <a href="#home-direct" className="rounded-full bg-primary/10 px-3 py-1 text-primary transition hover:bg-primary/20">Direct</a>
                         </div>
                     </section>
 
                     {topQuickArticles.length > 0 && (
-                        <section className="mb-8">
+                        <section id="actualites" className="mb-8">
                             <div className="mb-3 flex items-center justify-between gap-3">
                                 <h3 className="font-heading text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white sm:text-2xl">Derniers articles</h3>
                                 <div className="flex items-center gap-2">
@@ -700,10 +714,10 @@ export default function Welcome() {
                     </div>
                 )}
 
-                <div id="home-live" ref={liveSectionRef} className="mt-10 animate-in fade-in slide-in-from-bottom-2 duration-700 md:mt-12">
+                <div id="home-direct" ref={liveSectionRef} className="mt-10 animate-in fade-in slide-in-from-bottom-2 duration-700 md:mt-12">
                     {mountLive && (
                         <Suspense fallback={<div className="mx-4 mb-10 h-[260px] animate-pulse rounded-3xl bg-primary/10" />}>
-                            <LazyLiveStreamsSection streams={liveStreams} />
+                            <LazyLiveStreamsSection streams={liveStreams} emissions={emissions} fallbackVideoUrl={settings.live_fallback_video_url ?? null} />
                         </Suspense>
                     )}
                 </div>
@@ -730,6 +744,15 @@ export default function Welcome() {
         </MainLayout>
     );
 }
+
+
+
+
+
+
+
+
+
 
 
 

@@ -189,21 +189,19 @@ export default function Index({ categories, filters = {} }: Props) {
                                                         <AdminButton
                                                             type="button"
                                                             variant="secondary"
-                                                            size="sm"
-                                                            icon={<Edit className="h-3.5 w-3.5" />}
+                                                            size="icon"
+                                                            icon={<Edit className="h-4 w-4" />}
                                                             onClick={() => router.visit(route('dashboard.categories.edit', category.id))}
-                                                        >
-                                                            Modifier
-                                                        </AdminButton>
+                                                            title="Modifier"
+                                                        />
                                                         <AdminButton
                                                             type="button"
                                                             variant="danger"
-                                                            size="sm"
-                                                            icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                            size="icon"
+                                                            icon={<Trash2 className="h-4 w-4" />}
                                                             onClick={() => handleDelete(category.id)}
-                                                        >
-                                                            Supprimer
-                                                        </AdminButton>
+                                                            title="Supprimer"
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>

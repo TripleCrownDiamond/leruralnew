@@ -30,6 +30,8 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             ArticleSeeder::class,
             AnnouncementSeeder::class,
+            WebTvVideoSeeder::class,
+            LiveStreamSeeder::class,
         ]);
     }
 }

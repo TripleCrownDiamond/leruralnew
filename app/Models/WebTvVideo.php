@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\InvalidatesSharedContentCache;
 use Illuminate\Database\Eloquent\Model;
 
 class WebTvVideo extends Model
 {
+    use InvalidatesSharedContentCache;
+
     protected $fillable = [
         'title',
         'youtube_id',

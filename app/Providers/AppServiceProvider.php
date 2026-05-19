@@ -2,11 +2,18 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Vite;
-use Illuminate\Support\ServiceProvider;
+use App\Models\Agenda;
+use App\Models\Category;
+use App\Models\Poll;
+use App\Models\PromoCode;
+use App\Models\Setting;
+use App\Models\StaticPage;
+use App\Observers\CacheInvalidationObserver;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,9 +28,17 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+        public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+                // Register cache invalidation observers
+        Setting::observe(CacheInvalidationObserver::class);
+        Category::observe(CacheInvalidationObserver::class);
+        StaticPage::observe(CacheInvalidationObserver::class);
+        PromoCode::observe(CacheInvalidationObserver::class);
+        Poll::observe(CacheInvalidationObserver::class);
+        Agenda::observe(CacheInvalidationObserver::class);
 
         // Customize Verify Email Notification
         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {

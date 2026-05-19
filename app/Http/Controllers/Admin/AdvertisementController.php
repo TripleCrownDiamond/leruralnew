@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Advertisement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,6 +30,11 @@ class AdvertisementController extends AdminController
         ]);
     }
 
+    private function flushSharedContentCache(): void
+    {
+        Cache::forget('shared_content:v1');
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -48,6 +54,8 @@ class AdvertisementController extends AdminController
             'redirect_url' => filled($data['redirect_url'] ?? null) ? trim($data['redirect_url']) : null,
             'is_active' => !empty($data['is_active']),
         ]);
+
+        $this->flushSharedContentCache();
 
         return back()->with('success', 'Espace pub ajoute.');
     }
@@ -72,12 +80,16 @@ class AdvertisementController extends AdminController
             'is_active' => !empty($data['is_active']),
         ]);
 
+        $this->flushSharedContentCache();
+
         return back()->with('success', 'Espace pub mis a jour.');
     }
 
     public function destroy(Advertisement $advertisement)
     {
         $advertisement->delete();
+
+        $this->flushSharedContentCache();
 
         return back()->with('success', 'Espace pub supprime.');
     }

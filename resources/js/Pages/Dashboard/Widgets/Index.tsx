@@ -20,6 +20,7 @@ interface WidgetSettings {
     dashboard_empty_chart_title?: string | null;
     dashboard_empty_chart_subtitle?: string | null;
     dashboard_empty_chart_text?: string | null;
+    live_fallback_video_url?: string | null;
 }
 
 const items = [
@@ -50,6 +51,7 @@ export default function Index({ settings }: { settings: WidgetSettings }) {
         dashboard_empty_chart_title: settings.dashboard_empty_chart_title ?? '',
         dashboard_empty_chart_subtitle: settings.dashboard_empty_chart_subtitle ?? '',
         dashboard_empty_chart_text: settings.dashboard_empty_chart_text ?? '',
+        live_fallback_video_url: settings.live_fallback_video_url ?? 'https://www.youtube.com/playlist?list=PLbG50jPcxecnHpAmGv6XBaQ4mgbPyRAN5',
     });
 
     const submit = (event: React.FormEvent) => {
@@ -119,24 +121,39 @@ export default function Index({ settings }: { settings: WidgetSettings }) {
                         </AdminCard>
                     </div>
 
-                    <AdminCard padded>
-                        <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">Contenu dashboard</p>
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
-                            <Field label="Titre hero" value={form.data.dashboard_hero_title} onChange={(v) => form.setData('dashboard_hero_title', v)} />
-                            <Field label="Titre actions rapides" value={form.data.dashboard_quick_actions_title} onChange={(v) => form.setData('dashboard_quick_actions_title', v)} />
-                            <Field label="Titre agenda" value={form.data.dashboard_agenda_title} onChange={(v) => form.setData('dashboard_agenda_title', v)} />
-                            <Field label="Titre bloc vide" value={form.data.dashboard_empty_chart_title} onChange={(v) => form.setData('dashboard_empty_chart_title', v)} />
-                            <Field label="Sous-titre bloc vide" value={form.data.dashboard_empty_chart_subtitle} onChange={(v) => form.setData('dashboard_empty_chart_subtitle', v)} />
-                        </div>
-                        <div className="mt-4">
-                            <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">Sous-titre hero</label>
-                            <textarea value={form.data.dashboard_hero_subtitle} onChange={(e) => form.setData('dashboard_hero_subtitle', e.target.value)} rows={3} className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-gray-950" />
-                        </div>
-                        <div className="mt-4">
-                            <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">Texte bloc vide</label>
-                            <textarea value={form.data.dashboard_empty_chart_text} onChange={(e) => form.setData('dashboard_empty_chart_text', e.target.value)} rows={3} className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-gray-950" />
-                        </div>
-                    </AdminCard>
+                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+                        <AdminCard padded>
+                            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">Contenu dashboard</p>
+                            <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                <Field label="Titre hero" value={form.data.dashboard_hero_title} onChange={(v) => form.setData('dashboard_hero_title', v)} />
+                                <Field label="Titre actions rapides" value={form.data.dashboard_quick_actions_title} onChange={(v) => form.setData('dashboard_quick_actions_title', v)} />
+                                <Field label="Titre agenda" value={form.data.dashboard_agenda_title} onChange={(v) => form.setData('dashboard_agenda_title', v)} />
+                                <Field label="Titre bloc vide" value={form.data.dashboard_empty_chart_title} onChange={(v) => form.setData('dashboard_empty_chart_title', v)} />
+                                <Field label="Sous-titre bloc vide" value={form.data.dashboard_empty_chart_subtitle} onChange={(v) => form.setData('dashboard_empty_chart_subtitle', v)} />
+                            </div>
+                            <div className="mt-4">
+                                <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">Sous-titre hero</label>
+                                <textarea value={form.data.dashboard_hero_subtitle} onChange={(e) => form.setData('dashboard_hero_subtitle', e.target.value)} rows={3} className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-gray-950" />
+                            </div>
+                            <div className="mt-4">
+                                <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">Texte bloc vide</label>
+                                <textarea value={form.data.dashboard_empty_chart_text} onChange={(e) => form.setData('dashboard_empty_chart_text', e.target.value)} rows={3} className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-gray-950" />
+                            </div>
+                        </AdminCard>
+
+                        <AdminCard padded>
+                            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">Direct</p>
+                            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                                Video ou playlist de jingle diffusee quand aucune emission n'est programmee.
+                            </p>
+                            <div className="mt-4">
+                                <Field label="Source jingle (video ou playlist)" value={form.data.live_fallback_video_url} onChange={(v) => form.setData('live_fallback_video_url', v)} />
+                            </div>
+                            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                                Exemple video: <span className="font-semibold">https://www.youtube.com/playlist?list=PLbG50jPcxecnHpAmGv6XBaQ4mgbPyRAN5</span><br />Exemple playlist: <span className="font-semibold">https://www.youtube.com/playlist?list=PLxxxx</span>
+                            </p>
+                        </AdminCard>
+                    </div>
                 </form>
             </div>
         </DashboardLayout>
@@ -151,3 +168,7 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
         </div>
     );
 }
+
+
+
+

@@ -49,6 +49,9 @@ interface CheckoutProps {
 
 export default function Checkout({ type, item, amount, name, gateways, original_amount, discount_amount = 0, requested_promo_code, applied_promo, promo_error }: CheckoutProps) {
     const { props } = usePage<any>();
+    const csrfToken = typeof document !== 'undefined'
+        ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
+        : '';
     const user = props.auth.user;
     const flashError = props.flash?.error as string | undefined;
     const checkoutItemId = item?.slug ?? item?.id ?? null;
@@ -68,6 +71,7 @@ export default function Checkout({ type, item, amount, name, gateways, original_
         phone_number: '',
         transaction_id: '',
         promo_code: requested_promo_code ?? '',
+        _token: csrfToken,
     });
 
     const { openKkiapayWidget, addKkiapayListener, removeKkiapayListener } = useKKiaPay();

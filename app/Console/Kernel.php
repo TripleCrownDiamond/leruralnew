@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('subscriptions:notify-expiring --days=3')->dailyAt('08:00');
+        $schedule->command('sitemap:generate')->dailyAt('02:15')->withoutOverlapping();
     }
 
     /**

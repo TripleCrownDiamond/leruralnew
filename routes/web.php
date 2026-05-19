@@ -106,3 +106,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/categories/{category:slug}/follow', [\App\Http\Controllers\CategoryFollowController::class, 'store'])->name('categories.follow');
     Route::delete('/categories/{category:slug}/follow', [\App\Http\Controllers\CategoryFollowController::class, 'destroy'])->name('categories.unfollow');
 });
+
+// Routes pour les notifications
+Route::middleware(['auth'])->prefix('api/notifications')->name('notifications.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+    Route::post('/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('read');
+    Route::post('/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('read-all');
+    Route::delete('/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('destroy');
+    Route::get('/preferences', [\App\Http\Controllers\NotificationController::class, 'preferences'])->name('preferences');
+    Route::put('/preferences', [\App\Http\Controllers\NotificationController::class, 'updatePreferences'])->name('preferences.update');
+});
+Route::get('/direct', fn () => Inertia::render('Live/Index'))->name('live.index');
+Route::get('/live', fn () => redirect()->route('live.index', [], 301));
+Route::get('/streaming', fn () => redirect()->route('live.index', [], 301));
+Route::get('/public-media/{path}', [\App\Http\Controllers\PublicMediaController::class, 'show'])->where('path', '.*')->name('media.public');
+Route::get('/public-advertisements/{advertisement}/view', [\App\Http\Controllers\AdvertisementTrackingController::class, 'view'])->name('public-advertisements.view');
+Route::get('/public-advertisements/{advertisement}/click', [\App\Http\Controllers\AdvertisementTrackingController::class, 'click'])->name('public-advertisements.click');
+

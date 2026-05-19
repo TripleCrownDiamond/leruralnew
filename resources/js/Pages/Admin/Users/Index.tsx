@@ -339,46 +339,41 @@ export default function Index({ users, filters = {}, roles }: Props) {
                                                         <AdminLinkButton
                                                             href={route('dashboard.users.show', user.id)}
                                                             variant="ghost"
-                                                            size="sm"
-                                                            icon={<Eye className="h-3.5 w-3.5" />}
-                                                        >
-                                                            Voir
-                                                        </AdminLinkButton>
+                                                            size="icon"
+                                                            icon={<Eye className="h-4 w-4" />}
+                                                            title="Voir"
+                                                        />
                                                         <AdminLinkButton
                                                             href={route('dashboard.users.edit', user.id)}
                                                             variant="secondary"
-                                                            size="sm"
-                                                            icon={<Edit className="h-3.5 w-3.5" />}
-                                                        >
-                                                            Modifier
-                                                        </AdminLinkButton>
+                                                            size="icon"
+                                                            icon={<Edit className="h-4 w-4" />}
+                                                            title="Modifier"
+                                                        />
                                                         {user.status === 'invited' ? (
                                                             <AdminButton
                                                                 variant="ghost"
-                                                                size="sm"
-                                                                icon={<Mail className="h-3.5 w-3.5" />}
+                                                                size="icon"
+                                                                icon={<Mail className="h-4 w-4" />}
                                                                 onClick={() => handleResendInvitation(user.id)}
-                                                            >
-                                                                Relancer
-                                                            </AdminButton>
+                                                                title="Relancer l'invitation"
+                                                            />
                                                         ) : user.status === 'active' || user.status === 'inactive' ? (
                                                             <AdminButton
                                                                 variant="ghost"
-                                                                size="sm"
-                                                                icon={<Shield className="h-3.5 w-3.5" />}
+                                                                size="icon"
+                                                                icon={<Shield className="h-4 w-4" />}
                                                                 onClick={() => handleToggleStatus(user)}
-                                                            >
-                                                                {user.status === 'active' ? 'Desactiver' : 'Activer'}
-                                                            </AdminButton>
+                                                                title={user.status === 'active' ? 'Désactiver' : 'Activer'}
+                                                            />
                                                         ) : null}
                                                         <AdminButton
                                                             variant="danger"
-                                                            size="sm"
-                                                            icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                            size="icon"
+                                                            icon={<Trash2 className="h-4 w-4" />}
                                                             onClick={() => handleDelete(user.id)}
-                                                        >
-                                                            Suppr.
-                                                        </AdminButton>
+                                                            title="Supprimer"
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>

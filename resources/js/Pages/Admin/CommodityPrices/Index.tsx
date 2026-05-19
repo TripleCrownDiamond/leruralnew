@@ -324,20 +324,18 @@ export default function Index({ prices, filters }: Props) {
                                                 <div className="flex items-center justify-end gap-2">
                                                     <AdminButton
                                                         variant="secondary"
-                                                        size="sm"
-                                                        icon={<Pencil className="h-3.5 w-3.5" />}
+                                                        size="icon"
+                                                        icon={<Pencil className="h-4 w-4" />}
                                                         onClick={() => startEdit(p)}
-                                                    >
-                                                        Modifier
-                                                    </AdminButton>
+                                                        title="Modifier"
+                                                    />
                                                     <AdminButton
                                                         variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                        size="icon"
+                                                        icon={<Trash2 className="h-4 w-4" />}
                                                         onClick={() => remove(p.id)}
-                                                    >
-                                                        Suppr.
-                                                    </AdminButton>
+                                                        title="Supprimer"
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>

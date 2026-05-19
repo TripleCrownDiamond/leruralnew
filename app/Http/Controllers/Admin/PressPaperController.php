@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\PressPaper;
 use App\Services\MediaUploadService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -89,6 +90,8 @@ class PressPaperController extends AdminController
             'published_at' => $data['published_at'] ?? null,
         ]);
 
+        $this->flushSharedContentCache();
+
         return back()->with('success', 'Edition papier ajoutee.');
     }
 
@@ -138,6 +141,8 @@ class PressPaperController extends AdminController
             'published_at' => $data['published_at'] ?? null,
         ]);
 
+        $this->flushSharedContentCache();
+
         return back()->with('success', 'Edition papier mise a jour.');
     }
 
@@ -148,7 +153,14 @@ class PressPaperController extends AdminController
 
         $pressPaper->delete();
 
+        $this->flushSharedContentCache();
+
         return back()->with('success', 'Edition papier supprimee.');
+    }
+
+    private function flushSharedContentCache(): void
+    {
+        Cache::forget('shared_content:v1');
     }
 
     private function toPublicUrl(?string $path): ?string

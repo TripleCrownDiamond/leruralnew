@@ -63,7 +63,7 @@ class DashboardController extends Controller
                     'date' => $u->created_at->diffForHumans(),
                 ]);
 
-        } elseif ($user->role === 'editor') {
+        } elseif ($user->role === 'editor' || $user->hasPermission('create_articles') || $user->hasPermission('edit_articles') || $user->hasPermission('manage_articles') || $user->hasPermission('manage_own_content')) {
             // Editor Stats
             $stats = [
                 'my_articles' => Article::where('author_id', $user->id)->count(),

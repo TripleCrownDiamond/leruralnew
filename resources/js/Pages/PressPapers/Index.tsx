@@ -29,7 +29,7 @@ export default function Index({ pressPapers }: { pressPapers: PressPaper[] }) {
         price_label: paper.price_label,
         action_url: paper.action_url,
         action_label: paper.action_label,
-        badge: paper.cover_label || 'Premiere page',
+        badge: paper.cover_label || 'Mise en avant',
     }));
 
     return (

@@ -101,7 +101,7 @@ class PressPaperController extends Controller
             return null;
         }
 
-        return Storage::disk('public')->url($normalized);
+        return url('/public-media/' . ltrim($normalized, '/'));
     }
 
     private function hasSubscriptionScope(?int $userId, string $scope): bool

@@ -1,6 +1,7 @@
 ﻿import CloudinaryUpload from '@/Components/CloudinaryUpload';
 import InputError from '@/Components/InputError';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
+import { AdminButton } from '@/Components/Dashboard/AdminButton';
 import { Button } from '@/Components/ui/button';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -170,23 +171,19 @@ export default function Index({ partners }: { partners: Partner[] }) {
                                         </a>
                                     )}
                                     <div className="mt-5 flex gap-2">
-                                        <Button type="button" variant="outline" onClick={() => startEdit(partner)} className="rounded-full">
-                                            <Pencil className="mr-2 h-4 w-4" />
-                                            Modifier
-                                        </Button>
-                                        <Button
+                                        <AdminButton type="button" variant="secondary" size="icon" icon={<Pencil className="h-4 w-4" />} onClick={() => startEdit(partner)} title="Modifier" />
+                                        <AdminButton
                                             type="button"
-                                            variant="destructive"
+                                            variant="danger"
+                                            size="icon"
+                                            icon={<Trash2 className="h-4 w-4" />}
                                             onClick={() => {
                                                 if (confirm('Supprimer ce partenaire ?')) {
                                                     router.delete(route('dashboard.partners.destroy', partner.id), { preserveScroll: true });
                                                 }
                                             }}
-                                            className="rounded-full"
-                                        >
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Supprimer
-                                        </Button>
+                                            title="Supprimer"
+                                        />
                                     </div>
                                 </article>
                             ))

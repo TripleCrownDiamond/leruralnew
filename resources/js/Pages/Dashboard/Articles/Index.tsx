@@ -18,7 +18,7 @@ import {
 } from '@/Components/ui/dialog';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Download, Edit, Eye, FileText, Globe, Plus, Star, Trash2, Upload } from 'lucide-react';
+import { Download, Edit, Eye, FileText, Globe, Plus, Star, Trash2, Upload, Copy, Check } from 'lucide-react';
 import type { FormEventHandler, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
@@ -60,6 +60,9 @@ interface Props {
 
 export default function Index({ articles, filters = {}, categories }: Props) {
     const { props } = usePage<any>();
+    const csrfToken = typeof document !== 'undefined'
+        ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
+        : '';
     const user = props.auth.user;
     const canTransferArticles = user?.role === 'admin';
     const [selectedArticles, setSelectedArticles] = useState<number[]>([]);
@@ -71,23 +74,19 @@ export default function Index({ articles, filters = {}, categories }: Props) {
     const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all');
     const [siteImportOpen, setSiteImportOpen] = useState(false);
     const [wordpressImportOpen, setWordpressImportOpen] = useState(false);
+    const [copiedArticleId, setCopiedArticleId] = useState<number | null>(null);
 
-    const siteImportForm = useForm<{
-        file: File | null;
-        publication_mode: 'preserve' | 'draft' | 'published';
-    }>({
+    const siteImportForm = useForm<any>({
         file: null,
         publication_mode: 'preserve',
+        _token: csrfToken,
     });
 
-    const wordpressImportForm = useForm<{
-        file: File | null;
-        publication_mode: 'draft' | 'published';
-    }>({
+    const wordpressImportForm = useForm<any>({
         file: null,
         publication_mode: 'draft',
+        _token: csrfToken,
     });
-
     useEffect(() => {
         if (
             search === (filters.search || '') &&
@@ -152,6 +151,18 @@ export default function Index({ articles, filters = {}, categories }: Props) {
 
     const handleRowClick = (id: number) => {
         router.visit(route('dashboard.articles.edit', id));
+    };
+
+    const copyArticleLink = async (slug: string, id: number) => {
+        const url = route('article.show', slug);
+
+        try {
+            await navigator.clipboard.writeText(url);
+            setCopiedArticleId(id);
+            window.setTimeout(() => setCopiedArticleId((current) => (current === id ? null : current)), 1600);
+        } catch {
+            // noop
+        }
     };
 
     const resetFilters = () => {
@@ -430,33 +441,38 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                                 </td>
                                                 <td className="px-5 py-4" onClick={(event) => event.stopPropagation()}>
                                                     <div className="flex items-center justify-end gap-2">
-                                                        <AdminLinkButton
+                                                                                                                <AdminLinkButton
                                                             href={route('dashboard.articles.edit', article.id)}
                                                             variant="secondary"
-                                                            size="sm"
-                                                            icon={<Edit className="h-3.5 w-3.5" />}
-                                                        >
-                                                            Modifier
-                                                        </AdminLinkButton>
+                                                            size="icon"
+                                                            icon={<Edit className="h-4 w-4" />}
+                                                            title="Modifier"
+                                                        />
+                                                        <AdminButton
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            icon={copiedArticleId === article.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                                            onClick={() => copyArticleLink(article.slug, article.id)}
+                                                            title={copiedArticleId === article.id ? 'Lien copié' : 'Copier le lien'}
+                                                        />
                                                         <AdminLinkButton
                                                             href={route('article.show', article.slug)}
                                                             as="a"
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             variant="ghost"
-                                                            size="sm"
-                                                            icon={<Eye className="h-3.5 w-3.5" />}
-                                                        >
-                                                            Voir
-                                                        </AdminLinkButton>
+                                                            size="icon"
+                                                            icon={<Eye className="h-4 w-4" />}
+                                                            title="Voir l'article"
+                                                        />
                                                         <AdminButton
                                                             variant="danger"
-                                                            size="sm"
-                                                            icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                            size="icon"
+                                                            icon={<Trash2 className="h-4 w-4" />}
                                                             onClick={() => handleDelete(article.id)}
-                                                        >
-                                                            Suppr.
-                                                        </AdminButton>
+                                                            title="Supprimer"
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>

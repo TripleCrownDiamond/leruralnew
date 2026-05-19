@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Play, Clock, ChevronLeft, ChevronRight, Radio, Users, Eye, Video, ListVideo, ExternalLink, TrendingUp } from 'lucide-react';
 import ImageWithFallback from '@/Components/ImageWithFallback';
 import EmptySectionState from '@/Components/EmptySectionState';
@@ -57,6 +57,7 @@ type YouTubePlaylist = {
     title: string;
     description: string;
     thumbnail: string | null;
+    primary_video_thumbnail?: string | null;
     item_count: number;
     published_at: string;
     url: string;
@@ -151,8 +152,9 @@ export default function WebTvSection({
     const playlistThumbnailMap = useMemo(() => {
         const map = new Map<string, string>();
         youtubePlaylists.forEach((playlist) => {
-            if (playlist.id && playlist.thumbnail) {
-                map.set(playlist.id, playlist.thumbnail);
+            const thumbnail = playlist.primary_video_thumbnail || playlist.thumbnail;
+            if (playlist.id && thumbnail) {
+                map.set(playlist.id, thumbnail);
             }
         });
         return map;
@@ -203,7 +205,7 @@ export default function WebTvSection({
                         </span>
                         <span>LE RURAL</span>
                         <span className="h-px w-8 bg-red-500/40" />
-                        <span className="text-gray-400">Aucun contenu video actif</span>
+                        <span className="text-gray-400">Dernieres videos et playlists YouTube</span>
                     </div>
 
                     <div className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-white/20 pb-5">
@@ -218,8 +220,8 @@ export default function WebTvSection({
 
                 <EmptySectionState
                     eyebrow="Web TV"
-                    title="Aucune video disponible"
-                    description="Les directs, playlists et emissions apparaitront ici des qu'un contenu Web TV sera active en base ou synchronise depuis YouTube."
+                    title="Aucune video YouTube disponible"
+                    description="Les videos, playlists et emissions YouTube apparaitront ici des qu'une source Web TV sera active en base ou synchronisee."
                     tone="red"
                     theme="dark"
                     className="border-white/10 bg-white/[0.05]"
@@ -264,11 +266,11 @@ export default function WebTvSection({
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-70" />
                             <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
                         </span>
-                        <span>En Direct</span>
+                        <span>Replay YouTube</span>
                     </span>
                     <span>LE RURAL</span>
                     <span className="h-px w-8 bg-red-500/40" />
-                    <span className="text-gray-400">Web TV / {mergedVideos.length} videos</span>
+                    <span className="text-gray-400">Web TV / Replay / {mergedVideos.length} videos</span>
                     {youtubeChannel && (
                         <a
                             href={youtubeChannel.url}
@@ -593,6 +595,10 @@ function StatTile({ icon, label, value, accent }: { icon: React.ReactNode; label
         </div>
     );
 }
+
+
+
+
 
 
 

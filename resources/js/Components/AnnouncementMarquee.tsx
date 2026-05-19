@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+﻿import { cn } from '@/lib/utils';
 import { Megaphone, MoveRight } from 'lucide-react';
 
 interface AnnouncementItem {
@@ -12,6 +12,40 @@ interface AnnouncementMarqueeProps {
     announcements?: AnnouncementItem[];
     compact?: boolean;
     className?: string;
+}
+
+function resolveAnnouncementLink(raw?: string | null): { href: string; external: boolean } | null {
+    const value = raw?.trim();
+
+    if (!value) {
+        return null;
+    }
+
+    if (/^(javascript|data):/i.test(value)) {
+        return null;
+    }
+
+    if (/^(https?:\/\/|mailto:|tel:)/i.test(value)) {
+        return { href: value, external: true };
+    }
+
+    if (value.startsWith('//')) {
+        return { href: `https:${value}`, external: true };
+    }
+
+    if (value.startsWith('#') || value.startsWith('/')) {
+        return { href: value, external: false };
+    }
+
+    if (value.includes('.') && !value.includes(' ')) {
+        return { href: `https://${value.replace(/^\/+/, '')}`, external: true };
+    }
+
+    if (value.includes('/')) {
+        return { href: `/${value.replace(/^\/+/, '')}`, external: false };
+    }
+
+    return { href: `#${value.replace(/^#+/, '')}`, external: false };
 }
 
 export default function AnnouncementMarquee({
@@ -50,20 +84,23 @@ export default function AnnouncementMarquee({
                     <div className="marquee-track flex min-w-0 flex-1 overflow-hidden">
                         <div className="marquee-run flex min-w-max items-center gap-3 pr-3 md:gap-4 md:pr-4">
                             {items.map((announcement, index) => {
+                                const resolved = resolveAnnouncementLink(announcement.link_url);
                                 const content = (
                                     <>
                                         <span className="rounded-full bg-primary px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary-foreground shadow-[0_8px_20px_-12px_rgba(47,106,17,0.9)]">
                                             {announcement.label || 'Annonce'}
                                         </span>
                                         <span className="whitespace-nowrap font-medium text-white/95">{announcement.message}</span>
-                                        {announcement.link_url && <MoveRight className="h-4 w-4 text-green-100 transition-transform group-hover:translate-x-0.5" />}
+                                        {resolved && <MoveRight className="h-4 w-4 text-green-100 transition-transform group-hover:translate-x-0.5" />}
                                     </>
                                 );
 
-                                return announcement.link_url ? (
+                                return resolved ? (
                                     <a
                                         key={`${announcement.id}-${index}`}
-                                        href={announcement.link_url}
+                                        href={resolved.href}
+                                        target={resolved.external ? '_blank' : undefined}
+                                        rel={resolved.external ? 'noreferrer noopener' : undefined}
                                         className="group flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.12] px-4 py-2.5 text-sm text-white/95 transition-all hover:border-primary/45 hover:bg-white/[0.18] hover:text-white"
                                     >
                                         {content}

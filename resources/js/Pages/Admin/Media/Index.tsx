@@ -1,3 +1,4 @@
+﻿import ImageWithFallback from '@/Components/ImageWithFallback';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -45,8 +46,13 @@ const canPreviewVideo = (asset: MediaAsset): boolean => {
 };
 
 export default function MediaIndex({ assets, filters, cdnRecommendations }: Props) {
+    const csrfToken = typeof document !== 'undefined'
+        ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
+        : '';
+
     const uploadForm = useForm({
         file: null as File | null,
+        _token: csrfToken,
     });
 
     const kinds = useMemo(() => ([
@@ -185,7 +191,13 @@ export default function MediaIndex({ assets, filters, cdnRecommendations }: Prop
                             <article key={asset.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/[0.03]">
                                 <div className="relative aspect-[16/9] bg-gray-900/80">
                                     {canPreviewImage(asset) ? (
-                                        <img src={asset.url} alt={asset.original_name} className="h-full w-full object-cover" loading="lazy" />
+                                        <ImageWithFallback
+                                            src={asset.url}
+                                            alt={asset.original_name}
+                                            fallbackSrc="/images/article-placeholder.svg"
+                                            className="h-full w-full object-contain bg-white dark:bg-gray-950"
+                                            loading="lazy"
+                                        />
                                     ) : canPreviewVideo(asset) ? (
                                         <video
                                             src={asset.url}
@@ -243,3 +255,4 @@ export default function MediaIndex({ assets, filters, cdnRecommendations }: Prop
         </DashboardLayout>
     );
 }
+

@@ -13,7 +13,10 @@ class ArticlePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin() || $user->isEditor();
+        return $user->isAdmin()
+            || $user->isEditor()
+            || $user->hasPermission('manage_articles')
+            || $user->hasPermission('create_articles');
     }
 
     /**
@@ -29,7 +32,10 @@ class ArticlePolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin() || $user->isEditor();
+        return $user->isAdmin()
+            || $user->isEditor()
+            || $user->hasPermission('manage_articles')
+            || $user->hasPermission('create_articles');
     }
 
     /**
@@ -37,9 +43,16 @@ class ArticlePolicy
      */
     public function update(User $user, Article $article): bool
     {
-        if ($user->isAdmin()) return true;
-        if ($user->isEditor()) return $article->author_id === $user->id;
-        return false;
+        if ($user->isAdmin() || $user->hasPermission('manage_articles')) {
+            return true;
+        }
+
+        if ($user->isEditor()) {
+            return $article->author_id === $user->id;
+        }
+
+        return $article->author_id === $user->id
+            && ($user->hasPermission('edit_articles') || $user->hasPermission('manage_own_content') || $user->hasPermission('create_articles'));
     }
 
     /**
@@ -47,9 +60,16 @@ class ArticlePolicy
      */
     public function delete(User $user, Article $article): bool
     {
-        if ($user->isAdmin()) return true;
-        if ($user->isEditor()) return $article->author_id === $user->id;
-        return false;
+        if ($user->isAdmin() || $user->hasPermission('manage_articles')) {
+            return true;
+        }
+
+        if ($user->isEditor()) {
+            return $article->author_id === $user->id;
+        }
+
+        return $article->author_id === $user->id
+            && ($user->hasPermission('edit_articles') || $user->hasPermission('manage_own_content'));
     }
 
     /**

@@ -1,3 +1,4 @@
+﻿import ImageWithFallback from '@/Components/ImageWithFallback';
 import { Image as ImageIcon, Loader2, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -104,9 +105,15 @@ export default function MediaLibraryPicker({
                                 }}
                                 className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 text-left hover:border-primary/40 dark:border-white/10 dark:bg-white/[0.03]"
                             >
-                                <div className="aspect-[16/10] bg-gray-200 dark:bg-white/10">
+                                <div className="aspect-[16/10] overflow-hidden bg-gray-200 dark:bg-white/10">
                                     {asset.kind === 'image' || asset.mime_type?.startsWith('image/') ? (
-                                        <img src={asset.url} alt={asset.original_name} className="h-full w-full object-cover" loading="lazy" />
+                                        <ImageWithFallback
+                                            src={asset.url}
+                                            alt={asset.original_name}
+                                            fallbackSrc="/images/article-placeholder.svg"
+                                            className="h-full w-full object-contain bg-white dark:bg-gray-950"
+                                            loading="lazy"
+                                        />
                                     ) : (
                                         <div className="flex h-full items-center justify-center text-gray-500 dark:text-gray-300">
                                             <ImageIcon className="h-5 w-5" />
@@ -140,3 +147,6 @@ export default function MediaLibraryPicker({
         </>
     );
 }
+
+
+

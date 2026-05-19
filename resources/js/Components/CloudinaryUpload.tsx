@@ -1,3 +1,5 @@
+import ImageWithFallback from '@/Components/ImageWithFallback';
+import { getCsrfHeaders, getCsrfToken, handleCsrfError, isCsrfError, appendCsrfToFormData, configureCsrfXhr } from '@/lib/csrf';
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Check, Loader2, Search, Upload, X } from 'lucide-react';
 
@@ -9,8 +11,6 @@ interface MediaItem {
     mime_type: string;
     created_at: string;
 }
-
-type CsrfHeader = 'X-CSRF-TOKEN' | 'X-XSRF-TOKEN' | null;
 
 interface CloudinaryUploadProps {
     onUpload: (url: string) => void;
@@ -37,25 +37,14 @@ export default function CloudinaryUpload({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const progressTimerRef = useRef<number | null>(null);
     const loadingRef = useRef(false);
+    const previewUrlRef = useRef<string | null>(null);
 
     useEffect(() => {
         setImage(defaultImage || null);
         setSelectedAssetUrl(defaultImage || null);
     }, [defaultImage]);
 
-    const resolveCsrfToken = (): { header: CsrfHeader; token: string } => {
-        if (typeof document === 'undefined') return { header: null, token: '' }; 
-
-        const metaToken = document.querySelector("meta[name='csrf-token']")?.getAttribute('content') ?? '';
-        if (metaToken) {
-            return { header: 'X-CSRF-TOKEN' as const, token: metaToken };
-        }
-
-        const cookieMatch = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
-        return cookieMatch
-            ? { header: 'X-XSRF-TOKEN' as const, token: decodeURIComponent(cookieMatch[1]) }
-            : { header: null, token: '' };
-    };
+    
 
     const stopProgressTicker = () => {
         if (progressTimerRef.current !== null) {
@@ -64,7 +53,13 @@ export default function CloudinaryUpload({
         }
     };
 
-    useEffect(() => () => stopProgressTicker(), []);
+    useEffect(() => () => {
+        stopProgressTicker();
+        if (previewUrlRef.current) {
+            URL.revokeObjectURL(previewUrlRef.current);
+            previewUrlRef.current = null;
+        }
+    }, []);
 
     const startProgressTicker = () => {
         stopProgressTicker();
@@ -131,26 +126,27 @@ export default function CloudinaryUpload({
         loadingRef.current = true;
         startProgressTicker();
 
+        if (previewUrlRef.current) {
+            URL.revokeObjectURL(previewUrlRef.current);
+        }
+
         const localPreview = URL.createObjectURL(file);
+        previewUrlRef.current = localPreview;
         setImage(localPreview);
 
         const uploadUrl = route('dashboard.media.store', undefined, false);
 
-        try {
+                try {
             const formData = new FormData();
             formData.append('file', file);
+            appendCsrfToFormData(formData);
 
             const payload = await new Promise<any>((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', uploadUrl, true);
                 xhr.responseType = 'json';
                 xhr.withCredentials = true;
-                xhr.setRequestHeader('Accept', 'application/json');
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                const csrf = resolveCsrfToken();
-                if (csrf.header) {
-                    xhr.setRequestHeader(csrf.header, csrf.token);
-                }
+                configureCsrfXhr(xhr);
 
                 xhr.upload.onprogress = (event) => {
                     if (!event.lengthComputable) {
@@ -161,8 +157,16 @@ export default function CloudinaryUpload({
                     setProgress(pct);
                 };
 
-                xhr.onload = () => {
+                                xhr.onload = () => {
                     const status = xhr.status ?? 0;
+                    
+                    // Gestion spécifique du CSRF token mismatch (419)
+                    if (isCsrfError(status)) {
+                        handleCsrfError((msg) => setError(msg));
+                        reject(new Error('Session expirée'));
+                        return;
+                    }
+                    
                     if (status < 200 || status >= 300) {
                         const message = xhr.response?.message || `Erreur upload (${status})`;
                         reject(new Error(message));
@@ -190,9 +194,13 @@ export default function CloudinaryUpload({
             if (tab === 'library') {
                 void loadLibrary(search);
             }
+
+            if (previewUrlRef.current === localPreview) {
+                URL.revokeObjectURL(localPreview);
+                previewUrlRef.current = null;
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erreur upload');
-            setImage(defaultImage || null);
         } finally {
             setTimeout(() => {
                 loadingRef.current = false;
@@ -200,7 +208,6 @@ export default function CloudinaryUpload({
                 setLoading(false);
                 setProgress(0);
             }, 250);
-            setTimeout(() => URL.revokeObjectURL(localPreview), 2000);
         }
     };
 
@@ -268,7 +275,7 @@ export default function CloudinaryUpload({
                 >
                     {image ? (
                         <div className="relative h-full w-full p-2">
-                            <img src={image} alt="Preview" className="h-full w-full rounded-md object-contain" />
+                            <ImageWithFallback src={image || undefined} alt="Preview" fallbackSrc="/images/article-placeholder.svg" className="h-full w-full rounded-md object-contain bg-white dark:bg-gray-950" />
                             <button
                                 type="button"
                                 onClick={handleRemove}
@@ -356,7 +363,13 @@ export default function CloudinaryUpload({
                                                 : 'border-gray-200 bg-white hover:border-primary/40 dark:border-white/20 dark:bg-black'
                                         }`}
                                     >
-                                        <img src={asset.url} alt={asset.original_name} className="h-12 w-12 rounded-md object-cover" loading="lazy" />
+                                        <ImageWithFallback
+                                            src={asset.url}
+                                            alt={asset.original_name}
+                                            fallbackSrc="/images/article-placeholder.svg"
+                                            className="h-12 w-12 rounded-md object-contain bg-white dark:bg-gray-950"
+                                            loading="lazy"
+                                        />
                                         <div className="min-w-0 flex-1">
                                             <p className="line-clamp-1 text-xs font-semibold text-gray-800 dark:text-gray-100">{asset.original_name}</p>
                                             <p className="line-clamp-1 text-[11px] text-gray-500 dark:text-gray-300">{asset.url}</p>
@@ -383,3 +396,5 @@ export default function CloudinaryUpload({
         </div>
     );
 }
+
+

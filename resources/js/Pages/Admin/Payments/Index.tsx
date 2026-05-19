@@ -243,11 +243,10 @@ export default function Index({ payments, filters = {} }: Props) {
                                                     <AdminLinkButton
                                                         href={route('dashboard.payments.show', payment.id)}
                                                         variant="secondary"
-                                                        size="sm"
-                                                        icon={<Eye className="h-3.5 w-3.5" />}
-                                                    >
-                                                        Details
-                                                    </AdminLinkButton>
+                                                        size="icon"
+                                                        icon={<Eye className="h-4 w-4" />}
+                                                        title="Détails"
+                                                    />
                                                 </td>
                                             </tr>
                                         ))}

@@ -1,4 +1,4 @@
-﻿@component('emails.layouts.base', ['headline' => 'Mise a jour de votre paiement', 'eyebrow' => 'LE RURAL / Facturation'])
+@component('emails.layouts.base', ['headline' => 'Mise a jour de votre paiement', 'eyebrow' => 'LE RURAL / Facturation'])
 <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">Statut actuel: <strong>{{ $statusLabel }}</strong></p>
 @if($customMessage)
 <p style="margin:0 0 14px;font-size:13px;line-height:1.6;color:#374151;">{{ $customMessage }}</p>

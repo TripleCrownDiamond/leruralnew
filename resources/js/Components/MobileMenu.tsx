@@ -96,7 +96,7 @@ export default function MobileMenu({
         return route().current('pages.show', { slug });
     };
 
-    const isPressEcriteActive = route().current('press-papers.index');
+    const isParutionsActive = route().current('press-papers.index');
 
     const isInternalPathActive = (url: string) => {
         if (!url || url === '#') return false;
@@ -206,14 +206,14 @@ export default function MobileMenu({
                         <span className="h-px w-6 bg-primary/30" />
                         <span className="text-gray-500 dark:text-gray-400">Rubriques</span>
                     </h3>
-                    <nav className="space-y-1.5">
+                    <nav className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                         {stableCategories.length > 0 ? (
                             stableCategories.map((c, idx) => (
                                 <a
                                     key={`mobile-category-${c.slug}`}
                                     href={route('category.show', c.slug)}
                                     onClick={onClose}
-                                    className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:border-primary hover:bg-primary hover:text-white"
+                                    className="group flex min-w-[220px] shrink-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:border-primary hover:bg-primary hover:text-white"
                                 >
                                     <span className="inline-block w-6 text-[10px] font-black tabular-nums text-white/45 group-hover:text-white/70">
                                         {String(idx + 1).padStart(2, '0')}
@@ -223,20 +223,20 @@ export default function MobileMenu({
                                 </a>
                             ))
                         ) : (
-                            <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
+                            <div className="min-w-[260px] rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
                                 Aucune rubrique disponible pour le moment.
                             </div>
-                                                )}
+                        )}
                         <Link
                             href={route('press-papers.index')}
                             onClick={onClose}
-                            className={`group flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-black uppercase tracking-[0.14em] transition-all ${
-                                isPressEcriteActive
+                            className={`group flex min-w-[220px] shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-black uppercase tracking-[0.14em] transition-all ${
+                                isParutionsActive
                                     ? 'border-primary bg-primary text-white'
                                     : 'border-white/10 bg-white/5 text-white hover:border-primary hover:bg-primary hover:text-white'
                             }`}
                         >
-                            <span className={`h-px transition-all ${isPressEcriteActive ? 'w-8 bg-white' : 'w-4 bg-white/20 group-hover:w-8 group-hover:bg-white'}`} />
+                            <span className={`h-px transition-all ${isParutionsActive ? 'w-8 bg-white' : 'w-4 bg-white/20 group-hover:w-8 group-hover:bg-white'}`} />
                             <span className="flex-1">Nos parutions</span>
                         </Link>
                     </nav>

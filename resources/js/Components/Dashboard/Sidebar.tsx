@@ -8,7 +8,6 @@ import {
     Settings,
     Bookmark,
     LogOut,
-    UserPlus,
     CreditCard,
     ShoppingBag,
     Percent,
@@ -67,6 +66,13 @@ function safeCurrent(pattern: string): boolean {
 
 export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
     const role = user.role;
+    const permissions = user.permissions ?? [];
+    const canWriteArticles = role === 'admin'
+        || role === 'editor'
+        || permissions.includes('create_articles')
+        || permissions.includes('edit_articles')
+        || permissions.includes('manage_articles')
+        || permissions.includes('manage_own_content');
     const navRef = useRef<HTMLElement | null>(null);
 
     const adminGroups: MenuGroup[] = [
@@ -81,8 +87,9 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
             title: 'Redaction',
             eyebrow: '02',
             items: [
-                { label: 'Articles', href: safeRoute('dashboard.articles.index'), icon: <FileText size={18} />, active: safeCurrent('dashboard.articles.*') },
+                                { label: 'Articles', href: safeRoute('dashboard.articles.index'), icon: <FileText size={18} />, active: safeCurrent('dashboard.articles.*') },
                 { label: 'Categories', href: safeRoute('dashboard.categories.index'), icon: <Layout size={18} />, active: safeCurrent('dashboard.categories.*') },
+                { label: 'Parutions', href: safeRoute('dashboard.press-papers.index'), icon: <FileText size={18} />, active: safeCurrent('dashboard.press-papers.*') },
                 { label: 'Commentaires', href: safeRoute('dashboard.comments.index'), icon: <MessageSquare size={18} />, active: safeCurrent('dashboard.comments.*') },
                 { label: 'Sondages', href: safeRoute('dashboard.polls.index'), icon: <BarChart2 size={18} />, active: safeCurrent('dashboard.polls.*') },
                 { label: 'Annonces', href: safeRoute('dashboard.announcements.index'), icon: <Megaphone size={18} />, active: safeCurrent('dashboard.announcements.*') },
@@ -110,9 +117,8 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
                 { label: "Plans d'abonnement", href: safeRoute('dashboard.subscription-plans.index'), icon: <Percent size={18} />, active: safeCurrent('dashboard.subscription-plans.*') },
                 { label: 'Souscriptions', href: safeRoute('dashboard.subscriptions.index'), icon: <ShoppingBag size={18} />, active: safeCurrent('dashboard.subscriptions.*') },
                 { label: 'Paiements', href: safeRoute('dashboard.payments.index'), icon: <DollarSign size={18} />, active: safeCurrent('dashboard.payments.*') },
-                { label: 'Moyens de paiement', href: safeRoute('dashboard.settings.payment'), icon: <CreditCard size={18} />, active: safeCurrent('dashboard.settings.payment*') },
+                                { label: 'Moyens de paiement', href: safeRoute('dashboard.settings.payment'), icon: <CreditCard size={18} />, active: safeCurrent('dashboard.settings.payment*') },
                 { label: 'Codes promo', href: safeRoute('dashboard.promo-codes.index'), icon: <Percent size={18} />, active: safeCurrent('dashboard.promo-codes.*') },
-                { label: 'Nos parutions', href: safeRoute('dashboard.press-papers.index'), icon: <FileText size={18} />, active: safeCurrent('dashboard.press-papers.*') },
             ],
         },
         {
@@ -137,7 +143,6 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
             items: [
                 { label: "Tableau de bord", href: safeRoute('dashboard'), icon: <LayoutDashboard size={18} />, active: safeCurrent('dashboard') },
                 { label: 'Mes articles', href: safeRoute('dashboard.articles.index'), icon: <FileText size={18} />, active: safeCurrent('dashboard.articles.*') },
-                { label: 'Brouillons', href: '#', icon: <UserPlus size={18} /> },
             ],
         },
         {
@@ -181,8 +186,8 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
         },
     ];
 
-    const groups = role === 'admin' ? adminGroups : role === 'editor' ? editorGroups : userGroups;
-    const roleLabel = role === 'admin' ? 'Administration' : role === 'editor' ? 'Redaction' : 'Abonne';
+    const groups = role === 'admin' ? adminGroups : canWriteArticles ? editorGroups : userGroups;
+    const roleLabel = role === 'admin' ? 'Administration' : canWriteArticles ? 'Redaction' : 'Abonne';
 
     useEffect(() => {
         const container = navRef.current;

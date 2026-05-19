@@ -188,19 +188,17 @@ export default function Index({ pages, filters }: Props) {
                                                     <AdminLinkButton
                                                         href={route('dashboard.static-pages.edit', p.id)}
                                                         variant="secondary"
-                                                        size="sm"
-                                                        icon={<Pencil className="h-3.5 w-3.5" />}
-                                                    >
-                                                        Modifier
-                                                    </AdminLinkButton>
+                                                        size="icon"
+                                                        icon={<Pencil className="h-4 w-4" />}
+                                                        title="Modifier"
+                                                    />
                                                     <AdminButton
                                                         variant="danger"
-                                                        size="sm"
-                                                        icon={<Trash2 className="h-3.5 w-3.5" />}
+                                                        size="icon"
+                                                        icon={<Trash2 className="h-4 w-4" />}
                                                         onClick={() => remove(p.id)}
-                                                    >
-                                                        Suppr.
-                                                    </AdminButton>
+                                                        title="Supprimer"
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>

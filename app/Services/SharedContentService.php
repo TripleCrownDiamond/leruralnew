@@ -18,41 +18,23 @@ class SharedContentService
 {
     public function __construct(
         protected YouTubeService $youtube,
+        protected AnnouncementLinkResolver $announcementLinkResolver,
     ) {
     }
 
     public function get(): array
     {
         $youtubeChannel = $this->youtube->getChannelStats();
-        $youtubeVideos = $this->youtube->getLatestVideos(12);
-        $youtubePlaylistsForLookup = $this->youtube->getPlaylists(50);
-        $playlistThumbnailsById = $this->playlistThumbnailsById($youtubePlaylistsForLookup);
-        $youtubePlaylistIds = collect($youtubePlaylistsForLookup)
-            ->pluck('id')
-            ->map(fn ($id) => trim((string) $id))
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-        $youtubePlaylistPrimaryThumbnailsById = $this->youtube->getPlaylistsPrimaryVideoThumbnails($youtubePlaylistIds);
-        $youtubePlaylistOembedThumbnailsById = $this->youtube->getPlaylistsOembedThumbnails($youtubePlaylistIds);
+        $youtubeVideos = $this->youtube->getLatestVideos(6);
+        $youtubePlaylistsForLookup = $this->youtube->getPlaylists(12);
+        $playlistPrimaryVideoThumbnailsById = $this->youtube->getPlaylistsPrimaryVideoThumbnails(array_map(fn (array $playlist) => (string) ($playlist['id'] ?? ''), $youtubePlaylistsForLookup));
+        $playlistCoverThumbnailsById = $this->playlistThumbnailsById($youtubePlaylistsForLookup);
+        $playlistThumbnailsById = array_merge($playlistCoverThumbnailsById, $playlistPrimaryVideoThumbnailsById);
         $youtubePlaylists = collect($youtubePlaylistsForLookup)
             ->take(10)
-            ->map(function (array $playlist) use ($playlistThumbnailsById, $youtubePlaylistPrimaryThumbnailsById, $youtubePlaylistOembedThumbnailsById) {
+            ->map(function (array $playlist) use ($playlistThumbnailsById) {
                 $id = (string) ($playlist['id'] ?? '');
-                $thumbnail = $playlist['thumbnail'] ?? null;
-
-                if (!$thumbnail && $id !== '') {
-                    $thumbnail = $playlistThumbnailsById[$id] ?? null;
-                }
-
-                if (!$thumbnail && $id !== '') {
-                    $thumbnail = $youtubePlaylistPrimaryThumbnailsById[$id] ?? null;
-                }
-
-                if (!$thumbnail && $id !== '') {
-                    $thumbnail = $youtubePlaylistOembedThumbnailsById[$id] ?? null;
-                }
+                $thumbnail = $playlistThumbnailsById[$id] ?? $playlist['thumbnail'] ?? null;
 
                 return [
                     'id' => $id,
@@ -71,14 +53,6 @@ class SharedContentService
             ->orderBy('order')
             ->get();
 
-        $emissionPlaylistIds = $emissions
-            ->map(fn (Emission $emission) => $this->extractPlaylistId($emission->playlist_url))
-            ->filter()
-            ->values()
-            ->all();
-
-        $playlistVideoThumbnailsById = $this->youtube->getPlaylistsPrimaryVideoThumbnails($emissionPlaylistIds);
-        $playlistOembedThumbnailsById = $this->youtube->getPlaylistsOembedThumbnails($emissionPlaylistIds);
         $localEmissionThumbnailsByLink = $this->localEmissionThumbnailsByLink();
         $localWebTvVideos = WebTvVideo::orderByDesc('published_at')->take(4)->get();
 
@@ -107,8 +81,6 @@ class SharedContentService
                         $emission->playlist_url,
                         $playlistThumbnailsById,
                         $localEmissionThumbnailsByLink,
-                        $playlistVideoThumbnailsById,
-                        $playlistOembedThumbnailsById,
                     ),
                     'playlist_url' => $emission->playlist_url,
                 ])
@@ -134,7 +106,7 @@ class SharedContentService
                     'id' => $announcement->id,
                     'label' => $announcement->label,
                     'message' => $announcement->message,
-                    'link_url' => $announcement->link_url,
+                    'link_url' => $this->announcementLinkResolver->normalize($announcement->link_url),
                 ])
                 ->values()
                 ->all(),
@@ -153,7 +125,7 @@ class SharedContentService
                         ? number_format((float) $paper->price, 0, ',', ' ') . ' FCFA'
                         : 'Gratuit',
                     'action_url' => route('press-papers.index'),
-                    'action_label' => 'Voir les journaux',
+                    'action_label' => 'Voir',
                     'badge' => 'Premiere page',
                 ])
                 ->values()
@@ -187,7 +159,12 @@ class SharedContentService
                 ->all(),
             'live_streams' => LiveStream::query()
                 ->where('is_active', true)
+                ->where(function ($query) {
+                    $query->whereNull('ends_at')
+                        ->orWhere('ends_at', '>=', now());
+                })
                 ->orderBy('sort_order')
+                ->orderByDesc('starts_at')
                 ->orderByDesc('id')
                 ->get()
                 ->map(fn (LiveStream $stream) => [
@@ -196,12 +173,38 @@ class SharedContentService
                     'title' => $stream->title,
                     'stream_url' => $stream->stream_url,
                     'embed_url' => $stream->embed_url,
+                    'replay_url' => $stream->replay_url,
+                    'thumbnail_url' => $stream->thumbnail_url,
+                    'fallback_image_url' => $stream->fallback_image_url,
+                    'starts_at' => optional($stream->starts_at)->toIso8601String(),
+                    'ends_at' => optional($stream->ends_at)->toIso8601String(),
+                ])
+                ->values()
+                ->all(),
+            'live_replays' => LiveStream::query()
+                ->whereNotNull('replay_url')
+                ->whereNotNull('ends_at')
+                ->where('ends_at', '<', now())
+                ->orderByDesc('ends_at')
+                ->orderByDesc('id')
+                ->take(6)
+                ->get()
+                ->map(fn (LiveStream $stream) => [
+                    'id' => $stream->id,
+                    'platform' => $stream->platform,
+                    'title' => $stream->title,
+                    'stream_url' => $stream->stream_url,
+                    'embed_url' => $stream->embed_url,
+                    'replay_url' => $stream->replay_url,
+                    'thumbnail_url' => $stream->thumbnail_url,
+                    'fallback_image_url' => $stream->fallback_image_url,
+                    'starts_at' => optional($stream->starts_at)->toIso8601String(),
+                    'ends_at' => optional($stream->ends_at)->toIso8601String(),
                 ])
                 ->values()
                 ->all(),
         ];
     }
-
     protected function mapSidebarVideos(array $youtubeVideos, array $localVideos): array
     {
         $items = collect($youtubeVideos)
@@ -330,15 +333,15 @@ class SharedContentService
             return $path;
         }
 
-        return Storage::disk('public')->url($path);
+        return url('/public-media/' . ltrim($path, '/'));
     }
 
     /**
-     * @param array<string, string> 
+     * @param array<string, string>
      * @param array<string, string> $playlistThumbnailsById
-     * @param array<string, string> 
+     * @param array<string, string>
      * @param array<string, string> $localEmissionThumbnailsByLink
-     * @param array<string, string> 
+     * @param array<string, string>
      * @param array<string, string> $playlistVideoThumbnailsById
      */
     private function resolveEmissionImage(
@@ -346,8 +349,6 @@ class SharedContentService
         ?string $playlistUrl,
         array $playlistThumbnailsById,
         array $localEmissionThumbnailsByLink,
-        array $playlistVideoThumbnailsById,
-        array $playlistOembedThumbnailsById,
     ): ?string {
         $image = filled($image) ? trim((string) $image) : null;
 
@@ -359,8 +360,6 @@ class SharedContentService
         $playlistId = $this->extractPlaylistId($playlistUrl);
 
         return ($playlistId ? ($playlistThumbnailsById[$playlistId] ?? null) : null)
-            ?: ($playlistId ? ($playlistVideoThumbnailsById[$playlistId] ?? null) : null)
-            ?: ($playlistId ? ($playlistOembedThumbnailsById[$playlistId] ?? null) : null)
             ?: ($playlistUrl ? ($localEmissionThumbnailsByLink[$playlistUrl] ?? null) : null)
             ?: ($playlistId ? ($localEmissionThumbnailsByLink['playlist:' . $playlistId] ?? null) : null);
     }
@@ -380,3 +379,7 @@ class SharedContentService
         return null;
     }
 }
+
+
+
+
