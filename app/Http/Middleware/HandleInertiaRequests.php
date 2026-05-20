@@ -112,7 +112,33 @@ class HandleInertiaRequests extends Middleware
             'settings' => fn () => CacheService::settings(),
             'promo_offer' => fn () => CacheService::featuredPromo(),
             'footer_pages' => fn () => CacheService::footerPages(),
-            'shared_content' => fn () => cache()->remember('shared_content:v1', now()->addHours(1), fn () => app(SharedContentService::class)->get()),
+            'shared_content' => function () {
+                try {
+                    return cache()->remember(
+                        'shared_content:v1',
+                        now()->addHours(1),
+                        fn () => app(SharedContentService::class)->get()
+                    );
+                } catch (\Throwable $e) {
+                    report($e);
+
+                    return cache()->get('shared_content:v1', [
+                        'market_prices' => [],
+                        'webtv_videos' => [],
+                        'youtube_channel' => null,
+                        'youtube_videos' => [],
+                        'youtube_playlists' => [],
+                        'emissions' => [],
+                        'partners' => [],
+                        'announcements' => [],
+                        'press_papers' => [],
+                        'advertisements' => [],
+                        'latest_comments' => [],
+                        'live_streams' => [],
+                        'live_replays' => [],
+                    ]);
+                }
+            },
         ]);
     }
 }

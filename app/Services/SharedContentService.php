@@ -11,6 +11,7 @@ use App\Models\LiveStream;
 use App\Models\Partner;
 use App\Models\PressPaper;
 use App\Models\WebTvVideo;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -24,12 +25,10 @@ class SharedContentService
 
     public function get(): array
     {
-        $youtubeChannel = $this->youtube->getChannelStats();
-        $youtubeVideos = $this->youtube->getLatestVideos(6);
-        $youtubePlaylistsForLookup = $this->youtube->getPlaylists(12);
-        $playlistPrimaryVideoThumbnailsById = $this->youtube->getPlaylistsPrimaryVideoThumbnails(array_map(fn (array $playlist) => (string) ($playlist['id'] ?? ''), $youtubePlaylistsForLookup));
-        $playlistCoverThumbnailsById = $this->playlistThumbnailsById($youtubePlaylistsForLookup);
-        $playlistThumbnailsById = array_merge($playlistCoverThumbnailsById, $playlistPrimaryVideoThumbnailsById);
+        $youtubeChannel = $this->safeYouTubeCall(fn () => $this->youtube->getChannelStats(), null, 'channel_stats');
+        $youtubeVideos = $this->safeYouTubeCall(fn () => $this->youtube->getLatestVideos(6), [], 'latest_videos');
+        $youtubePlaylistsForLookup = $this->safeYouTubeCall(fn () => $this->youtube->getPlaylists(8), [], 'playlists');
+        $playlistThumbnailsById = $this->playlistThumbnailsById($youtubePlaylistsForLookup);
         $youtubePlaylists = collect($youtubePlaylistsForLookup)
             ->take(10)
             ->map(function (array $playlist) use ($playlistThumbnailsById) {
@@ -205,6 +204,23 @@ class SharedContentService
                 ->all(),
         ];
     }
+
+    private function safeYouTubeCall(callable $callback, mixed $fallback, string $context): mixed
+    {
+        try {
+            $result = $callback();
+
+            return $result ?? $fallback;
+        } catch (\Throwable $e) {
+            Log::warning('SharedContentService YouTube call failed', [
+                'context' => $context,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $fallback;
+        }
+    }
+
     protected function mapSidebarVideos(array $youtubeVideos, array $localVideos): array
     {
         $items = collect($youtubeVideos)
