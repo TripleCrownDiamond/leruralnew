@@ -1,5 +1,5 @@
-﻿import { useEffect, useMemo, useState } from 'react';
-import { Play, Clock, ChevronLeft, ChevronRight, Radio, Users, Eye, Video, ListVideo, ExternalLink, TrendingUp } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Play, Clock, Radio, Users, Eye, Video, ExternalLink } from 'lucide-react';
 import ImageWithFallback from '@/Components/ImageWithFallback';
 import EmptySectionState from '@/Components/EmptySectionState';
 
@@ -116,6 +116,17 @@ export default function WebTvSection({
     const [isPlayerReady, setIsPlayerReady] = useState(false);
     const activeVideo = mergedVideos[activeIdx] ?? null;
 
+    useEffect(() => {
+        if (mergedVideos.length === 0) {
+            setActiveIdx(0);
+            return;
+        }
+
+        if (activeIdx >= mergedVideos.length) {
+            setActiveIdx(0);
+        }
+    }, [activeIdx, mergedVideos.length]);
+
     const getVideoId = (v: WebTvVideo | YouTubeVideo | null): string | null => {
         if (!v) return null;
         return (v as any).youtube_id ?? (v as any).id ?? null;
@@ -138,56 +149,6 @@ export default function WebTvSection({
     const getVideoPublished = (v: WebTvVideo | YouTubeVideo) => (v as any).published_at;
     const getVideoViews = (v: WebTvVideo | YouTubeVideo): number | null => (v as any).view_count ?? null;
     const getVideoDuration = (v: WebTvVideo | YouTubeVideo): string | null => (v as any).duration ?? null;
-    const extractPlaylistId = (url?: string | null): string | null => {
-        if (!url) return null;
-        const match = url.match(/[?&]list=([^&]+)/i);
-        return match?.[1] ? decodeURIComponent(match[1]) : null;
-    };
-
-    const playlistSeriesThumbnail = (playlistId?: string | null): string | null => {
-        if (!playlistId) return null;
-        return `https://i.ytimg.com/vi_webp/videoseries/hqdefault.webp?list=${encodeURIComponent(playlistId)}`;
-    };
-
-    const playlistThumbnailMap = useMemo(() => {
-        const map = new Map<string, string>();
-        youtubePlaylists.forEach((playlist) => {
-            const thumbnail = playlist.primary_video_thumbnail || playlist.thumbnail;
-            if (playlist.id && thumbnail) {
-                map.set(playlist.id, thumbnail);
-            }
-        });
-        return map;
-    }, [youtubePlaylists]);
-    const filledPlaylistFallbacks = useMemo(() => {
-        const existingIds = new Set(youtubePlaylists.map((p) => p.id));
-
-        const fromEmissions = emissions
-            .map((emission) => {
-                const emissionPlaylistId = extractPlaylistId(emission.playlist_url);
-                const id = emissionPlaylistId || `emission-${emission.id}`;
-
-                if (existingIds.has(id)) {
-                    return null;
-                }
-
-                return {
-                    id,
-                    title: emission.name,
-                    description: emission.description || '',
-                    thumbnail:
-                        emission.image
-                        || (emissionPlaylistId ? playlistThumbnailMap.get(emissionPlaylistId) ?? playlistSeriesThumbnail(emissionPlaylistId) : null)
-                        || (mergedVideos.length > 0 ? getVideoThumbnail(mergedVideos[0]) : null),
-                    item_count: 0,
-                    published_at: '',
-                    url: emission.playlist_url,
-                } as YouTubePlaylist;
-            })
-            .filter((playlist): playlist is YouTubePlaylist => Boolean(playlist));
-
-        return [...youtubePlaylists, ...fromEmissions].slice(0, 16);
-    }, [youtubePlaylists, emissions, playlistThumbnailMap, mergedVideos]);
     const hasAnyWebTvData =
         mergedVideos.length > 0 ||
         Boolean(youtubeChannel) ||
@@ -233,6 +194,7 @@ export default function WebTvSection({
     const activeVideoId = getVideoId(activeVideo);
     const activeVideoThumbnail = getVideoThumbnail(activeVideo);
     const otherVideos = mergedVideos.filter((v, i) => i !== activeIdx);
+    const playlistVideos = otherVideos.length > 0 ? otherVideos : mergedVideos.slice(0, 6);
 
     const sectionedVideos = useMemo(() => {
         const map = new Map<string, Array<WebTvVideo | YouTubeVideo>>();
@@ -461,7 +423,13 @@ export default function WebTvSection({
                     </div>
 
                     <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                        {otherVideos.map((video, idx) => {
+                        {playlistVideos.length === 0 && (
+                            <div className='rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-semibold text-gray-400'>
+                                Aucune video recente disponible pour le moment.
+                            </div>
+                        )}
+
+                        {playlistVideos.map((video, idx) => {
                             const vid = getVideoId(video);
                             if (!vid) return null;
                             const duration = getVideoDuration(video);
@@ -515,69 +483,6 @@ export default function WebTvSection({
                     </div>
                 </div>
             </div>
-
-            {filledPlaylistFallbacks.length > 0 && (
-                <div className="mt-16 border-t-2 border-white/10 pt-10">
-                    <div className="mb-8">
-                        <div className="mb-3 flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.22em] text-red-400">
-                            <ListVideo className="h-3.5 w-3.5" />
-                            <span>LE RURAL TV</span>
-                            <span className="h-px w-8 bg-red-500/40" />
-                            <span className="text-gray-500">Nos emissions / {filledPlaylistFallbacks.length}</span>
-                        </div>
-                        <div className="flex items-end justify-between gap-4">
-                            <h3 className="font-heading text-3xl lg:text-4xl font-black uppercase tracking-tight text-white leading-[0.95]">
-                                Nos emissions
-                            </h3>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-                        {filledPlaylistFallbacks.map((playlist) => {
-                            const playlistId = playlist.id || extractPlaylistId(playlist.url);
-                            const playlistFallbackThumbnail = playlistSeriesThumbnail(playlistId) || (mergedVideos.length > 0 ? getVideoThumbnail(mergedVideos[0]) : null);
-                            const playlistThumbnail = playlist.thumbnail || playlistFallbackThumbnail;
-
-                            return (
-                                <a
-                                    key={playlist.id}
-                                    href={playlist.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group cursor-pointer"
-                                >
-                                    <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-2xl bg-gray-800 ring-1 ring-white/10 transition-all shadow-lg group-hover:shadow-red-600/30 group-hover:ring-red-500/60">
-                                        {playlistThumbnail ? (
-                                            <ImageWithFallback
-                                                src={playlistThumbnail}
-                                                alt={playlist.title}
-                                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                            />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-red-900/40 to-gray-900">
-                                                <ListVideo className="h-10 w-10 text-red-500/50" />
-                                            </div>
-                                        )}
-                                        <div className="absolute inset-y-0 right-0 flex w-16 flex-col items-center justify-center gap-1 bg-gradient-to-l from-black/80 to-transparent text-white">
-                                            <ListVideo className="h-5 w-5" />
-                                            <span className="text-[10px] font-black tabular-nums">{playlist.item_count}</span>
-                                            <span className="text-[8px] font-black uppercase tracking-wider opacity-70">videos</span>
-                                        </div>
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                                        <div className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-md bg-red-600/90 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white opacity-0 transition-opacity group-hover:opacity-100">
-                                            <Play className="h-2.5 w-2.5 fill-current" />
-                                            Voir
-                                        </div>
-                                    </div>
-                                    <h4 className="line-clamp-2 text-sm font-black uppercase leading-snug tracking-[0.08em] text-gray-200 transition-colors group-hover:text-red-400">
-                                        {playlist.title}
-                                    </h4>
-                                </a>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
         </section>
     );
 }
