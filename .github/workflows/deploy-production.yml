@@ -36,7 +36,7 @@ jobs:
       - name: Sync release to server
         uses: burnett01/rsync-deployments@7.0.2
         with:
-          switches: -avzr --delete --exclude=.git --exclude=node_modules --exclude=tests --exclude=.github --exclude=storage/logs/*
+          switches: -avzr --delete --exclude=.git --exclude=node_modules --exclude=tests --exclude=.github --exclude=.env --exclude=database/database.sqlite --exclude=storage/app/public/** --exclude=storage/framework/** --exclude=storage/logs/**
           path: ./
           remote_path: ${{ secrets.DEPLOY_PATH }}
           remote_host: ${{ secrets.DEPLOY_HOST }}
