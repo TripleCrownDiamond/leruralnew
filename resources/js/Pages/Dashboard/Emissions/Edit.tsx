@@ -1,4 +1,4 @@
-﻿import CloudinaryUpload from '@/Components/CloudinaryUpload';
+import CloudinaryUpload from '@/Components/CloudinaryUpload';
 import AdminCard from '@/Components/Dashboard/AdminCard';
 import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
@@ -34,8 +34,8 @@ export default function Edit({ emission }: { emission: Emission }) {
     };
 
     return (
-        <DashboardLayout title={`Modifier Â· ${emission.name}`}>
-            <Head title={`Modifier Â· ${emission.name}`} />
+        <DashboardLayout title={`Modifier - ${emission.name}`}>
+            <Head title={`Modifier - ${emission.name}`} />
 
             <div className="space-y-6">
                 <AdminPageHeader
@@ -158,3 +158,5 @@ export default function Edit({ emission }: { emission: Emission }) {
         </DashboardLayout>
     );
 }
+
+

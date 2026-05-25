@@ -115,7 +115,7 @@ export default function Create({ categories }: Props) {
                                 Retour a la liste
                             </AdminLinkButton>
                             <AdminButton type="submit" disabled={processing} icon={<Sparkles className="h-4 w-4" />}>
-                                {publicationMode === 'scheduled' ? 'Programmer' : publicationMode === 'now' ? 'Publier maintenant' : 'Enregistrer brouillon'}
+                                {publicationMode === 'scheduled' ? 'Programmer' : publicationMode === 'now' ? 'Publier' : 'Brouillon'}
                             </AdminButton>
                         </>
                     }
@@ -239,11 +239,11 @@ export default function Create({ categories }: Props) {
                                         <CalendarClock className="h-4 w-4" />
                                         Visibilite
                                     </div>
-                                    <div className="grid gap-2 sm:grid-cols-3">
+                                    <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                                         <button
                                             type="button"
                                             onClick={() => setPublicationMode('now')}
-                                            className={`rounded-xl border px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] transition-colors ${
+                                            className={`rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] leading-tight text-center transition-colors ${
                                                 publicationMode === 'now'
                                                     ? 'border-primary bg-primary text-white shadow-sm'
                                                     : 'border-gray-200 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-white/10 dark:bg-gray-950 dark:text-white/70'
@@ -254,7 +254,7 @@ export default function Create({ categories }: Props) {
                                         <button
                                             type="button"
                                             onClick={() => setPublicationMode('scheduled')}
-                                            className={`rounded-xl border px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] transition-colors ${
+                                            className={`rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] leading-tight text-center transition-colors ${
                                                 publicationMode === 'scheduled'
                                                     ? 'border-primary bg-primary text-white shadow-sm'
                                                     : 'border-gray-200 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-white/10 dark:bg-gray-950 dark:text-white/70'
@@ -265,7 +265,7 @@ export default function Create({ categories }: Props) {
                                         <button
                                             type="button"
                                             onClick={() => setPublicationMode('draft')}
-                                            className={`rounded-xl border px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] transition-colors ${
+                                            className={`rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] leading-tight text-center transition-colors ${
                                                 publicationMode === 'draft'
                                                     ? 'border-primary bg-primary text-white shadow-sm'
                                                     : 'border-gray-200 bg-white text-gray-700 hover:border-primary hover:text-primary dark:border-white/10 dark:bg-gray-950 dark:text-white/70'
@@ -471,3 +471,4 @@ function EditorModeButton({
         </button>
     );
 }
+

@@ -737,7 +737,7 @@ export default function LiveIndex() {
                                                 Impossible de charger la diffusion
                                             </p>
                                             <p className="mt-2 text-sm text-gray-400">
-                                                La source vidÃ©o n'est pas disponible. Veuillez rÃ©essayer ou patienter.
+                                                La source video n'est pas disponible. Veuillez reessayer ou patienter.
                                             </p>
                                             <div className="mt-6 flex gap-3">
                                                 <button
@@ -748,7 +748,7 @@ export default function LiveIndex() {
                                                     }}
                                                     className="rounded-full bg-white px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-gray-900 transition hover:bg-gray-100"
                                                 >
-                                                    RÃ©essayer
+                                                    Reessayer
                                                 </button>
                                                 <button
                                                     type="button"
@@ -1034,14 +1034,4 @@ export default function LiveIndex() {
         </MainLayout>
     );
 }
-
-
-
-
-
-
-
-
-
-
 
