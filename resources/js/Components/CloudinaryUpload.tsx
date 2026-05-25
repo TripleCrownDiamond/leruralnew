@@ -1,5 +1,5 @@
 import ImageWithFallback from '@/Components/ImageWithFallback';
-import { getCsrfHeaders, getCsrfToken, handleCsrfError, isCsrfError, appendCsrfToFormData, configureCsrfXhr } from '@/lib/csrf';
+import { appendCsrfToFormData, configureCsrfXhr, handleCsrfError, isCsrfError } from '@/lib/csrf';
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Check, Loader2, Search, Upload, X } from 'lucide-react';
 
@@ -396,5 +396,6 @@ export default function CloudinaryUpload({
         </div>
     );
 }
+
 
 

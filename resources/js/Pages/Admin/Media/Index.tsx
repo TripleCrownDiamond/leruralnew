@@ -1,4 +1,4 @@
-﻿import ImageWithFallback from '@/Components/ImageWithFallback';
+import ImageWithFallback from '@/Components/ImageWithFallback';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -46,13 +46,9 @@ const canPreviewVideo = (asset: MediaAsset): boolean => {
 };
 
 export default function MediaIndex({ assets, filters, cdnRecommendations }: Props) {
-    const csrfToken = typeof document !== 'undefined'
-        ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
-        : '';
 
     const uploadForm = useForm({
         file: null as File | null,
-        _token: csrfToken,
     });
 
     const kinds = useMemo(() => ([
@@ -255,4 +251,5 @@ export default function MediaIndex({ assets, filters, cdnRecommendations }: Prop
         </DashboardLayout>
     );
 }
+
 

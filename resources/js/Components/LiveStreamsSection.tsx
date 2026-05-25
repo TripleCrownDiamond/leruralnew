@@ -1,4 +1,3 @@
-﻿import EmptySectionState from '@/Components/EmptySectionState';
 import ImageWithFallback from '@/Components/ImageWithFallback';
 import { cn } from '@/lib/utils';
 import { ArrowRight, Clock3, Radio, Tv2 } from 'lucide-react';
@@ -22,6 +21,8 @@ interface EmissionSource {
     name: string;
     playlist_url?: string | null;
 }
+
+const DEFAULT_CONTINUOUS_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=PLbG50jPcxecnHpAmGv6XBaQ4mgbPyRAN5';
 
 const platformLabels: Record<string, string> = {
     youtube: 'YouTube',
@@ -202,7 +203,7 @@ export default function LiveStreamsSection({
     const fallbackPreviewSource = useMemo(() => {
         const emissionFallback = emissions.find((emission) => Boolean(emission.playlist_url?.trim()))?.playlist_url ?? null;
 
-        return fallbackVideoUrl || emissionFallback;
+        return fallbackVideoUrl || emissionFallback || DEFAULT_CONTINUOUS_PLAYLIST_URL;
     }, [emissions, fallbackVideoUrl]);
 
     const previewEmbedUrl = useMemo(() => {
@@ -213,38 +214,25 @@ export default function LiveStreamsSection({
         return resolvePlayableSourceUrl(fallbackPreviewSource);
     }, [currentStream, fallbackPreviewSource]);
 
-    const previewLabel = currentStream ? 'Apercu live actif' : 'Apercu jingle / emission';
-
-    if (!orderedStreams.length) {
-        return (
-            <section className={cn('mx-0 mb-16 md:mx-4', className)}>
-                <EmptySectionState
-                    eyebrow="Direct"
-                    title="Aucune emission programmee"
-                    description="Les emissions programmees apparaitront ici. La page Direct reste disponible avec lecture continue en attendant."
-                    tone="primary"
-                />
-                <div className="mt-4 flex justify-center">
-                    <Link
-                        href={route('live.index')}
-                        className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-primary/30"
-                    >
-                        Voir direct
-                        <ArrowRight className="h-4 w-4" />
-                    </Link>
-                </div>
-            </section>
-        );
-    }
+    const previewLabel = currentStream ? 'Apercu live actif' : 'Apercu direct';
 
     return (
         <section className={cn('mx-0 mb-16 md:mx-4', className)}>
             <div className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-[0_24px_60px_-35px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-gray-950">
                 <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
                     <div className="border-b border-gray-200 p-5 dark:border-white/10 lg:border-b-0 lg:border-r lg:p-6">
-                        <div className="mb-4 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-primary">
-                            <Radio className="h-4 w-4" />
-                            Emissions programmees
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+                                <Radio className="h-4 w-4" />
+                                Emissions
+                            </div>
+                            <Link
+                                href={route('live.index')}
+                                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-primary/30"
+                            >
+                                Voir direct
+                                <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
                         </div>
 
                         <div className="space-y-4">
@@ -277,77 +265,84 @@ export default function LiveStreamsSection({
                             <div className="rounded-3xl border border-primary/15 bg-primary/10 p-4 dark:border-primary/20 dark:bg-primary/15">
                                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
                                     <Clock3 className="h-3.5 w-3.5" />
-                                    {currentStream ? 'Emission en cours' : startsSoon ? 'Compte a rebours' : 'Prochaine diffusion'}
+                                    {currentStream
+                                        ? 'Emission en cours'
+                                        : nextStream
+                                          ? startsSoon
+                                              ? 'Compte a rebours'
+                                              : 'Prochaine diffusion'
+                                          : 'Direct'}
                                 </div>
                                 <h3 className="mt-2 font-heading text-2xl font-black uppercase leading-[0.98] tracking-tight text-gray-950 dark:text-white">
-                                    {displayStream?.title}
+                                    {displayStream?.title ?? 'Direct LE RURAL'}
                                 </h3>
                                 <p className="mt-2 text-sm leading-relaxed text-gray-700 dark:text-white/75">
                                     {currentStream
                                         ? `Diffusion en cours depuis ${formatClock(currentStream.starts_at)}.`
-                                        : startsSoon
-                                          ? `Le direct commence dans ${formatCountdown(countdown ?? 0)}.`
-                                          : `Diffusion prevue le ${formatClock(nextStream?.starts_at)}.`}
+                                        : nextStream
+                                          ? startsSoon
+                                              ? `Le direct commence dans ${formatCountdown(countdown ?? 0)}.`
+                                              : `Diffusion prevue le ${formatClock(nextStream.starts_at)}.`
+                                          : 'Le direct reste disponible. Consultez la page Direct pour voir le flux en cours.'}
                                 </p>
                                 <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-600 dark:text-white/55">
                                     <span className="rounded-full border border-gray-300 bg-white px-3 py-1 dark:border-white/10 dark:bg-white/5">
-                                        {platformLabels[displayStream?.platform ?? 'custom']}
+                                        {displayStream ? platformLabels[displayStream.platform] : 'Direct'}
                                     </span>
                                     <span className="rounded-full border border-gray-300 bg-white px-3 py-1 dark:border-white/10 dark:bg-white/5">
-                                        {formatClock(displayStream?.starts_at)}
+                                        {displayStream?.starts_at ? formatClock(displayStream.starts_at) : 'Disponible'}
                                     </span>
                                 </div>
                             </div>
-
-                            <Link
-                                href={route('live.index')}
-                                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-primary/30"
-                            >
-                                Voir direct
-                                <ArrowRight className="h-4 w-4" />
-                            </Link>
                         </div>
                     </div>
 
                     <div className="p-5 sm:p-6">
                         <div className="mb-4 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-primary">
                             <Tv2 className="h-4 w-4" />
-                            Autres emissions
+                            Selection
                         </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            {visibleStreams.slice(0, 4).map((stream) => {
-                                const isCurrent = stream.id === currentStream?.id;
-                                const isNext = stream.id === nextStream?.id;
+                        {visibleStreams.length > 0 ? (
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {visibleStreams.slice(0, 4).map((stream) => {
+                                    const isCurrent = stream.id === currentStream?.id;
+                                    const isNext = stream.id === nextStream?.id;
 
-                                return (
-                                    <article
-                                        key={stream.id}
-                                        className={cn(
-                                            'rounded-2xl border p-3 transition',
-                                            isCurrent
-                                                ? 'border-primary/40 bg-primary/15 ring-2 ring-primary/25'
-                                                : isNext
-                                                  ? 'border-primary/25 bg-primary/10 dark:bg-primary/12'
-                                                  : 'border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/[0.04]',
-                                        )}
-                                    >
-                                        <div className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-500 dark:text-white/55">
-                                            <span>{platformLabels[stream.platform]}</span>
-                                            <span className={isCurrent ? 'text-primary' : 'text-gray-400'}>{isCurrent ? 'En cours' : isNext ? 'A suivre' : 'Programme'}</span>
-                                        </div>
+                                    return (
+                                        <article
+                                            key={stream.id}
+                                            className={cn(
+                                                'rounded-2xl border p-3 transition',
+                                                isCurrent
+                                                    ? 'border-primary/40 bg-primary/15 ring-2 ring-primary/25'
+                                                    : isNext
+                                                      ? 'border-primary/25 bg-primary/10 dark:bg-primary/12'
+                                                      : 'border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/[0.04]',
+                                            )}
+                                        >
+                                            <div className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-500 dark:text-white/55">
+                                                <span>{platformLabels[stream.platform]}</span>
+                                                <span className={isCurrent ? 'text-primary' : 'text-gray-400'}>{isCurrent ? 'En cours' : isNext ? 'A suivre' : 'Programme'}</span>
+                                            </div>
 
-                                        <h4 className={cn('mt-2 line-clamp-2 text-sm font-black leading-snug', isCurrent ? 'text-gray-950 dark:text-white' : 'text-gray-900 dark:text-white')}>
-                                            {stream.title}
-                                        </h4>
+                                            <h4 className={cn('mt-2 line-clamp-2 text-sm font-black leading-snug', isCurrent ? 'text-gray-950 dark:text-white' : 'text-gray-900 dark:text-white')}>
+                                                {stream.title}
+                                            </h4>
 
-                                        <p className="mt-1 text-[11px] text-gray-500 dark:text-white/55">{formatClock(stream.starts_at)}</p>
-                                    </article>
-                                );
-                            })}
-                        </div>
+                                            <p className="mt-1 text-[11px] text-gray-500 dark:text-white/55">{formatClock(stream.starts_at)}</p>
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600 dark:border-white/15 dark:bg-white/[0.03] dark:text-white/65">
+                                Contenu en attente de publication.
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </section>
     );
 }
+

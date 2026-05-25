@@ -1,6 +1,6 @@
 /**
- * Utilitaire centralisé pour la gestion des tokens CSRF
- * Résout les problèmes de "CSRF token mismatch" en production
+ * Centralized CSRF helpers for fetch/XMLHttpRequest uploads.
+ * Cookie token is preferred because it is refreshed after login/logout.
  */
 
 export interface CsrfToken {
@@ -8,36 +8,41 @@ export interface CsrfToken {
     token: string;
 }
 
-/**
- * Récupère le token CSRF depuis la meta tag ou le cookie XSRF-TOKEN
- */
-export function getCsrfToken(): CsrfToken {
+function getMetaCsrfToken(): string {
     if (typeof document === 'undefined') {
-        return { header: null, token: '' };
+        return '';
     }
 
-    // Priorité 1: Meta tag csrf-token (injecté par Laravel Blade)
-    const metaToken = document.querySelector("meta[name='csrf-token']")?.getAttribute('content') ?? '';
+    return document.querySelector("meta[name='csrf-token']")?.getAttribute('content') ?? '';
+}
+
+function getCookieCsrfToken(): string {
+    if (typeof document === 'undefined') {
+        return '';
+    }
+
+    const cookieMatch = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
+    return cookieMatch ? decodeURIComponent(cookieMatch[1]) : '';
+}
+
+export function getCsrfToken(): CsrfToken {
+    const cookieToken = getCookieCsrfToken();
+    if (cookieToken) {
+        return { header: 'X-XSRF-TOKEN', token: cookieToken };
+    }
+
+    const metaToken = getMetaCsrfToken();
     if (metaToken) {
         return { header: 'X-CSRF-TOKEN', token: metaToken };
-    }
-
-    // Priorité 2: Cookie XSRF-TOKEN (utilisé par Sanctum)
-    const cookieMatch = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
-    if (cookieMatch) {
-        return { header: 'X-XSRF-TOKEN', token: decodeURIComponent(cookieMatch[1]) };
     }
 
     return { header: null, token: '' };
 }
 
-/**
- * Retourne les headers nécessaires pour une requête AJAX avec CSRF
- */
 export function getCsrfHeaders(): Record<string, string> {
     const csrf = getCsrfToken();
     const headers: Record<string, string> = {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
     };
 
@@ -49,79 +54,85 @@ export function getCsrfHeaders(): Record<string, string> {
 }
 
 /**
- * Ajoute le token CSRF à un FormData
+ * Only append _token when we rely on the meta token.
+ * If cookie token exists, rely on X-XSRF-TOKEN header only.
  */
 export function appendCsrfToFormData(formData: FormData): void {
-    const csrf = getCsrfToken();
-    if (csrf.token) {
-        formData.append('_token', csrf.token);
+    if (getCookieCsrfToken()) {
+        return;
+    }
+
+    const metaToken = getMetaCsrfToken();
+    if (metaToken && !formData.has('_token')) {
+        formData.append('_token', metaToken);
     }
 }
 
-/**
- * Configure un XMLHttpRequest avec les headers CSRF appropriés
- */
 export function configureCsrfXhr(xhr: XMLHttpRequest): void {
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-    
+
     const csrf = getCsrfToken();
     if (csrf.header && csrf.token) {
         xhr.setRequestHeader(csrf.header, csrf.token);
     }
 }
 
-/**
- * Vérifie si une erreur est une erreur CSRF (code 419)
- */
 export function isCsrfError(status: number): boolean {
     return status === 419;
 }
 
-/**
- * Gère une erreur CSRF en proposant un rechargement de page
- */
 export function handleCsrfError(onError?: (message: string) => void): void {
-    const message = 'Session expirée. La page va se recharger...';
-    
+    const message = 'Session expiree. La page va se recharger...';
+
     if (onError) {
         onError(message);
     } else {
         alert(message);
     }
-    
-    // Recharger la page après un court délai pour obtenir un nouveau token
+
     setTimeout(() => {
         window.location.reload();
     }, 1500);
 }
 
-/**
- * Effectue une requête fetch avec gestion automatique du CSRF
- */
-export async function csrfFetch(
-    url: string,
-    options: RequestInit = {}
-): Promise<Response> {
-    const csrf = getCsrfToken();
-    
-    const headers: Record<string, string> = {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        ...(options.headers as Record<string, string> || {}),
+export async function refreshCsrfCookie(): Promise<void> {
+    try {
+        await fetch('/sanctum/csrf-cookie', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+    } catch {
+        // noop
+    }
+}
+
+export async function csrfFetch(url: string, options: RequestInit = {}): Promise<Response> {
+    const request = async () => {
+        const headers: Record<string, string> = {
+            ...getCsrfHeaders(),
+            ...((options.headers as Record<string, string>) || {}),
+        };
+
+        return fetch(url, {
+            ...options,
+            headers,
+            credentials: 'same-origin',
+        });
     };
 
-    if (csrf.header && csrf.token) {
-        headers[csrf.header] = csrf.token;
+    let response = await request();
+    if (!isCsrfError(response.status)) {
+        return response;
     }
 
-    const response = await fetch(url, {
-        ...options,
-        headers,
-        credentials: 'same-origin',
-    });
+    await refreshCsrfCookie();
+    response = await request();
 
-    // Gestion automatique de l'erreur CSRF
     if (isCsrfError(response.status)) {
         handleCsrfError();
         throw new Error('CSRF token mismatch');
@@ -130,10 +141,6 @@ export async function csrfFetch(
     return response;
 }
 
-/**
- * Upload un fichier avec gestion robuste du CSRF
- * Utilise XMLHttpRequest pour le suivi de progression
- */
 export function uploadFileWithProgress(
     url: string,
     file: File,
@@ -142,7 +149,7 @@ export function uploadFileWithProgress(
         onSuccess?: (response: any) => void;
         onError?: (error: string) => void;
         fieldName?: string;
-    } = {}
+    } = {},
 ): { xhr: XMLHttpRequest; abort: () => void } {
     const { onProgress, onSuccess, onError, fieldName = 'file' } = options;
     const xhr = new XMLHttpRequest();
@@ -154,7 +161,7 @@ export function uploadFileWithProgress(
     xhr.open('POST', url, true);
     xhr.responseType = 'json';
     xhr.withCredentials = true;
-    
+
     configureCsrfXhr(xhr);
 
     xhr.upload.onprogress = (event) => {
@@ -182,7 +189,7 @@ export function uploadFileWithProgress(
     };
 
     xhr.onerror = () => {
-        onError?.('Erreur réseau lors de l\'upload');
+        onError?.('Erreur reseau lors de l\'upload');
     };
 
     xhr.send(formData);

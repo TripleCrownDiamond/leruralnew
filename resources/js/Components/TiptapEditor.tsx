@@ -1,4 +1,4 @@
-import { getCsrfHeaders, getCsrfToken, isCsrfError, handleCsrfError } from '@/lib/csrf';
+import { appendCsrfToFormData, getCsrfHeaders, handleCsrfError, isCsrfError, refreshCsrfCookie } from '@/lib/csrf';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -126,25 +126,33 @@ export default function TiptapEditor({ value, onChange, placeholder, className =
     });
 
     const uploadFile = useCallback(async (file: File) => {
-        const csrf = getCsrfToken();
-        const formData = new FormData();
-        formData.append('file', file);
-        if (csrf.token) {
-            formData.append('_token', csrf.token);
-        }
+        const createFormData = () => {
+            const formData = new FormData();
+            formData.append('file', file);
+            appendCsrfToFormData(formData);
+            return formData;
+        };
 
-        try {
-            const response = await fetch(route('dashboard.media.store', undefined, false), {
+        const executeUpload = (formData: FormData) => {
+            return fetch(route('dashboard.media.store', undefined, false), {
                 method: 'POST',
                 headers: getCsrfHeaders(),
                 body: formData,
                 credentials: 'same-origin',
             });
+        };
 
-            // Gestion spécifique du CSRF token mismatch (419)
+        try {
+            let response = await executeUpload(createFormData());
+
             if (isCsrfError(response.status)) {
-                handleCsrfError();
-                return null;
+                await refreshCsrfCookie();
+                response = await executeUpload(createFormData());
+
+                if (isCsrfError(response.status)) {
+                    handleCsrfError();
+                    return null;
+                }
             }
 
             const data = await response.json();
@@ -459,5 +467,6 @@ function ToolbarButton({ onClick, isActive, disabled, icon, title }: ToolbarButt
         </button>
     );
 }
+
 
 
