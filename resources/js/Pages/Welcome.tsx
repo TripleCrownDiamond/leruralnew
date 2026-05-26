@@ -1,4 +1,4 @@
-﻿import EmptySectionState from '@/Components/EmptySectionState';
+import EmptySectionState from '@/Components/EmptySectionState';
 import JournalShelf from '@/Components/JournalShelf';
 import AuthModal from '@/Components/AuthModal';
 import HomeCategorySection from '@/Components/HomeCategorySection';
@@ -111,11 +111,13 @@ export default function Welcome() {
     const hasActiveSubscription = Boolean(props.auth?.has_active_subscription);
     const isElevatedUser = Boolean(authUser && ['admin', 'editor'].includes(String(authUser.role ?? '')));
     const isAdminUser = Boolean(authUser && String(authUser.role ?? '') === 'admin');
-    const featured = props.featured ?? [];
+    const rawFeatured = props.featured ?? [];
+    const latestArticles = props.latest_articles ?? [];
+    const featured = rawFeatured.length > 0 ? rawFeatured : latestArticles.slice(0, 5);
     const latestByCategory = props.latest_by_category ?? {};
     const categorySections = Object.entries(latestByCategory).filter(([, category]) => category.articles.length > 0);
     const hasCategoryContent = categorySections.length > 0;
-    const topQuickArticles = (props.latest_articles ?? []).slice(0, 10);
+    const topQuickArticles = latestArticles.slice(0, 10);
 
     const categoryNameMap: Record<string, string> = {
         economy: 'Economie',
@@ -744,24 +746,4 @@ export default function Welcome() {
         </MainLayout>
     );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
