@@ -20,6 +20,10 @@ class CategoryController extends AdminController
             $query->where(function ($q) use ($search, $columns) {
                 $q->where('name_fr', 'like', "%{$search}%");
 
+                if (in_array('name_en', $columns, true)) {
+                    $q->orWhere('name_en', 'like', "%{$search}%");
+                }
+
                 if (in_array('description_fr', $columns, true)) {
                     $q->orWhere('description_fr', 'like', "%{$search}%");
                 }
@@ -54,9 +58,10 @@ class CategoryController extends AdminController
     public function store(Request $request)
     {
         $validated = $request->validate($this->rules());
-        $validated['slug'] = Str::slug($validated['name_fr']);
+        $payload = $this->normalizePayload($validated);
+        $payload['slug'] = Str::slug($payload['name_fr']);
 
-        Category::create($validated);
+        Category::create($payload);
 
         return redirect()->route('dashboard.categories.index')->with('success', 'Categorie creee avec succes');
     }
@@ -71,9 +76,10 @@ class CategoryController extends AdminController
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate($this->rules());
-        $validated['slug'] = Str::slug($validated['name_fr']);
+        $payload = $this->normalizePayload($validated);
+        $payload['slug'] = Str::slug($payload['name_fr']);
 
-        $category->update($validated);
+        $category->update($payload);
 
         return redirect()->route('dashboard.categories.index')->with('success', 'Categorie mise a jour avec succes');
     }
@@ -96,6 +102,10 @@ class CategoryController extends AdminController
 
         $columns = $this->categoryColumns();
 
+        if (in_array('name_en', $columns, true)) {
+            $rules['name_en'] = 'nullable|string|max:255';
+        }
+
         if (in_array('description_fr', $columns, true)) {
             $rules['description_fr'] = 'nullable|string';
         }
@@ -113,6 +123,20 @@ class CategoryController extends AdminController
         }
 
         return $rules;
+    }
+
+    private function normalizePayload(array $validated): array
+    {
+        $columns = $this->categoryColumns();
+
+        if (in_array('name_en', $columns, true)) {
+            $nameEn = trim((string) ($validated['name_en'] ?? ''));
+            $validated['name_en'] = $nameEn !== '' ? $nameEn : (string) $validated['name_fr'];
+        } else {
+            unset($validated['name_en']);
+        }
+
+        return $validated;
     }
 
     private function categoryColumns(): array

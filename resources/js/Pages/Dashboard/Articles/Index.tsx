@@ -1,4 +1,3 @@
-
 import AdminCard, { AdminEmptyState, AdminStatusPill } from '@/Components/Dashboard/AdminCard';
 import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
@@ -292,7 +291,7 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                 <AdminSearchBar
                     value={search}
                     onChange={setSearch}
-                    placeholder="Rechercher un titre, un extrait ou un auteur..."
+                    placeholder="Rechercher un article..."
                     filters={
                         <div className="flex gap-1 rounded-full border border-gray-200 bg-gray-50 p-1 text-[10px] font-black uppercase tracking-[0.14em] dark:border-white/10 dark:bg-white/5">
                             {[
@@ -319,13 +318,13 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                     trailing={
                         <div className="flex flex-wrap items-center gap-2">
                             <FilterSelect value={typeFilter} onChange={setTypeFilter}>
-                                <option value="all">Tous les acces</option>
+                                <option value="all">Acces: tous</option>
                                 <option value="free">Gratuit</option>
                                 <option value="premium">Premium</option>
                             </FilterSelect>
 
                             <FilterSelect value={categoryFilter} onChange={setCategoryFilter}>
-                                <option value="all">Toutes rubriques</option>
+                                <option value="all">Rubriques: toutes</option>
                                 {categories.map((category) => (
                                     <option key={category.id} value={String(category.id)}>
                                         {category.name_fr}
@@ -454,7 +453,7 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                                             size="icon"
                                                             icon={copiedArticleId === article.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                                                             onClick={() => copyArticleLink(article.slug, article.id)}
-                                                            title={copiedArticleId === article.id ? 'Lien copié' : 'Copier le lien'}
+                                                            title={copiedArticleId === article.id ? 'Lien copie' : 'Copier le lien'}
                                                         />
                                                         <AdminLinkButton
                                                             href={route('article.show', article.slug)}
@@ -649,7 +648,7 @@ function FilterSelect({
         <select
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            className="h-9 rounded-xl border border-gray-200 bg-gray-50 px-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-700 outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/80"
+            className="admin-filter-select h-11 min-w-[170px] rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-white/10 dark:bg-gray-900 dark:text-gray-100"
         >
             {children}
         </select>
@@ -679,7 +678,4 @@ function AccessBadge({ premium, price }: { premium: boolean; price?: number | nu
         </AdminStatusPill>
     );
 }
-
-
-
 

@@ -1,5 +1,5 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     ArrowLeft,
@@ -35,12 +35,25 @@ interface Poll {
 
 export default function Results({ poll }: { poll: Poll }) {
     const [isExporting, setIsExporting] = useState(false);
+    const resolvePollExportUrl = (format: 'csv' | 'excel' | 'pdf') => {
+        const exportFormat = format === 'excel' ? 'csv' : format;
+
+        try {
+            const routeHelper = route();
+            if (typeof routeHelper?.has === 'function' && routeHelper.has('dashboard.polls.export')) {
+                return route('dashboard.polls.export', { poll: poll.id, format: exportFormat });
+            }
+        } catch {
+            // Ignore Ziggy errors and fallback to static URL.
+        }
+
+        return `/dashboard/polls/${poll.id}/export?format=${exportFormat}`;
+    };
 
     const handleExport = (format: 'csv' | 'excel' | 'pdf') => {
         setIsExporting(true);
-        router.visit(route('dashboard.polls.export', { id: poll.id, format }), {
-            onFinish: () => setIsExporting(false),
-        });
+        window.location.href = resolvePollExportUrl(format);
+        window.setTimeout(() => setIsExporting(false), 1200);
     };
 
     const pct = (votes: number) =>

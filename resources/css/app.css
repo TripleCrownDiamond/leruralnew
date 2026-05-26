@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Poppins:wght@300;400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Poppins:wght@300;400;600;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -113,3 +113,22 @@
   display: none;
 }
 
+
+@layer components {
+  .admin-filter-select option {
+    color: rgb(17 24 39);
+    background-color: rgb(255 255 255);
+  }
+}
+
+
+@layer components {
+  .dark .admin-filter-select {
+    color-scheme: dark;
+  }
+
+  .dark .admin-filter-select option {
+    color: rgb(243 244 246);
+    background-color: rgb(17 24 39);
+  }
+}

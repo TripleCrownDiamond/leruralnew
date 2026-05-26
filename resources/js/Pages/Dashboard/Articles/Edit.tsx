@@ -672,7 +672,7 @@ export default function Edit({ article, categories }: Props) {
 
 
 
-                                {publicationMode === 'scheduled' ? 'Programmer la mise a jour' : publicationMode === 'now' ? 'Mettre a jour maintenant' : 'Enregistrer brouillon'}
+                                {publicationMode === 'scheduled' ? 'Programmer' : publicationMode === 'now' ? 'Mettre a jour' : 'Brouillon'}
 
 
 
@@ -1168,7 +1168,7 @@ export default function Edit({ article, categories }: Props) {
 
 
 
-                                    <div className="grid gap-2 sm:grid-cols-3">
+                                    <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
 
 
 
@@ -1184,7 +1184,7 @@ export default function Edit({ article, categories }: Props) {
 
 
 
-                                            className={`rounded-xl border px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] transition-colors ${
+                                            className={`rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] leading-tight text-center transition-colors ${
 
 
 
@@ -1228,7 +1228,7 @@ export default function Edit({ article, categories }: Props) {
 
 
 
-                                            className={`rounded-xl border px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] transition-colors ${
+                                            className={`rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] leading-tight text-center transition-colors ${
 
 
 
@@ -1272,7 +1272,7 @@ export default function Edit({ article, categories }: Props) {
 
 
 
-                                            className={`rounded-xl border px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] transition-colors ${
+                                            className={`rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] leading-tight text-center transition-colors ${
 
 
 
@@ -2093,26 +2093,4 @@ function EditorModeButton({
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
