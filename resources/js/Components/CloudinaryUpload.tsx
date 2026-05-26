@@ -1,7 +1,7 @@
 import ImageWithFallback from '@/Components/ImageWithFallback';
-import { appendCsrfToFormData, configureCsrfXhr, handleCsrfError, isCsrfError } from '@/lib/csrf';
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { appendCsrfToFormData, csrfFetch } from '@/lib/csrf';
 import { Check, Loader2, Search, Upload, X } from 'lucide-react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 
 interface MediaItem {
     id: number;
@@ -44,8 +44,6 @@ export default function CloudinaryUpload({
         setSelectedAssetUrl(defaultImage || null);
     }, [defaultImage]);
 
-    
-
     const stopProgressTicker = () => {
         if (progressTimerRef.current !== null) {
             window.clearInterval(progressTimerRef.current);
@@ -53,13 +51,16 @@ export default function CloudinaryUpload({
         }
     };
 
-    useEffect(() => () => {
-        stopProgressTicker();
-        if (previewUrlRef.current) {
-            URL.revokeObjectURL(previewUrlRef.current);
-            previewUrlRef.current = null;
-        }
-    }, []);
+    useEffect(
+        () => () => {
+            stopProgressTicker();
+            if (previewUrlRef.current) {
+                URL.revokeObjectURL(previewUrlRef.current);
+                previewUrlRef.current = null;
+            }
+        },
+        [],
+    );
 
     const startProgressTicker = () => {
         stopProgressTicker();
@@ -136,52 +137,23 @@ export default function CloudinaryUpload({
 
         const uploadUrl = route('dashboard.media.store', undefined, false);
 
-                try {
+        try {
             const formData = new FormData();
             formData.append('file', file);
             appendCsrfToFormData(formData);
 
-            const payload = await new Promise<any>((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', uploadUrl, true);
-                xhr.responseType = 'json';
-                xhr.withCredentials = true;
-                configureCsrfXhr(xhr);
-
-                xhr.upload.onprogress = (event) => {
-                    if (!event.lengthComputable) {
-                        return;
-                    }
-
-                    const pct = Math.max(1, Math.min(95, Math.round((event.loaded / event.total) * 100)));
-                    setProgress(pct);
-                };
-
-                                xhr.onload = () => {
-                    const status = xhr.status ?? 0;
-                    
-                    // Gestion spécifique du CSRF token mismatch (419)
-                    if (isCsrfError(status)) {
-                        handleCsrfError((msg) => setError(msg));
-                        reject(new Error('Session expirée'));
-                        return;
-                    }
-                    
-                    if (status < 200 || status >= 300) {
-                        const message = xhr.response?.message || `Erreur upload (${status})`;
-                        reject(new Error(message));
-                        return;
-                    }
-
-                    resolve(xhr.response ?? {});
-                };
-
-                xhr.onerror = () => reject(new Error('Erreur upload'));
-                xhr.send(formData);
+            const response = await csrfFetch(uploadUrl, {
+                method: 'POST',
+                body: formData,
             });
 
-            const url = payload?.asset?.url || payload?.url;
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const message = payload?.message || `Erreur upload (${response.status})`;
+                throw new Error(message);
+            }
 
+            const url = payload?.asset?.url || payload?.url;
             if (!url) {
                 throw new Error('Lien media introuvable apres upload.');
             }
@@ -267,8 +239,8 @@ export default function CloudinaryUpload({
                         error
                             ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/10'
                             : image
-                                ? 'border-primary/30 bg-primary/5 dark:border-primary/40 dark:bg-primary/10'
-                                : 'border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-white/20 dark:bg-gray-900 dark:hover:bg-gray-800'
+                              ? 'border-primary/30 bg-primary/5 dark:border-primary/40 dark:bg-primary/10'
+                              : 'border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-white/20 dark:bg-gray-900 dark:hover:bg-gray-800'
                     }`}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
@@ -396,6 +368,4 @@ export default function CloudinaryUpload({
         </div>
     );
 }
-
-
 

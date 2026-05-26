@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class MediaUploadService
 {
@@ -451,7 +452,11 @@ class MediaUploadService
     private function storeOnPublicDisk(array $prepared, string $folder): array
     {
         $relativePath = trim($folder, '/') . '/' . Str::uuid()->toString() . '.' . $prepared['extension'];
-        Storage::disk('public')->put($relativePath, $prepared['contents']);
+        $stored = Storage::disk('public')->put($relativePath, $prepared['contents']);
+
+        if ($stored === false) {
+            throw new RuntimeException('Echec de stockage sur le disque public. Verifiez le lien storage et les permissions.');
+        }
 
         return [
             'disk' => 'public',
@@ -627,8 +632,4 @@ class MediaUploadService
         return 'other';
     }
 }
-
-
-
-
 

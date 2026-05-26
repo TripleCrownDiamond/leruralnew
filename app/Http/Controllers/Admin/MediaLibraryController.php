@@ -86,30 +86,44 @@ class MediaLibraryController extends AdminController
             'file' => ['required', 'file', 'max:25600'],
         ]);
 
-        $file = $validated['file'];
-        $result = $this->mediaUploadService->upload($file, 'media-library', [
-            'max_width' => 1800,
-            'quality' => 84,
-            'user_id' => $request->user()?->id,
-        ]);
+        try {
+            $file = $validated['file'];
+            $result = $this->mediaUploadService->upload($file, 'media-library', [
+                'max_width' => 1800,
+                'quality' => 84,
+                'user_id' => $request->user()?->id,
+            ]);
 
-        $asset = null;
-        if (!empty($result['asset_id'])) {
-            $asset = MediaAsset::query()->find($result['asset_id']);
+            $asset = null;
+            if (!empty($result['asset_id'])) {
+                $asset = MediaAsset::query()->find($result['asset_id']);
+            }
+
+            if (!$asset && !empty($result['url'])) {
+                $asset = MediaAsset::query()->where('url', (string) $result['url'])->latest('id')->first();
+            }
+
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'asset' => $asset,
+                    'url' => $result['url'] ?? null,
+                ], 201);
+            }
+
+            return back()->with('success', 'Media charge avec succes.');
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Upload impossible. Verifiez la configuration persistent/storage et les permissions.',
+                ], 500);
+            }
+
+            return back()->withErrors([
+                'file' => 'Upload impossible. Verifiez la configuration persistent/storage et les permissions.',
+            ]);
         }
-
-        if (!$asset && !empty($result['url'])) {
-            $asset = MediaAsset::query()->where('url', (string) $result['url'])->latest('id')->first();
-        }
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'asset' => $asset,
-                'url' => $result['url'] ?? null,
-            ], 201);
-        }
-
-        return back()->with('success', 'Media charge avec succes.');
     }
 
     public function destroy(Request $request, MediaAsset $media)
@@ -197,3 +211,5 @@ class MediaLibraryController extends AdminController
         $query->where('kind', $kind);
     }
 }
+
+
