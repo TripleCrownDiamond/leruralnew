@@ -81,6 +81,12 @@ type PlaybackItem = {
     kind: 'jingle' | 'emission';
 };
 
+type PlaybackCursor = {
+    index: number;
+    startOffsetSeconds: number;
+    slotStartedAt: number;
+};
+
 const platformLabels: Record<string, string> = {
     youtube: 'YouTube',
 
@@ -301,6 +307,108 @@ function resolveLivePlayerUrl(
     return resolvePlayableSourceUrl(source);
 }
 
+function getPlaybackDurationMs(
+    item: PlaybackItem,
+    jingleDurationSeconds: number,
+    emissionDurationSeconds: number,
+): number {
+    const rawDurationSeconds =
+        item.kind === 'emission'
+            ? emissionDurationSeconds
+            : jingleDurationSeconds;
+
+    const safeDurationSeconds = Number.isFinite(rawDurationSeconds)
+        ? Math.max(1, Math.floor(rawDurationSeconds))
+        : 90;
+
+    return safeDurationSeconds * 1000;
+}
+
+function resolveSynchronizedPlaybackCursor(
+    queue: PlaybackItem[],
+    jingleDurationSeconds: number,
+    emissionDurationSeconds: number,
+    nowMs: number,
+): PlaybackCursor {
+    if (queue.length === 0) {
+        return {
+            index: 0,
+            startOffsetSeconds: 0,
+            slotStartedAt: nowMs,
+        };
+    }
+
+    const slotDurations = queue.map((item) =>
+        getPlaybackDurationMs(item, jingleDurationSeconds, emissionDurationSeconds),
+    );
+    const cycleDuration = slotDurations.reduce(
+        (acc, duration) => acc + duration,
+        0,
+    );
+
+    if (cycleDuration <= 0) {
+        return {
+            index: 0,
+            startOffsetSeconds: 0,
+            slotStartedAt: nowMs,
+        };
+    }
+
+    const anchorMs = Date.UTC(2024, 0, 1, 0, 0, 0);
+    const elapsedSinceAnchor =
+        ((nowMs - anchorMs) % cycleDuration + cycleDuration) % cycleDuration;
+
+    let cursor = elapsedSinceAnchor;
+    let accumulated = 0;
+
+    for (let index = 0; index < slotDurations.length; index += 1) {
+        const slotDuration = slotDurations[index];
+
+        if (cursor < slotDuration) {
+            return {
+                index,
+                startOffsetSeconds: Math.max(0, Math.floor(cursor / 1000)),
+                slotStartedAt: nowMs - cursor,
+            };
+        }
+
+        cursor -= slotDuration;
+        accumulated += slotDuration;
+    }
+
+    return {
+        index: 0,
+        startOffsetSeconds: 0,
+        slotStartedAt: nowMs - accumulated,
+    };
+}
+
+function withYouTubeStartOffset(
+    embedUrl: string,
+    startOffsetSeconds: number,
+): string {
+    const safeOffset = Math.max(0, Math.floor(startOffsetSeconds));
+
+    if (safeOffset <= 0) {
+        return embedUrl;
+    }
+
+    try {
+        const baseOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://lerural.bj';
+        const parsed = new URL(embedUrl, baseOrigin);
+
+        if (!parsed.hostname.includes('youtube.com')) {
+            return embedUrl;
+        }
+
+        parsed.searchParams.set('start', String(safeOffset));
+
+        return parsed.toString();
+    } catch {
+        return embedUrl;
+    }
+}
+
 function buildFallbackPlayback(url: string): PlaybackItem {
     const source = url.trim() || 'https://www.youtube.com/playlist?list=PLbG50jPcxecnHpAmGv6XBaQ4mgbPyRAN5';
     const videoId = extractYouTubeId(source);
@@ -361,7 +469,11 @@ export default function LiveIndex() {
 
     const [now, setNow] = useState(() => Date.now());
 
-    const [playbackIndex, setPlaybackIndex] = useState(0);
+    const [playbackCursor, setPlaybackCursor] = useState<PlaybackCursor>(() => ({
+        index: 0,
+        startOffsetSeconds: 0,
+        slotStartedAt: Date.now(),
+    }));
 
     const [playerReady, setPlayerReady] = useState(false);
     const [playerError, setPlayerError] = useState(false);
@@ -425,35 +537,50 @@ export default function LiveIndex() {
 
     const activePlaybackQueue = defaultPlaybackQueue;
 
-    useEffect(() => {
-        if (activePlaybackQueue.length === 0) {
-            setPlaybackIndex(0);
-
-            return;
-        }
-
-        setPlaybackIndex((current) => current % activePlaybackQueue.length);
-    }, [activePlaybackQueue.length]);
-
-        const jingleDurationSeconds = Number(props.settings?.live_jingle_duration_seconds) || 90;
+    const jingleDurationSeconds =
+        Number(props.settings?.live_jingle_duration_seconds) || 90;
     const emissionDurationSeconds = Number(props.settings?.live_emission_duration_seconds) || 720;
+
+    useEffect(() => {
+        setPlaybackCursor(
+            resolveSynchronizedPlaybackCursor(
+                activePlaybackQueue,
+                jingleDurationSeconds,
+                emissionDurationSeconds,
+                Date.now(),
+            ),
+        );
+    }, [
+        activePlaybackQueue,
+        emissionDurationSeconds,
+        jingleDurationSeconds,
+    ]);
 
     useEffect(() => {
         if (activePlaybackQueue.length <= 1) {
             return;
         }
 
-        const activePlayback = activePlaybackQueue[playbackIndex] ?? fallbackPlayback;
-        const rotationMs =
-            activePlayback.kind === 'emission'
-                ? emissionDurationSeconds * 1000
-                : jingleDurationSeconds * 1000;
+        const activePlayback =
+            activePlaybackQueue[playbackCursor.index] ?? fallbackPlayback;
+        const slotDurationMs = getPlaybackDurationMs(
+            activePlayback,
+            jingleDurationSeconds,
+            emissionDurationSeconds,
+        );
+        const elapsedMs = Math.max(
+            0,
+            Date.now() - playbackCursor.slotStartedAt,
+        );
+        const remainingMs = Math.max(1000, slotDurationMs - elapsedMs);
 
         const timer = window.setTimeout(() => {
-            setPlaybackIndex(
-                (current) => (current + 1) % activePlaybackQueue.length,
-            );
-        }, rotationMs);
+            setPlaybackCursor((current) => ({
+                index: (current.index + 1) % activePlaybackQueue.length,
+                startOffsetSeconds: 0,
+                slotStartedAt: Date.now(),
+            }));
+        }, remainingMs);
 
         return () => window.clearTimeout(timer);
     }, [
@@ -461,7 +588,8 @@ export default function LiveIndex() {
         emissionDurationSeconds,
         fallbackPlayback,
         jingleDurationSeconds,
-        playbackIndex,
+        playbackCursor.index,
+        playbackCursor.slotStartedAt,
     ]);
 
     const liveNow = useMemo(
@@ -585,14 +713,28 @@ export default function LiveIndex() {
     const currentProgramId = liveNow?.id ?? null;
 
     const activePlayback =
-        activePlaybackQueue[playbackIndex] ?? fallbackPlayback;
+        activePlaybackQueue[playbackCursor.index] ?? fallbackPlayback;
+
+    const scheduledPlaybackUrl = useMemo(() => {
+        if (!activePlayback?.embedUrl) {
+            return activePlayback?.embedUrl;
+        }
+
+        return withYouTubeStartOffset(
+            activePlayback.embedUrl,
+            playbackCursor.startOffsetSeconds,
+        );
+    }, [
+        activePlayback?.embedUrl,
+        playbackCursor.startOffsetSeconds,
+    ]);
 
     const replayPlayerUrl = selectedReplayUrl;
 
     const heroPlayerUrl =
         resolveLivePlayerUrl(liveNow, 'live') ||
         replayPlayerUrl ||
-        activePlayback.embedUrl;
+        scheduledPlaybackUrl;
 
     const heroStream =
         liveNow ??
@@ -756,7 +898,11 @@ export default function LiveIndex() {
                                                         setSelectedReplayUrl(null);
                                                         setPlayerError(false);
                                                         // Force switch to next in queue
-                                                        setPlaybackIndex((current) => (current + 1) % activePlaybackQueue.length);
+                                                        setPlaybackCursor((current) => ({
+                                                            index: (current.index + 1) % activePlaybackQueue.length,
+                                                            startOffsetSeconds: 0,
+                                                            slotStartedAt: Date.now(),
+                                                        }));
                                                     }}
                                                     className="rounded-full border border-white/20 px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-white transition hover:bg-white/10"
                                                 >
@@ -1034,4 +1180,6 @@ export default function LiveIndex() {
         </MainLayout>
     );
 }
+
+
 

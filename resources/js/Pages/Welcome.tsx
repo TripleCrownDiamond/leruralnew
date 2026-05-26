@@ -719,7 +719,7 @@ export default function Welcome() {
                 <div id="home-direct" ref={liveSectionRef} className="mt-10 animate-in fade-in slide-in-from-bottom-2 duration-700 md:mt-12">
                     {mountLive && (
                         <Suspense fallback={<div className="mx-4 mb-10 h-[260px] animate-pulse rounded-3xl bg-primary/10" />}>
-                            <LazyLiveStreamsSection streams={liveStreams} emissions={emissions} fallbackVideoUrl={settings.live_fallback_video_url ?? null} />
+                            <LazyLiveStreamsSection streams={liveStreams} emissions={emissions} fallbackVideoUrl={settings.live_fallback_video_url ?? null} jingleDurationSeconds={Number(settings.live_jingle_duration_seconds) || 90} />
                         </Suspense>
                     )}
                 </div>
@@ -746,4 +746,5 @@ export default function Welcome() {
         </MainLayout>
     );
 }
+
 

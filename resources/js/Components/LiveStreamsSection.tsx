@@ -147,15 +147,40 @@ function resolveLivePlayerUrl(stream?: LiveStream | null): string | null {
     return resolvePlayableSourceUrl(stream.embed_url || stream.stream_url || null);
 }
 
+function withYouTubeStartOffset(embedUrl: string, startOffsetSeconds: number): string {
+    const safeOffset = Math.max(0, Math.floor(startOffsetSeconds));
+
+    if (safeOffset <= 0) {
+        return embedUrl;
+    }
+
+    try {
+        const baseOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://lerural.bj';
+        const parsed = new URL(embedUrl, baseOrigin);
+
+        if (!parsed.hostname.includes('youtube.com')) {
+            return embedUrl;
+        }
+
+        parsed.searchParams.set('start', String(safeOffset));
+
+        return parsed.toString();
+    } catch {
+        return embedUrl;
+    }
+}
+
 export default function LiveStreamsSection({
     streams,
     emissions = [],
     fallbackVideoUrl = null,
+    jingleDurationSeconds = 90,
     className,
 }: {
     streams: LiveStream[];
     emissions?: EmissionSource[];
     fallbackVideoUrl?: string | null;
+    jingleDurationSeconds?: number;
     className?: string;
 }) {
     const [now, setNow] = useState(() => Date.now());
@@ -206,13 +231,27 @@ export default function LiveStreamsSection({
         return fallbackVideoUrl || emissionFallback || DEFAULT_CONTINUOUS_PLAYLIST_URL;
     }, [emissions, fallbackVideoUrl]);
 
+    const fallbackStartOffsetSeconds = useMemo(() => {
+        const duration = Math.max(1, Math.floor(Number(jingleDurationSeconds) || 90));
+        const anchorMs = Date.UTC(2024, 0, 1, 0, 0, 0);
+        const elapsedSeconds = Math.floor((Date.now() - anchorMs) / 1000);
+
+        return ((elapsedSeconds % duration) + duration) % duration;
+    }, [jingleDurationSeconds]);
+
     const previewEmbedUrl = useMemo(() => {
         if (currentStream) {
             return resolveLivePlayerUrl(currentStream);
         }
 
-        return resolvePlayableSourceUrl(fallbackPreviewSource);
-    }, [currentStream, fallbackPreviewSource]);
+        const fallbackEmbed = resolvePlayableSourceUrl(fallbackPreviewSource);
+
+        if (!fallbackEmbed) {
+            return null;
+        }
+
+        return withYouTubeStartOffset(fallbackEmbed, fallbackStartOffsetSeconds);
+    }, [currentStream, fallbackPreviewSource, fallbackStartOffsetSeconds]);
 
     const previewLabel = currentStream ? 'Apercu live actif' : 'Apercu direct';
 
@@ -345,4 +384,6 @@ export default function LiveStreamsSection({
         </section>
     );
 }
+
+
 
