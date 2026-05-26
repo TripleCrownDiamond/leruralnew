@@ -121,3 +121,14 @@
   }
 }
 
+
+@layer components {
+  .dark .admin-filter-select {
+    color-scheme: dark;
+  }
+
+  .dark .admin-filter-select option {
+    color: rgb(243 244 246);
+    background-color: rgb(17 24 39);
+  }
+}

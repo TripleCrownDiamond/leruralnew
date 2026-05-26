@@ -105,12 +105,16 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
         );
     };
 
-    const handleApprove = (commentId: number) => {
-        router.post(route('dashboard.comments.approve', commentId), {}, { preserveScroll: true });
+    const handleApprove = (comment: Comment) => {
+        if (comment.is_approved) return;
+
+        router.post(route('dashboard.comments.approve', comment.id), {}, { preserveScroll: true });
     };
 
-    const handleReject = (commentId: number) => {
-        router.post(route('dashboard.comments.reject', commentId), {}, { preserveScroll: true });
+    const handleReject = (comment: Comment) => {
+        if (!comment.is_approved) return;
+
+        router.post(route('dashboard.comments.reject', comment.id), {}, { preserveScroll: true });
     };
 
     const handleDelete = (commentId: number) => {
@@ -123,12 +127,16 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
     };
 
     const handleBulkApprove = () => {
-        if (!selectedComments.length) return;
+        const commentIds = comments.data
+            .filter((comment) => selectedComments.includes(comment.id) && !comment.is_approved)
+            .map((comment) => comment.id);
 
-        if (confirm(`Approuver ${selectedComments.length} commentaire(s) ?`)) {
+        if (!commentIds.length) return;
+
+        if (confirm(`Approuver ${commentIds.length} commentaire(s) ?`)) {
             router.post(
                 route('dashboard.comments.bulk-approve'),
-                { comment_ids: selectedComments },
+                { comment_ids: commentIds },
                 {
                     preserveScroll: true,
                     onSuccess: () => setSelectedComments([]),
@@ -138,12 +146,16 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
     };
 
     const handleBulkReject = () => {
-        if (!selectedComments.length) return;
+        const commentIds = comments.data
+            .filter((comment) => selectedComments.includes(comment.id) && comment.is_approved)
+            .map((comment) => comment.id);
 
-        if (confirm(`Rejeter ${selectedComments.length} commentaire(s) ?`)) {
+        if (!commentIds.length) return;
+
+        if (confirm(`Rejeter ${commentIds.length} commentaire(s) ?`)) {
             router.post(
                 route('dashboard.comments.bulk-reject'),
-                { comment_ids: selectedComments },
+                { comment_ids: commentIds },
                 {
                     preserveScroll: true,
                     onSuccess: () => setSelectedComments([]),
@@ -201,6 +213,16 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
         return { approved, flagged, pending };
     }, [comments.data]);
 
+    const bulkApprovableCount = useMemo(
+        () => comments.data.filter((comment) => selectedComments.includes(comment.id) && !comment.is_approved).length,
+        [comments.data, selectedComments],
+    );
+
+    const bulkRejectableCount = useMemo(
+        () => comments.data.filter((comment) => selectedComments.includes(comment.id) && comment.is_approved).length,
+        [comments.data, selectedComments],
+    );
+
     return (
         <DashboardLayout title="Commentaires">
             <Head title="Commentaires" />
@@ -222,8 +244,9 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                         size="sm"
                                         icon={<CheckCircle2 className="h-3.5 w-3.5" />}
                                         onClick={handleBulkApprove}
+                                        disabled={bulkApprovableCount === 0}
                                     >
-                                        Approuver ({selectedComments.length})
+                                        Approuver ({bulkApprovableCount})
                                     </AdminButton>
                                     <AdminButton
                                         type="button"
@@ -231,8 +254,9 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                         size="sm"
                                         icon={<XCircle className="h-3.5 w-3.5" />}
                                         onClick={handleBulkReject}
+                                        disabled={bulkRejectableCount === 0}
                                     >
-                                        Rejeter ({selectedComments.length})
+                                        Rejeter ({bulkRejectableCount})
                                     </AdminButton>
                                     <AdminButton
                                         type="button"
@@ -340,6 +364,8 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                             const authorName = comment.user?.name || comment.author_name || 'Anonyme';
                                             const authorEmail = comment.user?.email || comment.author_email || '-';
                                             const articleTitle = comment.article?.title_fr || 'Article supprime';
+                                            const canApprove = !comment.is_approved;
+                                            const canReject = comment.is_approved;
 
                                             return (
                                                 <tr
@@ -377,16 +403,18 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                                                 variant="secondary"
                                                                 size="icon"
                                                                 icon={<CheckCircle2 className="h-4 w-4" />}
-                                                                onClick={() => handleApprove(comment.id)}
-                                                                title="Approuver"
+                                                                onClick={() => handleApprove(comment)}
+                                                                disabled={!canApprove}
+                                                                title={canApprove ? "Approuver" : "Deja approuve"}
                                                             />
                                                             <AdminButton
                                                                 type="button"
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 icon={<XCircle className="h-4 w-4" />}
-                                                                onClick={() => handleReject(comment.id)}
-                                                                title="Rejeter"
+                                                                onClick={() => handleReject(comment)}
+                                                                disabled={!canReject}
+                                                                title={canReject ? "Rejeter" : "Deja en attente"}
                                                             />
                                                             <AdminButton
                                                                 type="button"
@@ -474,7 +502,7 @@ function FilterSelect({ value, onChange, children }: { value: string; onChange: 
         <select
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            className="h-9 rounded-xl border border-gray-200 bg-gray-50 px-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-700 outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/80"
+            className="admin-filter-select h-9 rounded-xl border border-gray-200 bg-gray-50 px-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-700 outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10 dark:border-white/10 dark:bg-gray-900 dark:text-gray-100"
         >
             {children}
         </select>

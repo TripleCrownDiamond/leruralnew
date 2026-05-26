@@ -85,6 +85,12 @@ const emptyForm = {
     is_active: true,
 };
 
+const formatDatetimeLocal = (date: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 const toDatetimeLocal = (value?: string | null) => {
     if (!value) {
         return '';
@@ -96,9 +102,29 @@ const toDatetimeLocal = (value?: string | null) => {
         return '';
     }
 
-    const pad = (n: number) => String(n).padStart(2, '0');
+    return formatDatetimeLocal(date);
+};
 
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+const buildDefaultSchedule = () => {
+    const now = new Date();
+    now.setSeconds(0, 0);
+
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
+
+    return {
+        starts_at: formatDatetimeLocal(now),
+        ends_at: formatDatetimeLocal(end),
+    };
+};
+
+const addOneHour = (datetimeLocal: string) => {
+    const date = new Date(datetimeLocal);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return formatDatetimeLocal(new Date(date.getTime() + 60 * 60 * 1000));
 };
 
 const toDateKey = (value?: string | null) => {
@@ -204,7 +230,11 @@ export default function Index({ liveStreams }: { liveStreams: LiveStream[] }) {
         props.settings?.live_fallback_video_url?.trim() ||
         'https://www.youtube.com/playlist?list=PLbG50jPcxecnHpAmGv6XBaQ4mgbPyRAN5';
 
-    const form = useForm({ ...(emptyForm as any), id: null as number | null });
+    const form = useForm({
+        ...(emptyForm as any),
+        ...buildDefaultSchedule(),
+        id: null as number | null,
+    });
 
     const isEditing = Boolean(form.data.id);
 
@@ -297,11 +327,21 @@ export default function Index({ liveStreams }: { liveStreams: LiveStream[] }) {
     }, [liveStreams]);
 
     const resetForm = () => {
-        form.reset();
-
         form.clearErrors();
 
-        form.setData({ ...(emptyForm as any), id: null });
+        form.setData({
+            ...(emptyForm as any),
+            ...buildDefaultSchedule(),
+            id: null,
+        });
+    };
+
+    const applyCurrentSchedule = () => {
+        form.clearErrors('starts_at', 'ends_at');
+        form.setData({
+            ...form.data,
+            ...buildDefaultSchedule(),
+        });
     };
 
     const startEdit = (stream: LiveStream) => {
@@ -709,53 +749,75 @@ export default function Index({ liveStreams }: { liveStreams: LiveStream[] }) {
                                 />
                             </div>
 
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label className="mb-1 block text-sm font-semibold">
-                                        Debut
-                                    </label>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-sm font-semibold">Horaires</p>
 
-                                    <input
-                                        type="datetime-local"
-                                        value={form.data.starts_at}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'starts_at',
-
-                                                e.target.value,
-                                            )
-                                        }
-                                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-gray-950"
-                                    />
-
-                                    <InputError
-                                        message={form.errors.starts_at}
-                                        className="mt-1"
-                                    />
+                                    <button
+                                        type="button"
+                                        onClick={applyCurrentSchedule}
+                                        className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-primary transition hover:bg-primary/15"
+                                    >
+                                        Maintenant +1h
+                                    </button>
                                 </div>
 
-                                <div>
-                                    <label className="mb-1 block text-sm font-semibold">
-                                        Fin
-                                    </label>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label className="mb-1 block text-sm font-semibold">
+                                            Debut
+                                        </label>
 
-                                    <input
-                                        type="datetime-local"
-                                        value={form.data.ends_at}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'ends_at',
+                                        <input
+                                            type="datetime-local"
+                                            value={form.data.starts_at}
+                                            onChange={(e) => {
+                                                const nextStart = e.target.value;
+                                                form.setData('starts_at', nextStart);
 
-                                                e.target.value,
-                                            )
-                                        }
-                                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-gray-950"
-                                    />
+                                                if (
+                                                    !form.data.ends_at ||
+                                                    form.data.ends_at <= nextStart
+                                                ) {
+                                                    form.setData(
+                                                        'ends_at',
+                                                        addOneHour(nextStart),
+                                                    );
+                                                }
+                                            }}
+                                            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-gray-950"
+                                        />
 
-                                    <InputError
-                                        message={form.errors.ends_at}
-                                        className="mt-1"
-                                    />
+                                        <InputError
+                                            message={form.errors.starts_at}
+                                            className="mt-1"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block text-sm font-semibold">
+                                            Fin
+                                        </label>
+
+                                        <input
+                                            type="datetime-local"
+                                            value={form.data.ends_at}
+                                            min={form.data.starts_at || undefined}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'ends_at',
+
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-gray-950"
+                                        />
+
+                                        <InputError
+                                            message={form.errors.ends_at}
+                                            className="mt-1"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

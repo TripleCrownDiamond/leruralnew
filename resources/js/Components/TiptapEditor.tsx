@@ -26,7 +26,6 @@ import {
     Heading2,
     Heading3,
     Highlighter,
-    Image as ImageIcon,
     Italic,
     Link as LinkIcon,
     List,
@@ -46,7 +45,6 @@ import {
 import { useCallback, useState, type ReactNode } from 'react';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
-import ImageCropper from '@/Components/ImageCropper';
 import MediaLibraryPicker from '@/Components/MediaLibraryPicker';
 
 const lowlight = createLowlight(common);
@@ -67,9 +65,6 @@ export default function TiptapEditor({ value, onChange, placeholder, className =
     const [showHighlightPicker, setShowHighlightPicker] = useState(false);
     const [textCustomColor, setTextCustomColor] = useState('#111827');
     const [highlightCustomColor, setHighlightCustomColor] = useState('#fef08a');
-    const [showCropper, setShowCropper] = useState(false);
-    const [imageToCrop, setImageToCrop] = useState<File | null>(null);
-
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -174,32 +169,6 @@ export default function TiptapEditor({ value, onChange, placeholder, className =
     }, []);
 
     if (!editor) return null;
-
-    const addImage = () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = (event: Event) => {
-            const target = event.target as HTMLInputElement;
-            if (!target.files?.length) return;
-            setImageToCrop(target.files[0]);
-            setShowCropper(true);
-        };
-        input.click();
-    };
-
-    const handleCropComplete = async (croppedBlob: Blob) => {
-        if (!imageToCrop) return;
-
-        const file = new File([croppedBlob], imageToCrop.name, { type: 'image/jpeg' });
-        const result = await uploadFile(file);
-        if (result) {
-            editor.chain().focus().setImage({ src: result.url }).run();
-        }
-
-        setShowCropper(false);
-        setImageToCrop(null);
-    };
 
     const addFile = () => {
         const input = document.createElement('input');
@@ -397,10 +366,10 @@ export default function TiptapEditor({ value, onChange, placeholder, className =
 
                 <div className="flex items-center gap-1">
                     <ToolbarButton onClick={setLink} isActive={editor.isActive('link')} icon={<LinkIcon className="h-4 w-4" />} title="Lien" />
-                    <ToolbarButton onClick={addImage} icon={<ImageIcon className="h-4 w-4" />} title="Image" />
                     <MediaLibraryPicker
-                        buttonLabel="Media"
-                        title="Inserer une image depuis la mediatheque"
+                        buttonLabel="Image"
+                        title="Inserer une image"
+                        iconOnly
                         onSelect={(url) => editor.chain().focus().setImage({ src: url }).run()}
                     />
                     <ToolbarButton onClick={addFile} icon={<Paperclip className="h-4 w-4" />} title="Fichier" />
@@ -427,13 +396,6 @@ export default function TiptapEditor({ value, onChange, placeholder, className =
             </div>
 
             <EditorContent editor={editor} className="min-h-[400px] bg-white dark:bg-gray-900" />
-
-            <ImageCropper
-                open={showCropper}
-                onOpenChange={setShowCropper}
-                imageFile={imageToCrop}
-                onCropComplete={handleCropComplete}
-            />
         </div>
     );
 }
@@ -467,6 +429,4 @@ function ToolbarButton({ onClick, isActive, disabled, icon, title }: ToolbarButt
         </button>
     );
 }
-
-
 
