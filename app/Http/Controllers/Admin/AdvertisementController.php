@@ -11,22 +11,11 @@ use Inertia\Response;
 
 class AdvertisementController extends AdminController
 {
-    private const LOCATION_PRESETS = [
-        'sidebar_top',
-        'sidebar_middle_skyscraper',
-        'paywall_sponsor',
-        'footer_banner',
-        'home_inline_feature',
-        'article_single_bottom',
-        'checkout_article_sidebar',
-        'checkout_subscription_sidebar',
-    ];
-
     public function index(): Response
     {
         return Inertia::render('Dashboard/Advertisements/Index', [
             'advertisements' => Advertisement::orderBy('location_id')->get(),
-            'locationPresets' => self::LOCATION_PRESETS,
+            'locationPresets' => array_keys(Advertisement::LOCATIONS),
         ]);
     }
 

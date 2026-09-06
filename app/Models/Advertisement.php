@@ -10,6 +10,21 @@ class Advertisement extends Model
 {
     use HasFactory;
 
+    /**
+     * Emplacements publicitaires cables dans les pages publiques.
+     * Toute cle ajoutee ici doit correspondre a un <AdSpace locationId="..." /> cote front.
+     */
+    public const LOCATIONS = [
+        'sidebar_top' => 'Sidebar haut',
+        'sidebar_middle_skyscraper' => 'Sidebar milieu',
+        'paywall_sponsor' => 'Paywall sponsor',
+        'footer_banner' => 'Footer banner',
+        'home_inline_feature' => 'Home inline feature',
+        'article_single_bottom' => 'Article bas de page',
+        'checkout_article_sidebar' => 'Checkout article',
+        'checkout_subscription_sidebar' => 'Checkout abonnement',
+    ];
+
     protected $fillable = [
         'location_id',
         'image_url',
