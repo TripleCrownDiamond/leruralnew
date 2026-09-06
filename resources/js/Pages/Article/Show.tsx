@@ -20,14 +20,17 @@ import {
     Linkedin,
     Lock,
     Mail,
+    Maximize2,
     MessageCircle,
     MessageSquare,
     Send,
     Share2,
     ThumbsUp,
     Twitter,
+    X,
+    ZoomIn,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ArticleShowProps {
     article: {
@@ -43,6 +46,7 @@ interface ArticleShowProps {
         image_position_x?: number | null;
         image_position_y?: number | null;
         author: string;
+        author_bio?: string | null;
         published_at: string | null;
         published_human: string | null;
         category: any;
@@ -79,8 +83,30 @@ export default function ArticleShow({
     const [isLiked, setIsLiked] = useState(article.is_liked);
     const [isSaved, setIsSaved] = useState(article.is_saved ?? false);
     const [copiedLink, setCopiedLink] = useState(false);
+    const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
     const imagePositionX = Number(article.image_position_x ?? 50);
     const imagePositionY = Number(article.image_position_y ?? 50);
+
+    // Lightbox: fermeture avec Echap + blocage du scroll
+    useEffect(() => {
+        if (!lightboxSrc) {
+            return;
+        }
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setLightboxSrc(null);
+            }
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            document.body.style.overflow = '';
+        };
+    }, [lightboxSrc]);
 
     // Similar articles state
     const [similarLiked, setSimilarLiked] = useState<Record<string, boolean>>(
@@ -194,6 +220,21 @@ export default function ArticleShow({
         article.share_image || article.image
     );
 
+    const resolveLightboxUrl = (src: string): string => {
+        if (src.startsWith('http') || src.startsWith('//')) {
+            return src.startsWith('//') ? `https:${src}` : src;
+        }
+
+        return src.startsWith('/') ? src : `/${src}`;
+    };
+
+    const handleContentImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'IMG' && target.getAttribute('src')) {
+            setLightboxSrc(resolveLightboxUrl(target.getAttribute('src')!));
+        }
+    };
+
     const copyShareLink = async () => {
         try {
             await navigator.clipboard.writeText(shareUrl);
@@ -262,6 +303,11 @@ export default function ArticleShow({
                     content={article.title}
                 />
                 <meta head-key="og:url" property="og:url" content={shareUrl} />
+                <meta
+                    head-key="og:locale"
+                    property="og:locale"
+                    content="fr_BJ"
+                />
                 <meta
                     head-key="article:published_time"
                     property="article:published_time"
@@ -456,17 +502,31 @@ export default function ArticleShow({
                     <div className="lg:col-span-8 xl:col-span-9">
                         <div className="overflow-hidden rounded-none border-y border-gray-100 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800 md:rounded-2xl md:border">
                             {/* Featured Image */}
-                            <div className="aspect-[21/9] w-full overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    article.image &&
+                                    setLightboxSrc(resolveLightboxUrl(article.image))
+                                }
+                                className={`group relative block aspect-[21/9] w-full cursor-zoom-in overflow-hidden ${article.image ? '' : 'cursor-default'}`}
+                                aria-label="Agrandir l'image"
+                            >
                                 <ImageWithFallback
                                     src={article.image || undefined}
                                     alt={article.title}
-                                    className="h-full w-full object-cover"
+                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                                     style={{
                                         objectPosition: `${imagePositionX}% ${imagePositionY}%`,
                                     }}
                                     fallbackSrc="/images/article-placeholder.svg"
                                 />
-                            </div>
+                                {article.image && (
+                                    <span className="absolute bottom-4 right-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white opacity-0 backdrop-blur transition-opacity duration-300 group-hover:opacity-100">
+                                        <Maximize2 className="h-3.5 w-3.5" />
+                                        Agrandir
+                                    </span>
+                                )}
+                            </button>
                             <div className="p-6 sm:p-10">
                                 {/* Actions Bar */}
                                 <div className="mb-8 flex flex-col items-center justify-between gap-4 border-b border-gray-100 pb-6 dark:border-gray-700 sm:flex-row">
@@ -652,7 +712,8 @@ export default function ArticleShow({
                                     {!article.can_read && article.premium ? (
                                         <div className="relative">
                                             <div
-                                                className="prose prose-lg max-w-none select-none blur-sm dark:prose-invert prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-xl"
+                                                className="prose prose-lg max-w-none select-none blur-sm dark:prose-invert prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-xl prose-img:cursor-zoom-in"
+                                                onClick={handleContentImageClick}
                                                 dangerouslySetInnerHTML={{
                                                     __html:
                                                         article.content || '',
@@ -671,7 +732,8 @@ export default function ArticleShow({
                                         </div>
                                     ) : (
                                         <div
-                                            className="prose prose-lg max-w-none dark:prose-invert prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-xl"
+                                            className="prose prose-lg max-w-none dark:prose-invert prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-xl prose-img:cursor-zoom-in"
+                                            onClick={handleContentImageClick}
                                             dangerouslySetInnerHTML={{
                                                 __html: article.content || '',
                                             }}
@@ -725,35 +787,33 @@ export default function ArticleShow({
                             hideWhenEmpty
                         />
 
-                        {/* Author Bio */}
-                        <div className="relative mb-12 mt-10 overflow-hidden rounded-3xl border border-gray-200 bg-gradient-to-br from-white to-primary/[0.03] p-8 shadow-[0_10px_40px_-15px_rgba(47,106,17,0.15)] dark:border-white/10 dark:from-gray-900 dark:to-primary/10">
-                            <div
-                                aria-hidden="true"
-                                className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"
-                            />
-                            <div className="relative flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:text-left">
-                                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl shadow-lg shadow-primary/20 ring-4 ring-white dark:ring-white/10">
-                                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-emerald-700 text-2xl font-black text-white">
-                                        {article.author.charAt(0)}
+                        {/* Author Bio - affichée seulement si une description a été renseignée */}
+                        {article.author_bio ? (
+                            <div className="relative mb-12 mt-10 overflow-hidden rounded-3xl border border-gray-200 bg-gradient-to-br from-white to-primary/[0.03] p-8 shadow-[0_10px_40px_-15px_rgba(47,106,17,0.15)] dark:border-white/10 dark:from-gray-900 dark:to-primary/10">
+                                <div
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"
+                                />
+                                <div className="relative flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:text-left">
+                                    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl shadow-lg shadow-primary/20 ring-4 ring-white dark:ring-white/10">
+                                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-emerald-700 text-2xl font-black text-white">
+                                            {article.author.charAt(0)}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex-1 pt-2">
-                                    <div className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
-                                        LE RURAL / Redaction
+                                    <div className="flex-1 pt-2">
+                                        <div className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                                            LE RURAL / Redaction
+                                        </div>
+                                        <h3 className="mt-1 font-heading text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                                            A propos de {article.author}
+                                        </h3>
+                                        <p className="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                                            {article.author_bio}
+                                        </p>
                                     </div>
-                                    <h3 className="mt-1 font-heading text-xl font-black tracking-tight text-gray-900 dark:text-white">
-                                        A propos de {article.author}
-                                    </h3>
-                                    <p className="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                                        Redacteur expert sur LE RURAL. Passionne
-                                        par l'agriculture durable et les
-                                        innovations technologiques dans le
-                                        secteur agro-alimentaire en Afrique de
-                                        l'Ouest.
-                                    </p>
                                 </div>
                             </div>
-                        </div>
+                        ) : null}
 
                         {/* Comments Section */}
                         <div
@@ -909,6 +969,36 @@ export default function ArticleShow({
                     </aside>
                 </div>
             </div>
+
+            {/* Lightbox image agrandie */}
+            {lightboxSrc && (
+                <div
+                    className="fixed inset-0 z-[150] flex animate-in fade-in items-center justify-center bg-black/95 p-4 backdrop-blur-sm sm:p-10"
+                    onClick={() => setLightboxSrc(null)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Image agrandie"
+                >
+                    <button
+                        type="button"
+                        onClick={() => setLightboxSrc(null)}
+                        className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition hover:bg-white hover:text-gray-900"
+                        aria-label="Fermer"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                    <img
+                        src={lightboxSrc}
+                        alt="Image agrandie"
+                        className="max-h-full max-w-full rounded-xl object-contain shadow-2xl ring-1 ring-white/10"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                    <span className="pointer-events-none absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/80 backdrop-blur">
+                        <ZoomIn className="h-3.5 w-3.5" />
+                        Cliquez pour fermer
+                    </span>
+                </div>
+            )}
         </MainLayout>
     );
 }

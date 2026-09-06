@@ -32,6 +32,7 @@ export default function CommentItem({ comment, articleId, depth = 0 }: CommentIt
         content: '',
         author_name: auth ? auth.name : '',
         author_email: auth ? auth.email : '',
+        rating: 5,
         parent_id: comment.id,
     });
 

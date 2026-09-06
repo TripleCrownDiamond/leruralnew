@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PublicMediaController extends Controller
 {
-    public function show(string $path): Response
+    public function show(string $path): StreamedResponse
     {
         $normalized = ltrim($path, '/');
 

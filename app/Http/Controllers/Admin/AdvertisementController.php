@@ -41,8 +41,8 @@ class AdvertisementController extends AdminController
             'location_id' => ['required', 'string', 'max:255', 'unique:advertisements,location_id'],
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:500'],
-            'image_url' => ['required', 'url', 'max:2048'],
-            'redirect_url' => ['nullable', 'url', 'max:2048'],
+            'image_url' => ['required', 'string', 'max:2048'],
+            'redirect_url' => ['nullable', 'string', 'max:2048'],
             'is_active' => ['boolean'],
         ]);
 
@@ -50,8 +50,8 @@ class AdvertisementController extends AdminController
             'location_id' => trim($data['location_id']),
             'title' => filled($data['title'] ?? null) ? trim($data['title']) : null,
             'description' => filled($data['description'] ?? null) ? trim($data['description']) : null,
-            'image_url' => trim($data['image_url']),
-            'redirect_url' => filled($data['redirect_url'] ?? null) ? trim($data['redirect_url']) : null,
+            'image_url' => $this->normalizeMediaUrl($data['image_url']),
+            'redirect_url' => $this->normalizeRedirectUrl($data['redirect_url'] ?? null),
             'is_active' => !empty($data['is_active']),
         ]);
 
@@ -66,8 +66,8 @@ class AdvertisementController extends AdminController
             'location_id' => ['required', 'string', 'max:255', 'unique:advertisements,location_id,' . $advertisement->id],
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:500'],
-            'image_url' => ['required', 'url', 'max:2048'],
-            'redirect_url' => ['nullable', 'url', 'max:2048'],
+            'image_url' => ['required', 'string', 'max:2048'],
+            'redirect_url' => ['nullable', 'string', 'max:2048'],
             'is_active' => ['boolean'],
         ]);
 
@@ -75,8 +75,8 @@ class AdvertisementController extends AdminController
             'location_id' => trim($data['location_id']),
             'title' => filled($data['title'] ?? null) ? trim($data['title']) : null,
             'description' => filled($data['description'] ?? null) ? trim($data['description']) : null,
-            'image_url' => trim($data['image_url']),
-            'redirect_url' => filled($data['redirect_url'] ?? null) ? trim($data['redirect_url']) : null,
+            'image_url' => $this->normalizeMediaUrl($data['image_url']),
+            'redirect_url' => $this->normalizeRedirectUrl($data['redirect_url'] ?? null),
             'is_active' => !empty($data['is_active']),
         ]);
 
@@ -92,6 +92,39 @@ class AdvertisementController extends AdminController
         $this->flushSharedContentCache();
 
         return back()->with('success', 'Espace pub supprime.');
+    }
+
+    /**
+     * Accepte les chemins relatifs (ex: /public-media/...) et les URLs absolues.
+     */
+    private function normalizeMediaUrl(string $value): string
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return $value;
+        }
+
+        if (str_starts_with($value, '//')) {
+            return 'https:' . $value;
+        }
+
+        return $value;
+    }
+
+    private function normalizeRedirectUrl(?string $value): ?string
+    {
+        $value = filled($value) ? trim($value) : null;
+
+        if ($value === null) {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $value) === 1 || str_starts_with($value, '/')) {
+            return $value;
+        }
+
+        return 'https://' . $value;
     }
 }
 

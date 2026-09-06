@@ -20,6 +20,7 @@ export default function Create({ roles, permissions, role_permissions }: Props) 
         permissions: getRolePermissions('user'),
         send_invitation: true,
         custom_message: '',
+        bio: '',
     });
 
     const togglePermission = (permission: string) => {
@@ -98,6 +99,23 @@ export default function Create({ roles, permissions, role_permissions }: Props) 
                                         required
                                     />
                                     {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">
+                                        Description (bio de l'auteur)
+                                    </label>
+                                    <textarea
+                                        rows={4}
+                                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                        value={data.bio}
+                                        onChange={(e) => setData('bio', e.target.value)}
+                                        placeholder="Ex: Redacteur specialise en agro-economie. Laissez vide pour ne pas afficher de bloc auteur."
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-white/50">
+                                        Affichee dans le bloc « A propos de l'auteur » sous les articles. Laissez vide pour masquer le bloc.
+                                    </p>
+                                    {errors.bio && <p className="mt-1 text-xs text-red-600">{errors.bio}</p>}
                                 </div>
                             </div>
                         </section>

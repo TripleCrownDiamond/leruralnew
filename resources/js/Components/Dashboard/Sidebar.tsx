@@ -26,6 +26,7 @@ import {
     Clock,
     Radio,
     FileImage,
+    CalendarCheck,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -81,6 +82,7 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
             eyebrow: '01',
             items: [
                 { label: 'Tableau de bord', href: safeRoute('dashboard'), icon: <LayoutDashboard size={18} />, active: safeCurrent('dashboard') },
+                { label: 'Statistiques', href: safeRoute('dashboard.stats.index'), icon: <BarChart2 size={18} />, active: safeCurrent('dashboard.stats.*') },
             ],
         },
         {
@@ -104,6 +106,7 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
                 { label: 'Web TV / YouTube', href: safeRoute('dashboard.web-tv.index'), icon: <Newspaper size={18} />, active: safeCurrent('dashboard.web-tv.*') },
                 { label: 'Prix des marches', href: safeRoute('dashboard.commodity-prices.index'), icon: <DollarSign size={18} />, active: safeCurrent('dashboard.commodity-prices.*') },
                 { label: 'Agenda', href: safeRoute('dashboard.agendas.index'), icon: <Clock size={18} />, active: safeCurrent('dashboard.agendas.*') },
+                { label: 'SAFEB 2026', href: safeRoute('dashboard.safeb-registrations.index'), icon: <CalendarCheck size={18} />, active: safeCurrent('dashboard.safeb-registrations.*') },
                 { label: 'Publicites', href: safeRoute('dashboard.advertisements.index'), icon: <Megaphone size={18} />, active: safeCurrent('dashboard.advertisements.*') },
                 { label: 'Partenaires', href: safeRoute('dashboard.partners.index'), icon: <Share2 size={18} />, active: safeCurrent('dashboard.partners.*') },
                 { label: 'Lives', href: safeRoute('dashboard.live-streams.index'), icon: <Radio size={18} />, active: safeCurrent('dashboard.live-streams.*') },

@@ -14,6 +14,7 @@ interface UserItem {
     created_at: string;
     last_login_at?: string | null;
     permissions?: string[];
+    bio?: string | null;
 }
 
 interface Props {
@@ -38,6 +39,7 @@ export default function Edit({ user, roles, permissions, role_permissions }: Pro
         status: user.status || 'active',
         send_notification: false,
         custom_message: '',
+        bio: user.bio ?? '',
     });
 
     const togglePermission = (permission: string) => {
@@ -136,6 +138,23 @@ export default function Edit({ user, roles, permissions, role_permissions }: Pro
                                     />
                                     <p className="mt-1 text-xs text-gray-500 dark:text-white/50">L'email n'est pas modifiable depuis cet ecran.</p>
                                     {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="mb-1 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50">
+                                        Description (bio de l'auteur)
+                                    </label>
+                                    <textarea
+                                        rows={4}
+                                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                        value={data.bio}
+                                        onChange={(e) => setData('bio', e.target.value)}
+                                        placeholder="Ex: Redactrice specialisee en agro-economie. Laissez vide pour ne pas afficher de bloc auteur sur les articles."
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-white/50">
+                                        Affichee dans le bloc « A propos de l'auteur » sous les articles. Laissez vide pour masquer le bloc.
+                                    </p>
+                                    {errors.bio && <p className="mt-1 text-xs text-red-600">{errors.bio}</p>}
                                 </div>
                             </div>
                         </section>

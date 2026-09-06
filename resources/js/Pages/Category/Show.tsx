@@ -309,6 +309,11 @@ export default function CategoryShow({
                 />
                 <meta head-key="og:url" property="og:url" content={shareUrl} />
                 <meta
+                    head-key="og:locale"
+                    property="og:locale"
+                    content="fr_BJ"
+                />
+                <meta
                     head-key="twitter:card"
                     name="twitter:card"
                     content="summary_large_image"

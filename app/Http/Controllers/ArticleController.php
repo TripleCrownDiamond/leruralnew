@@ -552,6 +552,15 @@ class ArticleController extends Controller
 
         $isSaved = $this->articleService->isSaved($article->id);
 
+        $authorBio = null;
+        if (!empty($article->author_id)) {
+            $authorBio = \App\Models\User::whereKey($article->author_id)->value('bio');
+        }
+        if (blank($authorBio)) {
+            $authorBio = \App\Models\User::where('name', $article->author_name)->value('bio');
+        }
+        $authorBio = filled($authorBio) ? trim((string) $authorBio) : null;
+
 
 
         $canRead = true;
@@ -703,6 +712,8 @@ class ArticleController extends Controller
                 'image_position_y' => $article->featured_image_position_y,
 
                 'author' => $article->author_name,
+
+                'author_bio' => $authorBio,
 
                 'published_at' => optional($article->published_at)->isoFormat('LL'),
 

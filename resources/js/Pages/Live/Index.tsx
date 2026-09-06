@@ -2,7 +2,7 @@ import MainLayout from '@/Layouts/MainLayout';
 
 import useSharedContent from '@/Hooks/useSharedContent';
 
-import { router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 
 import type { PageProps } from '@/types';
 
@@ -814,7 +814,72 @@ export default function LiveIndex() {
     }, [isYoutubePlayer, playerReady]);
 
     return (
-        <MainLayout title="Direct">
+        <MainLayout title="Direct - LE RURAL">
+            <Head title="Direct - LE RURAL">
+                <meta
+                    head-key="description"
+                    name="description"
+                    content="Regardez LE RURAL en direct : emissions, journal, debats et documentaires sur l'agriculture et le monde rural en Afrique de l'Ouest."
+                />
+                <meta head-key="og:type" property="og:type" content="website" />
+                <meta head-key="og:site_name" property="og:site_name" content="LE RURAL" />
+                <meta
+                    head-key="og:title"
+                    property="og:title"
+                    content="Direct - LE RURAL | Television en ligne"
+                />
+                <meta
+                    head-key="og:description"
+                    property="og:description"
+                    content="Regardez LE RURAL en direct : emissions, journal, debats et documentaires sur l'agriculture et le monde rural en Afrique de l'Ouest."
+                />
+                <meta
+                    head-key="og:image"
+                    property="og:image"
+                    content="/images/live-og.jpg"
+                />
+                <meta
+                    head-key="og:image:secure_url"
+                    property="og:image:secure_url"
+                    content="/images/live-og.jpg"
+                />
+                <meta
+                    head-key="og:image:alt"
+                    property="og:image:alt"
+                    content="LE RURAL - Direct"
+                />
+                <meta
+                    head-key="og:url"
+                    property="og:url"
+                    content="/live"
+                />
+                <meta
+                    head-key="og:locale"
+                    property="og:locale"
+                    content="fr_BJ"
+                />
+                <meta
+                    head-key="twitter:card"
+                    name="twitter:card"
+                    content="summary_large_image"
+                />
+                <meta
+                    head-key="twitter:title"
+                    name="twitter:title"
+                    content="Direct - LE RURAL | Television en ligne"
+                />
+                <meta
+                    head-key="twitter:description"
+                    name="twitter:description"
+                    content="Regardez LE RURAL en direct : emissions, journal, debats et documentaires sur l'agriculture et le monde rural."
+                />
+                <meta
+                    head-key="twitter:image"
+                    name="twitter:image"
+                    content="/images/live-og.jpg"
+                />
+                <link head-key="canonical" rel="canonical" href="/live" />
+            </Head>
             <section className="mx-auto max-w-7xl px-2 py-4 sm:px-4 lg:px-8 lg:py-8">
                 <div className="mb-6 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-[0.28em] text-primary">
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1">

@@ -6,6 +6,8 @@ import HomeSidebar from '@/Components/HomeSidebar';
 import AdSpace from '@/Components/AdSpace';
 import IntroLoader from '@/Components/IntroLoader';
 import ImageWithFallback from '@/Components/ImageWithFallback';
+import LiveDirectPopup from '@/Components/LiveDirectPopup';
+import SafebPopup from '@/Components/SafebPopup';
 import RelaunchSplash from '@/Components/RelaunchSplash';
 import useInViewMount from '@/Hooks/useInViewMount';
 import useSharedContent from '@/Hooks/useSharedContent';
@@ -144,6 +146,8 @@ export default function Welcome() {
     });
     const [isLoaded, setIsLoaded] = useState(!showLoader);
     const [showRelaunchSplash, setShowRelaunchSplash] = useState(false);
+    const [showLiveDirectPopup, setShowLiveDirectPopup] = useState(false);
+    const [showSafebPopup, setShowSafebPopup] = useState(false);
     const [showSubscriptionAuthModal, setShowSubscriptionAuthModal] = useState(false);
     const [featuredIndex, setFeaturedIndex] = useState(0);
     const [isFeaturedPaused, setIsFeaturedPaused] = useState(false);
@@ -156,6 +160,8 @@ export default function Welcome() {
     const liveSectionRef = useRef<HTMLDivElement | null>(null);
     const latestArticlesScrollerRef = useRef<HTMLDivElement | null>(null);
     const splashTriggeredRef = useRef(false);
+    const livePopupTriggeredRef = useRef(false);
+    const safebPopupTriggeredRef = useRef(false);
 
     const mountWebtv = useInViewMount(webtvSectionRef);
     const mountPartners = useInViewMount(partnersSectionRef);
@@ -221,11 +227,70 @@ export default function Welcome() {
         setShowRelaunchSplash(true);
     };
 
+    const triggerLiveDirectPopupOnce = () => {
+        if (livePopupTriggeredRef.current || typeof window === 'undefined') {
+            return;
+        }
+
+        try {
+            if (sessionStorage.getItem('le_rural_direct_popup_seen') === '1') {
+                livePopupTriggeredRef.current = true;
+                return;
+            }
+
+            sessionStorage.setItem('le_rural_direct_popup_seen', '1');
+        } catch {
+            // Stockage bloque : on affiche quand meme une fois par session.
+        }
+
+        livePopupTriggeredRef.current = true;
+        setShowLiveDirectPopup(true);
+    };
+
+    const triggerSafebPopupOnce = () => {
+        if (safebPopupTriggeredRef.current || typeof window === 'undefined') {
+            return;
+        }
+
+        try {
+            if (sessionStorage.getItem('le_rural_safeb_popup_seen') === '1') {
+                safebPopupTriggeredRef.current = true;
+                return;
+            }
+
+            sessionStorage.setItem('le_rural_safeb_popup_seen', '1');
+        } catch {
+            // Stockage bloque : on affiche quand meme une fois par session.
+        }
+
+        safebPopupTriggeredRef.current = true;
+        setShowSafebPopup(true);
+    };
+
     useEffect(() => {
         if (!showLoader) {
             triggerSplashOnce();
+            triggerLiveDirectPopupOnce();
         }
     }, [showLoader]);
+
+    // Le popup SAFEB apparait apres le direct (sans empiler les deux).
+    useEffect(() => {
+        if (showLoader) {
+            return;
+        }
+
+        if (showLiveDirectPopup) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            triggerSafebPopupOnce();
+        }, 1600);
+
+        return () => window.clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showLoader, showLiveDirectPopup]);
 
     useEffect(() => {
         if (featuredCount <= 1 || isFeaturedPaused) {
@@ -250,6 +315,7 @@ export default function Welcome() {
     const handleIntroComplete = () => {
         setShowLoader(false);
         triggerSplashOnce();
+        triggerLiveDirectPopupOnce();
     };
 
     const formatCfa = (value: number | string | null | undefined) => {
@@ -329,6 +395,19 @@ export default function Welcome() {
         <MainLayout title="Accueil">
             {showLoader && <IntroLoader onComplete={handleIntroComplete} />}
             {showRelaunchSplash && <RelaunchSplash onComplete={() => setShowRelaunchSplash(false)} />}
+            {showLiveDirectPopup && (
+                <LiveDirectPopup
+                    streams={liveStreams}
+                    fallbackVideoUrl={settings.live_fallback_video_url ?? null}
+                    onClose={() => setShowLiveDirectPopup(false)}
+                />
+            )}
+            {showSafebPopup && (
+                <SafebPopup
+                    pdfUrl={settings.safeb_pdf_url ?? null}
+                    onClose={() => setShowSafebPopup(false)}
+                />
+            )}
             <AuthModal
                 isOpen={showSubscriptionAuthModal}
                 onClose={() => setShowSubscriptionAuthModal(false)}
@@ -736,8 +815,8 @@ export default function Welcome() {
                 {showSocials && (
                     <div ref={socialsSectionRef} className="animate-in fade-in slide-in-from-bottom-2 duration-700">
                         {mountSocials && (
-                            <Suspense fallback={<div className="mx-4 mb-16 h-[320px] animate-pulse rounded-3xl bg-primary/10" />}>
-                                <LazySocialMediaSection settings={settings} />
+                            <Suspense fallback={<div className="mx-4 mb-16 h-[200px] animate-pulse rounded-3xl bg-primary/10" />}>
+                                <LazySocialMediaSection settings={settings} compact />
                             </Suspense>
                         )}
                     </div>

@@ -46,8 +46,8 @@ const fields = [
     {
         key: 'social_whatsapp_url',
         label: 'WhatsApp',
-        placeholder: 'https://wa.me/229XXXXXXXX',
-        hint: 'Canal WhatsApp pour les alertes rapides.',
+        placeholder: 'https://whatsapp.com/channel/XXXXXX',
+        hint: 'Chaine WhatsApp officielle (whatsapp.com/channel/...) ou lien wa.me.',
     },
     {
         key: 'social_linkedin_url',

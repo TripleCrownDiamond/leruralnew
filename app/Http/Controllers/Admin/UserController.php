@@ -86,6 +86,7 @@ class UserController extends AdminController
             'permissions.*' => ['string', Rule::in(array_column($this->getPermissions(), 'value'))],
             'send_invitation' => ['boolean'],
             'custom_message' => ['nullable', 'string', 'max:1000'],
+            'bio' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $sendInvitation = (bool) ($validated['send_invitation'] ?? false);
@@ -94,6 +95,7 @@ class UserController extends AdminController
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make(Str::random(16)),
+            'bio' => filled($validated['bio'] ?? null) ? trim($validated['bio']) : null,
             'role' => $validated['role'],
             'permissions' => $this->normalizePermissionsForRole($validated['role'], $validated['permissions'] ?? []),
             'status' => $sendInvitation ? 'invited' : 'active',
@@ -181,11 +183,13 @@ class UserController extends AdminController
             'status' => ['required', 'string', Rule::in(['active', 'inactive', 'invited', 'suspended'])],
             'send_notification' => ['boolean'],
             'custom_message' => ['nullable', 'string', 'max:1000'],
+            'bio' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $user->update([
             'name' => $user->name,
             'email' => $user->email,
+            'bio' => filled($validated['bio'] ?? null) ? trim($validated['bio']) : null,
             'role' => $validated['role'],
             'status' => $validated['status'],
             'permissions' => $this->normalizePermissionsForRole($validated['role'], $validated['permissions'] ?? []),

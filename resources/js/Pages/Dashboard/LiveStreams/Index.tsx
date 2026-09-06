@@ -72,6 +72,8 @@ const emptyForm = {
 
     embed_url: '',
 
+    replay_url: '',
+
     thumbnail_url: '',
 
     fallback_image_url: '',
@@ -270,6 +272,31 @@ export default function Index({ liveStreams }: { liveStreams: LiveStream[] }) {
 
                     return b.id - a.id;
                 })[0] ?? null,
+
+        [liveStreams, now],
+    );
+
+    const endedStreams = useMemo(
+        () =>
+            [...liveStreams]
+
+                .filter((stream) => getStreamStatus(stream, now) === 'ended')
+
+                .sort((a, b) => {
+                    const endA =
+                        toDate(a.ends_at)?.getTime() ??
+                        Number.NEGATIVE_INFINITY;
+
+                    const endB =
+                        toDate(b.ends_at)?.getTime() ??
+                        Number.NEGATIVE_INFINITY;
+
+                    if (endA !== endB) {
+                        return endB - endA;
+                    }
+
+                    return b.id - a.id;
+                }),
 
         [liveStreams, now],
     );
@@ -884,6 +911,92 @@ export default function Index({ liveStreams }: { liveStreams: LiveStream[] }) {
                     </form>
 
                     <div className="space-y-6">
+                        {endedStreams.length > 0 && (
+                            <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-gray-900">
+                                <div className="mb-4 flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                                            Archive
+                                        </p>
+
+                                        <h3 className="mt-1 text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white">
+                                            Diffusions terminees
+                                        </h3>
+                                    </div>
+
+                                    <span className="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-gray-600 dark:bg-white/10 dark:text-white/60">
+                                        {endedStreams.length} diff
+                                        {endedStreams.length > 1 ? 'usions' : 'usion'}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-2">
+                                    {endedStreams.map((stream) => (
+                                        <div
+                                            key={stream.id}
+                                            className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-white/10 dark:bg-white/[0.04]"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
+                                                    {stream.title}
+                                                </p>
+                                                <p className="mt-0.5 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                                                    {stream.platform}
+                                                    {stream.ends_at
+                                                        ? ` · fin le ${stream.ends_at}`
+                                                        : ''}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex shrink-0 gap-2">
+                                                <AdminButton
+                                                    type="button"
+                                                    variant="secondary"
+                                                    size="icon"
+                                                    icon={
+                                                        <Pencil className="h-4 w-4" />
+                                                    }
+                                                    onClick={() =>
+                                                        startEdit(stream)
+                                                    }
+                                                    title="Modifier le lien"
+                                                />
+
+                                                <AdminButton
+                                                    type="button"
+                                                    variant="danger"
+                                                    size="icon"
+                                                    icon={
+                                                        <Trash2 className="h-4 w-4" />
+                                                    }
+                                                    onClick={() => {
+                                                        if (
+                                                            confirm(
+                                                                'Supprimer cette programmation ?',
+                                                            )
+                                                        ) {
+                                                            router.delete(
+                                                                route(
+                                                                    'dashboard.live-streams.destroy',
+
+                                                                    stream.id,
+                                                                ),
+
+                                                                {
+                                                                    preserveScroll: true,
+                                                                },
+                                                            );
+                                                        }
+                                                    }}
+                                                    title="Supprimer"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
                         {groupedStreams.length > 0 ? (
                             groupedStreams.map((group) => (
                                 <section

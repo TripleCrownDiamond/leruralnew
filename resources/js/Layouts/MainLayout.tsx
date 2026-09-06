@@ -1,3 +1,4 @@
+import AdSpace from '@/Components/AdSpace';
 import AnnouncementMarquee from '@/Components/AnnouncementMarquee';
 import CookieBanner from '@/Components/CookieBanner';
 import LiveSearch from '@/Components/LiveSearch';
@@ -263,6 +264,7 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
 
     const isParutionsActive = route().current('press-papers.index');
     const isLiveActive = route().current('live.index');
+    const isSafebActive = route().current('safeb.index');
 
     const isFooterPageActive = (slug: string) => {
         if (slug === 'contact') {
@@ -760,6 +762,16 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
                                     >
                                         <span className="relative">Direct</span>
                                     </Link>
+                                    <Link
+                                        href={route('safeb.index')}
+                                        className={`group relative shrink-0 rounded-full border px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all ${
+                                            isSafebActive
+                                                ? 'border-amber-400 bg-amber-400 text-gray-950 shadow-[0_14px_35px_-20px_rgba(251,191,36,0.8)]'
+                                                : 'border-amber-300/40 bg-amber-50 text-amber-800 hover:border-amber-400 hover:bg-amber-100 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:border-amber-400/60 dark:hover:bg-amber-400/20'
+                                        }`}
+                                    >
+                                        <span className="relative">SAFEB 2026</span>
+                                    </Link>
                                 </nav>
 
                                 <button
@@ -1058,7 +1070,18 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
                         )}
                     </div>
                 </div>
-                <div className="container relative mx-auto mt-14 border-t border-white/10 px-4 pt-6">
+                <div className="container relative mx-auto mt-12 px-4">
+                    <AdSpace
+                        width="100%"
+                        height={110}
+                        locationId="footer_banner"
+                        label="Publicite pied de page"
+                        className="w-full overflow-hidden rounded-2xl"
+                        hideWhenEmpty
+                    />
+                </div>
+
+                <div className="container relative mx-auto mt-10 border-t border-white/10 px-4 pt-6">
                     <div className="flex flex-col items-center justify-between gap-3 text-xs text-gray-500 md:flex-row">
                         <div className="flex flex-col items-center gap-1 md:items-start">
                             <p className="font-semibold">

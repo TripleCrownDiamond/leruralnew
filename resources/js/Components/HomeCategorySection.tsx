@@ -39,11 +39,32 @@ export default function HomeCategorySection({
 
     const count = articles.length;
 
+    const renderCard = (a: Article, index: number) => {
+        const fallbackExcerpt =
+            typeof a.excerpt === 'string' && a.excerpt.trim() !== ''
+                ? a.excerpt
+                : typeof a.content === 'string'
+                  ? a.content
+                  : '';
+
+        return (
+            <ArticleCard
+                key={a.slug}
+                a={{ ...a, excerpt: fallbackExcerpt }}
+                priceLabel={formatCfa(typeof a.price === 'number' ? a.price : undefined)}
+                liked={Boolean(likedBySlug[a.slug])}
+                onToggleLike={() => onToggleLike(a.slug, a.likes_count ?? 0)}
+                likesCount={likesCountBySlug[a.slug]}
+                className="h-full"
+            />
+        );
+    };
+
     return (
-        <section id={id} className="relative py-16">
+        <section id={id} className="relative py-8 md:py-16">
             <div className="absolute left-0 top-20 bottom-20 hidden w-[2px] bg-gradient-to-b from-primary/40 via-primary/10 to-transparent lg:block" aria-hidden="true" />
 
-            <header className="mb-10">
+            <header className="mb-6 md:mb-10">
                 <div className="mb-4 flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.22em] text-primary">
                     <span className="inline-block h-2 w-2 rounded-full bg-primary shadow-[0_0_0_4px_rgba(47,106,17,0.15)]" />
                     <span>LE RURAL</span>
@@ -68,29 +89,16 @@ export default function HomeCategorySection({
             </header>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7">
-                {articles.slice(0, 6).map((a) => {
-                    const fallbackExcerpt =
-                        typeof a.excerpt === 'string' && a.excerpt.trim() !== ''
-                            ? a.excerpt
-                            : typeof a.content === 'string'
-                                ? a.content
-                                : '';
-
-                    return (
-                        <ArticleCard
-                            key={a.slug}
-                            a={{ ...a, excerpt: fallbackExcerpt }}
-                            priceLabel={formatCfa(typeof a.price === 'number' ? a.price : undefined)}
-                            liked={Boolean(likedBySlug[a.slug])}
-                            onToggleLike={() => onToggleLike(a.slug, a.likes_count ?? 0)}
-                            likesCount={likesCountBySlug[a.slug]}
-                            className="h-full"
-                        />
-                    );
-                })}
+                {articles.slice(0, 3).map((a, index) => renderCard(a, index))}
             </div>
 
-            <div className="my-14 flex justify-center">
+            {articles.length > 3 && (
+                <div className="mt-6 hidden grid-cols-1 gap-6 sm:grid-cols-2 md:grid lg:grid-cols-3 lg:mt-7 lg:gap-7">
+                    {articles.slice(3, 6).map((a, index) => renderCard(a, index + 3))}
+                </div>
+            )}
+
+            <div className="my-10 flex justify-center md:my-14">
                 <AdSpace
                     width={970}
                     height={120}
