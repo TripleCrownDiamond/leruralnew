@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ], prepend: [
             \App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\TrackPageViews::class,
         ]);
 
         $middleware->alias([

@@ -29,10 +29,10 @@ class SettingSeeder extends Seeder
             // Réseaux sociaux
             'social_facebook_url' => null,
             'social_x_url' => null,
-            'social_instagram_url' => null,
-            'social_tiktok_url' => null,
-            'social_whatsapp_url' => null,
-            'social_linkedin_url' => null,
+            'social_instagram_url' => 'https://www.instagram.com/lerural_officiel?igsh=MWc0aGQwODd6Znl6Mg==',
+            'social_tiktok_url' => 'https://vm.tiktok.com/ZN9hUW6Qbee7W-Ud69X/',
+            'social_whatsapp_url' => 'https://whatsapp.com/channel/0029Vb7LDS7C6Zvp8IITuW1C',
+            'social_linkedin_url' => 'https://www.linkedin.com/company/le-rural-officiel/',
         ];
 
         foreach ($settings as $key => $value) {

@@ -584,15 +584,12 @@ export default function Safeb({ pdf_url, safeb_settings }: SafebProps) {
 
                     <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {pageComposantes.map((item: any) => (
-                            // Resolve icon name to component
-                            Object.assign(item, { _icon: resolveIcon(item.icon) })
-                        ).map((item: any) => (
                             <div
                                 key={item.title}
                                 className="group rounded-3xl border border-gray-200/80 bg-gray-50/50 p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white hover:shadow-[0_18px_44px_-24px_rgba(47,106,17,0.4)] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
                             >
                                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white dark:bg-primary/20">
-                                    {item._icon}
+                                    {resolveIcon(item.icon)}
                                 </div>
                                 <h3 className="mt-3.5 text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">
                                     {item.title}
@@ -654,7 +651,7 @@ export default function Safeb({ pdf_url, safeb_settings }: SafebProps) {
                                     {pack.range}
                                 </p>
                                 <ul className="mt-4 flex-1 space-y-2">
-                                    {pack.features.map((feature) => (
+                                    {pack.features.map((feature: string) => (
                                         <li
                                             key={feature}
                                             className="flex items-start gap-2 text-xs leading-relaxed text-gray-600 dark:text-white/70"
