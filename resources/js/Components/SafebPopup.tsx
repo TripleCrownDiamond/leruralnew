@@ -1,5 +1,13 @@
+import SafebLogo from '@/Components/SafebLogo';
 import { Link } from '@inertiajs/react';
-import { ArrowRight, CalendarDays, Download, MapPin, Wheat, X } from 'lucide-react';
+import {
+    ArrowRight,
+    CalendarDays,
+    Download,
+    MapPin,
+    Wheat,
+    X,
+} from 'lucide-react';
 import { useEffect } from 'react';
 
 interface SafebPopupProps {
@@ -7,7 +15,10 @@ interface SafebPopupProps {
     onClose: () => void;
 }
 
-export default function SafebPopup({ pdfUrl = null, onClose }: SafebPopupProps) {
+export default function SafebPopup({
+    pdfUrl = null,
+    onClose,
+}: SafebPopupProps) {
     const resolvedPdfUrl = pdfUrl || route('safeb.pdf');
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
@@ -27,14 +38,14 @@ export default function SafebPopup({ pdfUrl = null, onClose }: SafebPopupProps) 
 
     return (
         <div
-            className="fixed inset-0 z-[135] flex animate-in fade-in items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-[135] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in"
             onClick={onClose}
             role="dialog"
             aria-modal="true"
             aria-label="Annonce SAFEB 2026"
         >
             <div
-                className="relative w-full max-w-lg animate-in zoom-in-95 duration-300 overflow-hidden rounded-[2rem] border border-white/10 bg-gray-950 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]"
+                className="relative w-full max-w-lg overflow-hidden rounded-[2rem] border border-white/10 bg-gray-950 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)] duration-300 animate-in zoom-in-95"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header gradient */}
@@ -67,15 +78,21 @@ export default function SafebPopup({ pdfUrl = null, onClose }: SafebPopupProps) 
                         </button>
                     </div>
 
-                    <h2 className="relative mt-4 font-heading text-3xl font-black uppercase leading-[1.05] tracking-tight text-white">
-                        SAFEB
-                        <span className="mt-1 block bg-gradient-to-b from-amber-200 to-amber-500 bg-clip-text text-transparent">
-                            2026
-                        </span>
-                    </h2>
+                    <div className="relative mt-4 flex items-center gap-4">
+                        <SafebLogo
+                            subtitle={false}
+                            className="h-16 w-16 shrink-0 rounded-xl shadow-lg ring-1 ring-white/15"
+                        />
+                        <h2 className="font-heading text-3xl font-black uppercase leading-[1.05] tracking-tight text-white">
+                            SAFEB
+                            <span className="mt-1 block bg-gradient-to-b from-amber-200 to-amber-500 bg-clip-text text-transparent">
+                                2026
+                            </span>
+                        </h2>
+                    </div>
                     <p className="relative mt-2 text-sm font-semibold text-white/85">
-                        Salon de l'Autonomisation de la Femme Entrepreneure Rurale
-                        du Bénin
+                        Salon de l'Autonomisation de la Femme Entrepreneure
+                        Rurale du Bénin
                     </p>
                     <div className="relative mt-4 flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/85">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/20 px-3 py-1.5">
@@ -94,7 +111,8 @@ export default function SafebPopup({ pdfUrl = null, onClose }: SafebPopupProps) 
                     <p className="text-sm leading-relaxed text-white/70">
                         Expositions, panels, masterclass, concours de pitch,
                         rencontres B2B, village gastronomique et soirée de gala.
-                        Participez en tant que panéliste, partenaire ou exposant.
+                        Participez en tant que panéliste, partenaire ou
+                        exposant.
                     </p>
 
                     <div className="mt-5 flex flex-col gap-3 sm:flex-row">
