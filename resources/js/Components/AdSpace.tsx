@@ -162,36 +162,57 @@ export default function AdSpace({
         );
     }
 
+    // Deux formats. Sans titre ni description, la creation de l'annonceur porte
+    // deja son propre message : on l'affiche nue. Avec un texte, on compose un
+    // encart ou le texte passe SOUS l'image, jamais par-dessus.
+    const hasCopy = Boolean(advertisement.title || advertisement.description);
+
+    // object-contain et non object-cover : l'annonceur fournit un visuel au
+    // format demande, le recadrer amputait son message.
+    const media = (
+        <ImageWithFallback
+            src={advertisement.image_url}
+            fallbackSrc="/images/article-placeholder.svg"
+            alt={advertisement.title || label}
+            className={`w-full object-contain ${hasCopy ? 'min-h-0 flex-1' : 'h-full'}`}
+            loading="lazy"
+            decoding="async"
+        />
+    );
+
     const content = (
-        <div className={`group relative overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900 ${className}`} style={{ width, height }}>
-            <ImageWithFallback
-                src={advertisement.image_url}
-                fallbackSrc="/images/article-placeholder.svg"
-                alt={advertisement.title || label}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                loading="lazy"
-                decoding="async"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 text-white">
-                <div className="min-w-0">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-black/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] backdrop-blur">
-                        <Megaphone className="h-3 w-3" />
-                        Sponsor
-                    </div>
-                    {(advertisement.title || advertisement.description) && (
-                        <div className="mt-3 min-w-0">
-                            {advertisement.title && <p className="truncate text-sm font-black uppercase tracking-[0.12em]">{advertisement.title}</p>}
-                            {advertisement.description && <p className="line-clamp-2 text-xs text-white/80">{advertisement.description}</p>}
-                        </div>
+        <div
+            className={`group relative flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900 ${className}`}
+            style={{ width, height }}
+        >
+            {/* Mention obligatoire, reduite au minimum pour ne pas masquer la creation. */}
+            <span className="pointer-events-none absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] text-white backdrop-blur">
+                <Megaphone className="h-2.5 w-2.5" />
+                Sponsor
+            </span>
+
+            {media}
+
+            {hasCopy && (
+                <div className="shrink-0 border-t border-black/5 bg-white p-3 dark:border-white/10 dark:bg-gray-900">
+                    {advertisement.title && (
+                        <p className="truncate text-sm font-black uppercase tracking-[0.1em] text-gray-900 dark:text-white">
+                            {advertisement.title}
+                        </p>
+                    )}
+                    {advertisement.description && (
+                        <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-gray-600 dark:text-white/70">
+                            {advertisement.description}
+                        </p>
+                    )}
+                    {advertisement.redirect_url && (
+                        <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white">
+                            En savoir plus
+                            <ExternalLink className="h-3 w-3" />
+                        </span>
                     )}
                 </div>
-                {advertisement.redirect_url && (
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur">
-                        <ExternalLink className="h-4 w-4" />
-                    </span>
-                )}
-            </div>
+            )}
         </div>
     );
 

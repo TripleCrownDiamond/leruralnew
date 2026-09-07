@@ -34,6 +34,17 @@ interface Article {
     is_premium: boolean;
     is_featured: boolean;
     price?: number | null;
+    seo?: {
+        score: number;
+        niveau: 'bon' | 'moyen' | 'faible';
+        checks: Array<{
+            cle: string;
+            libelle: string;
+            ok: boolean;
+            poids: number;
+            conseil: string;
+        }>;
+    };
 }
 
 interface Props {
@@ -418,6 +429,12 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                                                 <span>{article.author}</span>
                                                                 <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-white/20" />
                                                                 <span>{article.published_at}</span>
+                                                                {article.seo && (
+                                                                    <>
+                                                                        <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-white/20" />
+                                                                        <SeoBadge seo={article.seo} />
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -652,6 +669,41 @@ function FilterSelect({
         >
             {children}
         </select>
+    );
+}
+
+/**
+ * Note de referencement. Le detail des points manquants est dans l'infobulle
+ * native : la redaction voit quoi corriger sans quitter la liste.
+ */
+function SeoBadge({ seo }: { seo: NonNullable<Article['seo']> }) {
+    const manquants = seo.checks.filter((check) => !check.ok);
+
+    const ton =
+        seo.niveau === 'bon'
+            ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
+            : seo.niveau === 'moyen'
+              ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300'
+              : 'border-red-300 bg-red-50 text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300';
+
+    const infobulle =
+        manquants.length === 0
+            ? 'Referencement complet : tous les controles sont au vert.'
+            : 'A corriger :\n' +
+              manquants.map((check) => '- ' + check.conseil).join('\n');
+
+    return (
+        <span
+            title={infobulle}
+            className={`inline-flex cursor-help items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] ${ton}`}
+        >
+            SEO {seo.score}%
+            {manquants.length > 0 && (
+                <span className="font-bold opacity-70">
+                    ({manquants.length})
+                </span>
+            )}
+        </span>
     );
 }
 

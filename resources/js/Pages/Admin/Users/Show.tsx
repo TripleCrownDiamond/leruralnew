@@ -1,3 +1,8 @@
+import {
+    AdminButton,
+    AdminLinkButton,
+} from '@/Components/Dashboard/AdminButton';
+import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
@@ -134,6 +139,14 @@ export default function Show({ user, roles, permissions, recentActivity = [] }: 
         router.post(route('dashboard.users.resend-invitation', user.id));
     };
 
+    const handleResendVerification = () => {
+        router.post(
+            route('dashboard.users.resend-verification', user.id),
+            {},
+            { preserveScroll: true },
+        );
+    };
+
     const handleToggleStatus = (newStatus: string) => {
         router.patch(route('dashboard.users.update-status', user.id), { status: newStatus });
     };
@@ -163,27 +176,42 @@ export default function Show({ user, roles, permissions, recentActivity = [] }: 
         <DashboardLayout title={`Profil de ${user.name}`}>
             <Head title={`Profil de ${user.name}`} />
 
-            <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href={route('dashboard.users.index')}>
-                                <ArrowLeft className="mr-2 h-4 w-4" />
+            <div className="space-y-6">
+                <AdminPageHeader
+                    eyebrow="Communaute"
+                    title={user.name}
+                    subtitle={user.email}
+                    icon={<Users className="h-6 w-6" />}
+                    actions={
+                        <div className="flex flex-wrap items-center gap-2">
+                            <AdminLinkButton
+                                href={route('dashboard.users.index')}
+                                variant="ghost"
+                                icon={<ArrowLeft className="h-3.5 w-3.5" />}
+                            >
                                 Retour
-                            </Link>
-                        </Button>
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                {user.name}
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-400">
-                                {user.email}
-                            </p>
+                            </AdminLinkButton>
+                            {!user.email_verified_at && (
+                                <AdminButton
+                                    variant="secondary"
+                                    icon={<Send className="h-3.5 w-3.5" />}
+                                    onClick={handleResendVerification}
+                                >
+                                    Renvoyer la verification
+                                </AdminButton>
+                            )}
+                            <AdminLinkButton
+                                href={route('dashboard.users.edit', user.id)}
+                                variant="primary"
+                                icon={<Edit className="h-3.5 w-3.5" />}
+                            >
+                                Modifier
+                            </AdminLinkButton>
                         </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
+                    }
+                />
+
+                <div className="flex flex-wrap justify-end gap-2">
                         {user.status === 'invited' && (
                             <Button variant="outline" onClick={handleResendInvitation}>
                                 <Send className="mr-2 h-4 w-4" />
@@ -233,11 +261,10 @@ export default function Show({ user, roles, permissions, recentActivity = [] }: 
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                </div>
 
                 {/* User Profile Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-32"></div>
+                <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
+                    <div className="h-32 bg-gradient-to-br from-gray-950 via-gray-900 to-primary/40"></div>
                     <div className="px-6 pb-6">
                         <div className="flex items-end -mt-16 mb-6">
                             <div className="h-32 w-32 rounded-full bg-white dark:bg-gray-800 border-4 border-white dark:border-gray-800 flex items-center justify-center">

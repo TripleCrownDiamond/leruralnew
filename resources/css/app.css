@@ -104,6 +104,23 @@
   }
 }
 
+/* Contenu d'article : une image seule sur sa ligne est centree.
+   Quand plusieurs images se suivent dans le meme paragraphe, elles gardent
+   leur flux en ligne — les passer en bloc les empilerait une par ligne. */
+.prose > img,
+.prose > figure > img,
+.prose > p:has(> img:only-child) > img,
+.prose > p:has(> a:only-child > img:only-child) > img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.prose > figure,
+.prose > figure > figcaption {
+  text-align: center;
+}
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

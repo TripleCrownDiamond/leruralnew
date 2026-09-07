@@ -1458,6 +1458,10 @@ class ArticleController extends Controller
 
             'price' => $article->price,
 
+            // Note de referencement : calculee a la volee sur la page courante
+            // (12 articles), jamais sur toute la base.
+            'seo' => app(\App\Services\SeoScoreService::class)->analyse($article),
+
         ];
 
     }
