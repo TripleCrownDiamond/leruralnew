@@ -83,7 +83,10 @@ export default function TiptapEditor({ value, onChange, placeholder, className =
             }),
             Image.configure({
                 HTMLAttributes: {
-                    class: 'rounded-lg max-w-[300px] w-auto h-auto my-3 inline-block mx-1',
+                    // Pas de plafond fixe a 300px : une image inseree seule
+                    // s'affichait au quart de sa taille. Elle occupe desormais
+                    // la largeur disponible, sans jamais deborder.
+                    class: 'rounded-lg max-w-full w-auto h-auto my-3 inline-block mx-1',
                 },
                 allowBase64: true,
                 inline: true,
