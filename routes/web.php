@@ -96,6 +96,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('dashboard')->name
     Route::post('safeb-settings', [\App\Http\Controllers\Admin\SafebSettingController::class, 'update'])->name('safeb-settings.update');
     Route::post('safeb-settings/reset/{section}', [\App\Http\Controllers\Admin\SafebSettingController::class, 'reset'])->name('safeb-settings.reset');
 
+    // Pas de SSH sur cet hebergement : les migrations se declenchent d'ici.
+    Route::post('maintenance/migrate', [\App\Http\Controllers\Admin\MaintenanceController::class, 'migrate'])->name('maintenance.migrate');
+
     Route::get('stats', [\App\Http\Controllers\Admin\StatsController::class, 'index'])->name('stats.index');
     Route::get('stats/export/{dataset}', [\App\Http\Controllers\Admin\StatsController::class, 'exportCsv'])->name('stats.export');
 

@@ -113,6 +113,7 @@ interface Props {
         pages: TopPage[];
     };
     health: {
+        pending_migrations: number;
         ad_slots: AdSlot[];
         ad_slots_missing: string[];
         featured: { active: number; expired: number; fallback: boolean };
@@ -1032,6 +1033,45 @@ export default function StatsIndex({
                         eyebrow="Engagement"
                         title="Temps passe sur le site"
                     />
+
+                    {health.pending_migrations > 0 && (
+                        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+                            <div className="flex items-start gap-3 text-sm">
+                                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                <div>
+                                    <p className="font-black text-amber-900 dark:text-amber-200">
+                                        {health.pending_migrations} mise(s) a
+                                        jour de la base en attente
+                                    </p>
+                                    <p className="mt-1 text-amber-800 dark:text-amber-200/80">
+                                        La mesure du temps de lecture ne
+                                        demarrera qu'une fois appliquee.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (
+                                        confirm(
+                                            'Appliquer les mises a jour de la base ?\n\nOperation sans effet si elles sont deja passees.',
+                                        )
+                                    ) {
+                                        router.post(
+                                            safeRoute(
+                                                'dashboard.maintenance.migrate',
+                                            ),
+                                            {},
+                                            { preserveScroll: true },
+                                        );
+                                    }
+                                }}
+                                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:bg-amber-600"
+                            >
+                                Appliquer maintenant
+                            </button>
+                        </div>
+                    )}
 
                     {temps.mesurees === 0 ? (
                         <EmptyBlock text="Aucune duree mesuree sur cette periode. La mesure demarre a la premiere visite suivant la mise en ligne du suivi." />

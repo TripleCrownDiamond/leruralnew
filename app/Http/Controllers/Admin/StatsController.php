@@ -381,6 +381,7 @@ class StatsController extends Controller
         $featuredActive = Article::featured()->published()->count();
 
         return [
+            'pending_migrations' => $this->migrationsEnAttente(),
             'ad_slots' => $slots->all(),
             'ad_slots_missing' => $slots->reject(fn (array $slot) => $slot['filled'] && $slot['active'] && $slot['has_image'])
                 ->pluck('label')
@@ -467,6 +468,25 @@ class StatsController extends Controller
                 'moyenne' => (int) round((float) $l->moyenne),
             ])->all(),
         ];
+    }
+
+    /**
+     * Nombre de migrations non encore appliquees.
+     * Sert a signaler qu'une mise a jour du schema reste a declencher, faute
+     * d'acces SSH sur cet hebergement.
+     */
+    private function migrationsEnAttente(): int
+    {
+        try {
+            $appliquees = \DB::table('migrations')->pluck('migration')->all();
+
+            $fichiers = collect(glob(database_path('migrations/*.php')) ?: [])
+                ->map(fn (string $chemin) => basename($chemin, '.php'));
+
+            return $fichiers->diff($appliquees)->count();
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 
     /**
