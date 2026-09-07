@@ -98,6 +98,46 @@ class CommentController extends AdminController
         ]);
     }
 
+    /**
+     * Repondre publiquement a un commentaire, au nom de la redaction.
+     * La reponse est rattachee au commentaire parent et publiee directement :
+     * elle emane d'un membre de l'equipe, elle n'a pas a passer la moderation.
+     */
+    public function reply(Request $request, Comment $comment)
+    {
+        $data = $request->validate([
+            'content' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $author = auth()->user();
+
+        Comment::create([
+            'article_id' => $comment->article_id,
+            'parent_id' => $comment->id,
+            'content' => $data['content'],
+            'author_name' => $author?->name ?? 'La redaction',
+            'author_email' => $author?->email,
+            'user_id' => $author?->id,
+            'rating' => 5,
+            'is_approved' => true,
+            'approved_at' => now(),
+            'approved_by' => $author?->id,
+        ]);
+
+        // Repondre vaut approbation du commentaire parent : sans cela la reponse
+        // serait publiee sous un commentaire qui, lui, resterait invisible.
+        if (! $comment->is_approved) {
+            $comment->update([
+                'is_approved' => true,
+                'auto_flagged' => false,
+                'approved_at' => now(),
+                'approved_by' => $author?->id,
+            ]);
+        }
+
+        return back()->with('success', 'Reponse publiee.');
+    }
+
     public function approve(Comment $comment)
     {
         $comment->update([

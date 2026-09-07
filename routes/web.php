@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('dashboard')->name
 
     Route::get('comments/settings', [\App\Http\Controllers\Admin\CommentController::class, 'settings'])->name('comments.settings');
     Route::post('comments/{comment}/approve', [\App\Http\Controllers\Admin\CommentController::class, 'approve'])->name('comments.approve');
+    Route::post('comments/{comment}/reply', [\App\Http\Controllers\Admin\CommentController::class, 'reply'])->name('comments.reply');
     Route::post('comments/{comment}/reject', [\App\Http\Controllers\Admin\CommentController::class, 'reject'])->name('comments.reject');
     Route::post('comments/bulk-approve', [\App\Http\Controllers\Admin\CommentController::class, 'bulkApprove'])->name('comments.bulk-approve');
     Route::post('comments/bulk-reject', [\App\Http\Controllers\Admin\CommentController::class, 'bulkReject'])->name('comments.bulk-reject');

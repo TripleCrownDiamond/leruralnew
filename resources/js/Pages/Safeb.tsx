@@ -19,14 +19,11 @@ import {
     Mic2,
     Phone,
     Presentation,
-    Send,
     Store,
     Ticket,
-    Upload,
     Users,
     Video,
     Wheat,
-    X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -46,6 +43,22 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 
 function resolveIcon(name: string): React.ReactNode {
     return ICON_MAP[name] ?? <Store className="h-5 w-5" />;
+}
+
+/**
+ * URL de la page d'inscription dediee a une activite. C'est cette URL qui est
+ * comptabilisee dans les statistiques de conversion du tableau de bord.
+ */
+function safeRegisterUrl(type: string): string {
+    try {
+        if (typeof route === 'function' && route().has('safeb.register.form')) {
+            return route('safeb.register.form', { type });
+        }
+    } catch {
+        // Ziggy indisponible : on retombe sur l'URL canonique.
+    }
+
+    return `/safeb/inscription/${type}`;
 }
 
 interface SafebProps {
@@ -847,490 +860,41 @@ export default function Safeb({ pdf_url, safeb_settings }: SafebProps) {
                         <h2 className="font-heading text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white sm:text-3xl">
                             Rejoignez le SAFEB 2026
                         </h2>
-                        <p className="mt-3 max-w-2xl text-sm text-gray-600 dark:text-white/65">
-                            Choisissez votre type de participation, remplissez
-                            le formulaire et l'equipe SAFEB reviendra vers vous.
+                        <p className="mt-2 max-w-2xl text-sm text-gray-600 dark:text-white/70">
+                            Choisissez votre type de participation. Chaque
+                            activite a sa propre page d'inscription, avec les
+                            informations qui la concernent.
                         </p>
 
-                        {flash.success && (
-                            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3.5 text-sm font-semibold text-emerald-700 dark:border-emerald-600/40 dark:bg-emerald-900/20 dark:text-emerald-300">
-                                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-                                {flash.success}
-                            </div>
-                        )}
-                        {flash.error && (
-                            <div className="mt-5 rounded-2xl border border-red-300 bg-red-50 px-4 py-3.5 text-sm font-semibold text-red-700 dark:border-red-600/40 dark:bg-red-900/20 dark:text-red-300">
-                                {flash.error}
-                            </div>
-                        )}
-
-                        {/* Tabs */}
-                        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                            {enabledTabs.map((tab: any) => {
-                                const isActive = activeType === tab.type;
-                                return (
-                                    <button
-                                        key={tab.type}
-                                        type="button"
-                                        onClick={() => switchType(tab.type)}
-                                        className={`group rounded-2xl border p-4 text-left transition-all ${
-                                            isActive
-                                                ? 'border-primary bg-primary/5 shadow-[0_14px_34px_-20px_rgba(47,106,17,0.6)] dark:border-primary/50'
-                                                : 'border-gray-200/80 bg-gray-50/50 hover:border-primary/30 hover:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]'
-                                        }`}
-                                    >
-                                        <div
-                                            className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
-                                                isActive
-                                                    ? 'bg-primary text-white'
-                                                    : 'bg-primary/10 text-primary group-hover:bg-primary/15'
-                                            }`}
-                                        >
-                                            {tab.icon}
-                                        </div>
-                                        <p
-                                            className={`mt-3 text-xs font-black uppercase tracking-tight ${
-                                                isActive
-                                                    ? 'text-primary'
-                                                    : 'text-gray-900 dark:text-white'
-                                            }`}
-                                        >
+                        {/* Chaque carte mene a l'URL dediee de l'activite : c'est elle
+                            qui est mesuree dans les statistiques de conversion. */}
+                        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {enabledTabs.map((tab: any) => (
+                                <a
+                                    key={tab.type}
+                                    href={safeRegisterUrl(tab.type)}
+                                    className="group flex h-full flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_20px_45px_-25px_rgba(47,106,17,0.5)] dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-primary/40"
+                                >
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-primary/20">
+                                        {typeof tab.icon === 'string'
+                                            ? resolveIcon(tab.icon)
+                                            : tab.icon}
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-heading text-base font-black uppercase tracking-tight text-gray-900 dark:text-white">
                                             {tab.label}
-                                        </p>
-                                        <p className="mt-1.5 text-[11px] leading-relaxed text-gray-500 dark:text-white/55">
+                                        </h3>
+                                        <p className="mt-1.5 text-sm leading-relaxed text-gray-600 dark:text-white/65">
                                             {tab.description}
                                         </p>
-                                    </button>
-                                );
-                            })}
+                                    </div>
+                                    <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-primary">
+                                        S'inscrire
+                                        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                                    </span>
+                                </a>
+                            ))}
                         </div>
-
-                        {/* Form */}
-                        <form onSubmit={submit} className="mt-6 space-y-4">
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <Field
-                                    label="Nom complet *"
-                                    error={form.errors.name}
-                                >
-                                    <input
-                                        type="text"
-                                        value={form.data.name}
-                                        onChange={(e) =>
-                                            form.setData('name', e.target.value)
-                                        }
-                                        placeholder="Votre nom et prenom"
-                                        className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                                        required
-                                    />
-                                </Field>
-                                <Field
-                                    label="Email *"
-                                    error={form.errors.email}
-                                >
-                                    <input
-                                        type="email"
-                                        value={form.data.email}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'email',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="vous@exemple.com"
-                                        className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                                        required
-                                    />
-                                </Field>
-                            </div>
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <Field
-                                    label="Telephone"
-                                    error={form.errors.phone}
-                                >
-                                    <input
-                                        type="text"
-                                        value={form.data.phone}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'phone',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="+229 ..."
-                                        className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                                    />
-                                </Field>
-                                <Field
-                                    label="Organisation / Structure"
-                                    error={form.errors.organization}
-                                >
-                                    <input
-                                        type="text"
-                                        value={form.data.organization}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'organization',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="Nom de votre structure"
-                                        className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                                    />
-                                </Field>
-                            </div>
-
-                            {/* Option select (panel, partner, stand, masterclass) */}
-                            {showOptionSelect && (
-                                <Field
-                                    label={optionLabel}
-                                    error={form.errors.option_label}
-                                >
-                                    <select
-                                        value={form.data.option_label}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'option_label',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                                    >
-                                        <option value="">
-                                            Selectionnez une option...
-                                        </option>
-                                        {optionChoices.map((choice) => (
-                                            <option key={choice} value={choice}>
-                                                {choice}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </Field>
-                            )}
-
-                            {/* Specialty field (culinary: specialite, film: titre du film) */}
-                            {showSpecialty && (
-                                <Field
-                                    label={
-                                        activeType === 'culinary'
-                                            ? 'Votre specialite culinaire *'
-                                            : 'Titre du film *'
-                                    }
-                                    error={form.errors.specialty}
-                                >
-                                    <input
-                                        type="text"
-                                        value={form.data.specialty}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'specialty',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder={
-                                            activeType === 'culinary'
-                                                ? 'Ex: Tchoukoualo, Ablo, Kpintin...'
-                                                : 'Titre de votre film'
-                                        }
-                                        className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                                        required
-                                    />
-                                </Field>
-                            )}
-
-                            {/* Pitch file upload */}
-                            {showPitchFiles && (
-                                <Field
-                                    label="Documents du projet *"
-                                    error={form.errors.pitch_files}
-                                >
-                                    <div className="space-y-3">
-                                        <div
-                                            onClick={() =>
-                                                pitchFileRef.current?.click()
-                                            }
-                                            className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50/50 p-6 transition-colors hover:border-primary/50 hover:bg-primary/5 dark:border-white/15 dark:bg-white/[0.02] dark:hover:border-primary/40"
-                                        >
-                                            <Upload className="h-8 w-8 text-gray-400 dark:text-white/40" />
-                                            <p className="text-xs font-bold text-gray-600 dark:text-white/70">
-                                                Cliquez pour joindre vos
-                                                fichiers
-                                            </p>
-                                            <p className="text-[10px] text-gray-400 dark:text-white/40">
-                                                PDF, JPG, PNG — Max 10 Mo par
-                                                fichier — Max 5 fichiers
-                                            </p>
-                                            <p className="text-[10px] text-primary">
-                                                Business plan, fiche
-                                                descriptive, besoins du
-                                                projet...
-                                            </p>
-                                        </div>
-                                        <input
-                                            ref={pitchFileRef}
-                                            type="file"
-                                            accept={ACCEPTED_PITCH_FILES}
-                                            multiple
-                                            className="hidden"
-                                            onChange={(e) =>
-                                                handleFileChange(
-                                                    e,
-                                                    'pitch_files',
-                                                    5,
-                                                )
-                                            }
-                                        />
-                                        {form.data.pitch_files.length > 0 && (
-                                            <div className="space-y-2">
-                                                {form.data.pitch_files.map(
-                                                    (file, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-white/5"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <FileText className="h-4 w-4 text-primary" />
-                                                                <span className="text-xs font-semibold text-gray-700 dark:text-white/80">
-                                                                    {file.name}
-                                                                </span>
-                                                                <span className="text-[10px] text-gray-400">
-                                                                    (
-                                                                    {(
-                                                                        file.size /
-                                                                        1024 /
-                                                                        1024
-                                                                    ).toFixed(
-                                                                        1,
-                                                                    )}{' '}
-                                                                    Mo)
-                                                                </span>
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    removeFile(
-                                                                        'pitch_files',
-                                                                        index,
-                                                                    )
-                                                                }
-                                                                className="text-gray-400 hover:text-red-500"
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </Field>
-                            )}
-
-                            {/* Culinary video upload */}
-                            {showCulinaryFiles && (
-                                <Field
-                                    label="Video de votre preparation (optionnel)"
-                                    error={form.errors.culinary_files}
-                                >
-                                    <div className="space-y-3">
-                                        <div
-                                            onClick={() =>
-                                                culinaryFileRef.current?.click()
-                                            }
-                                            className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50/50 p-6 transition-colors hover:border-primary/50 hover:bg-primary/5 dark:border-white/15 dark:bg-white/[0.02] dark:hover:border-primary/40"
-                                        >
-                                            <Video className="h-8 w-8 text-gray-400 dark:text-white/40" />
-                                            <p className="text-xs font-bold text-gray-600 dark:text-white/70">
-                                                Cliquez pour joindre une video
-                                            </p>
-                                            <p className="text-[10px] text-gray-400 dark:text-white/40">
-                                                MP4, MOV, AVI, WebM — Max 50 Mo
-                                                — Max 3 videos
-                                            </p>
-                                        </div>
-                                        <input
-                                            ref={culinaryFileRef}
-                                            type="file"
-                                            accept={ACCEPTED_VIDEO_FILES}
-                                            multiple
-                                            className="hidden"
-                                            onChange={(e) =>
-                                                handleFileChange(
-                                                    e,
-                                                    'culinary_files',
-                                                    3,
-                                                )
-                                            }
-                                        />
-                                        {form.data.culinary_files.length >
-                                            0 && (
-                                            <div className="space-y-2">
-                                                {form.data.culinary_files.map(
-                                                    (file, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-white/5"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <Video className="h-4 w-4 text-primary" />
-                                                                <span className="text-xs font-semibold text-gray-700 dark:text-white/80">
-                                                                    {file.name}
-                                                                </span>
-                                                                <span className="text-[10px] text-gray-400">
-                                                                    (
-                                                                    {(
-                                                                        file.size /
-                                                                        1024 /
-                                                                        1024
-                                                                    ).toFixed(
-                                                                        1,
-                                                                    )}{' '}
-                                                                    Mo)
-                                                                </span>
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    removeFile(
-                                                                        'culinary_files',
-                                                                        index,
-                                                                    )
-                                                                }
-                                                                className="text-gray-400 hover:text-red-500"
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </Field>
-                            )}
-
-                            {/* Film video upload */}
-                            {showFilmFiles && (
-                                <Field
-                                    label="Video du film (bande-annonce ou extrait) *"
-                                    error={form.errors.film_files}
-                                >
-                                    <div className="space-y-3">
-                                        <div
-                                            onClick={() =>
-                                                filmFileRef.current?.click()
-                                            }
-                                            className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50/50 p-6 transition-colors hover:border-primary/50 hover:bg-primary/5 dark:border-white/15 dark:bg-white/[0.02] dark:hover:border-primary/40"
-                                        >
-                                            <Film className="h-8 w-8 text-gray-400 dark:text-white/40" />
-                                            <p className="text-xs font-bold text-gray-600 dark:text-white/70">
-                                                Cliquez pour joindre votre video
-                                            </p>
-                                            <p className="text-[10px] text-gray-400 dark:text-white/40">
-                                                MP4, MOV, AVI, WebM — Max 50 Mo
-                                                — Max 3 videos
-                                            </p>
-                                        </div>
-                                        <input
-                                            ref={filmFileRef}
-                                            type="file"
-                                            accept={ACCEPTED_VIDEO_FILES}
-                                            multiple
-                                            className="hidden"
-                                            onChange={(e) =>
-                                                handleFileChange(
-                                                    e,
-                                                    'film_files',
-                                                    3,
-                                                )
-                                            }
-                                        />
-                                        {form.data.film_files.length > 0 && (
-                                            <div className="space-y-2">
-                                                {form.data.film_files.map(
-                                                    (file, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-white/5"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <Film className="h-4 w-4 text-primary" />
-                                                                <span className="text-xs font-semibold text-gray-700 dark:text-white/80">
-                                                                    {file.name}
-                                                                </span>
-                                                                <span className="text-[10px] text-gray-400">
-                                                                    (
-                                                                    {(
-                                                                        file.size /
-                                                                        1024 /
-                                                                        1024
-                                                                    ).toFixed(
-                                                                        1,
-                                                                    )}{' '}
-                                                                    Mo)
-                                                                </span>
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    removeFile(
-                                                                        'film_files',
-                                                                        index,
-                                                                    )
-                                                                }
-                                                                className="text-gray-400 hover:text-red-500"
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </Field>
-                            )}
-
-                            <Field
-                                label="Message (optionnel)"
-                                error={form.errors.message}
-                            >
-                                <textarea
-                                    rows={4}
-                                    value={form.data.message}
-                                    onChange={(e) =>
-                                        form.setData('message', e.target.value)
-                                    }
-                                    placeholder={
-                                        activeType === 'stand'
-                                            ? 'Produits que vous souhaitez exposer, besoins en amenagement...'
-                                            : activeType === 'partner'
-                                              ? 'Vos attentes en matiere de visibilite et de partenariat...'
-                                              : activeType === 'film'
-                                                ? 'Description du film, theme, message du realisateur...'
-                                                : 'Informations complementaires...'
-                                    }
-                                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm leading-relaxed focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                                />
-                            </Field>
-
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <p className="text-[11px] leading-relaxed text-gray-400 dark:text-white/40">
-                                    L'equipe SAFEB vous contactera a l'adresse
-                                    indiquee pour confirmer votre participation.
-                                </p>
-                                <button
-                                    type="submit"
-                                    disabled={form.processing}
-                                    className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-br from-primary to-emerald-700 px-7 text-xs font-black uppercase tracking-[0.16em] text-white shadow-[0_16px_40px_-18px_rgba(47,106,17,0.8)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    <Send className="h-4 w-4" />
-                                    {form.processing
-                                        ? 'Envoi en cours...'
-                                        : 'Envoyer mon inscription'}
-                                </button>
-                            </div>
-                        </form>
                     </div>
                 </section>
 

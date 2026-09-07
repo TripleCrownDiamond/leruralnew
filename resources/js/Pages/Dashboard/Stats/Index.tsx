@@ -126,6 +126,31 @@ const PERIODS: { key: Period; label: string }[] = [
     { key: 'all', label: 'Tout' },
 ];
 
+const SECTIONS: { id: string; label: string; icon: React.ReactNode }[] = [
+    {
+        id: 'apercu',
+        label: 'Apercu',
+        icon: <Activity className="h-3.5 w-3.5" />,
+    },
+    {
+        id: 'trafic',
+        label: 'Trafic',
+        icon: <TrendingUp className="h-3.5 w-3.5" />,
+    },
+    {
+        id: 'contenus',
+        label: 'Contenus',
+        icon: <Newspaper className="h-3.5 w-3.5" />,
+    },
+    { id: 'safeb', label: 'SAFEB', icon: <UserPlus className="h-3.5 w-3.5" /> },
+    {
+        id: 'controles',
+        label: 'Publicites',
+        icon: <Megaphone className="h-3.5 w-3.5" />,
+    },
+    { id: 'cumuls', label: 'Cumuls', icon: <Eye className="h-3.5 w-3.5" /> },
+];
+
 const CHART_COLORS = {
     primary: '#2f6a11',
     primaryLight: '#4a8a1f',
@@ -262,8 +287,32 @@ export default function StatsIndex({
                     </div>
                 </section>
 
+                {/* Navigation interne : la page est longue, cette barre reste
+                    accessible pendant le defilement. */}
+                <nav
+                    aria-label="Sections des statistiques"
+                    className="sticky top-0 z-30 -mx-1 overflow-x-auto rounded-2xl border border-gray-200 bg-white/90 px-1 py-2 backdrop-blur-xl dark:border-white/10 dark:bg-gray-950/90"
+                >
+                    <ul className="flex min-w-max items-center gap-1 px-1">
+                        {SECTIONS.map((section) => (
+                            <li key={section.id}>
+                                <a
+                                    href={`#${section.id}`}
+                                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-gray-500 transition-colors hover:bg-primary/10 hover:text-primary dark:text-white/55 dark:hover:text-white"
+                                >
+                                    {section.icon}
+                                    {section.label}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div
+                    id="apercu"
+                    className="grid scroll-mt-24 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+                >
                     <StatCard
                         title={`Vues · ${periodLabel}`}
                         value={totals.views}
@@ -296,7 +345,7 @@ export default function StatsIndex({
                 </div>
 
                 {/* Traffic chart */}
-                <section>
+                <section id="trafic" className="scroll-mt-24">
                     <SectionHeader
                         eyebrow="Analyse"
                         title="Evolution du trafic"
@@ -431,7 +480,10 @@ export default function StatsIndex({
                 </section>
 
                 {/* Top articles + top pages */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div
+                    id="contenus"
+                    className="grid scroll-mt-24 grid-cols-1 gap-6 lg:grid-cols-2"
+                >
                     <ChartCard
                         eyebrow="Contenus"
                         title="Articles les plus vus"
@@ -550,7 +602,10 @@ export default function StatsIndex({
                 {/* SAFEB : audience, inscriptions et conversion.
                     Les couleurs sont declinees par theme : le vert de marque est trop sombre
                     sur fond sombre, chaque mode a donc son propre pas de la meme rampe. */}
-                <section className="space-y-6 [--c-safeb-signups:#10b981] [--c-safeb-views:#2f6a11] dark:[--c-safeb-signups:#059669] dark:[--c-safeb-views:#4a8a1f]">
+                <section
+                    id="safeb"
+                    className="scroll-mt-24 space-y-6 [--c-safeb-signups:#10b981] [--c-safeb-views:#2f6a11] dark:[--c-safeb-signups:#059669] dark:[--c-safeb-views:#4a8a1f]"
+                >
                     <div className="flex flex-wrap items-end justify-between gap-3">
                         <SectionHeader
                             eyebrow="SAFEB"
@@ -947,7 +1002,7 @@ export default function StatsIndex({
                 </section>
 
                 {/* Controles de sante : emplacements publicitaires et articles a la une */}
-                <section className="space-y-6">
+                <section id="controles" className="scroll-mt-24 space-y-6">
                     <div className="flex flex-wrap items-end justify-between gap-3">
                         <SectionHeader
                             eyebrow="Controles"
@@ -1085,7 +1140,7 @@ export default function StatsIndex({
                 </section>
 
                 {/* Lifetime counters */}
-                <section>
+                <section id="cumuls" className="scroll-mt-24">
                     <SectionHeader
                         eyebrow="Cumuls"
                         title="Chiffres cles du site"

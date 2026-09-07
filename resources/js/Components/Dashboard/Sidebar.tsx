@@ -1,33 +1,32 @@
-import { Link } from '@inertiajs/react';
-import { useEffect, useRef } from 'react';
 import { User } from '@/types';
+import { Link } from '@inertiajs/react';
 import {
-    LayoutDashboard,
-    FileText,
-    Users,
-    Settings,
-    Bookmark,
-    LogOut,
-    CreditCard,
-    ShoppingBag,
-    Percent,
-    MessageSquare,
-    Globe,
-    Share2,
-    File,
-    Layout,
     BarChart2,
-    DollarSign,
-    Megaphone,
-    Newspaper,
-    Youtube,
-    X,
-    Sparkles,
-    Clock,
-    Radio,
-    FileImage,
+    Bookmark,
     CalendarCheck,
+    Clock,
+    CreditCard,
+    DollarSign,
+    File,
+    FileImage,
+    FileText,
+    Globe,
+    Layout,
+    LayoutDashboard,
+    LogOut,
+    Megaphone,
+    MessageSquare,
+    Newspaper,
+    Percent,
+    Radio,
+    Settings,
+    Share2,
+    ShoppingBag,
+    Sparkles,
+    Users,
+    X,
 } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 interface SidebarProps {
     user: User & { avatar?: string };
@@ -68,12 +67,13 @@ function safeCurrent(pattern: string): boolean {
 export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
     const role = user.role;
     const permissions = user.permissions ?? [];
-    const canWriteArticles = role === 'admin'
-        || role === 'editor'
-        || permissions.includes('create_articles')
-        || permissions.includes('edit_articles')
-        || permissions.includes('manage_articles')
-        || permissions.includes('manage_own_content');
+    const canWriteArticles =
+        role === 'admin' ||
+        role === 'editor' ||
+        permissions.includes('create_articles') ||
+        permissions.includes('edit_articles') ||
+        permissions.includes('manage_articles') ||
+        permissions.includes('manage_own_content');
     const navRef = useRef<HTMLElement | null>(null);
 
     const adminGroups: MenuGroup[] = [
@@ -81,60 +81,222 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
             title: 'Vue globale',
             eyebrow: '01',
             items: [
-                { label: 'Tableau de bord', href: safeRoute('dashboard'), icon: <LayoutDashboard size={18} />, active: safeCurrent('dashboard') },
-                { label: 'Statistiques', href: safeRoute('dashboard.stats.index'), icon: <BarChart2 size={18} />, active: safeCurrent('dashboard.stats.*') },
+                {
+                    label: 'Tableau de bord',
+                    href: safeRoute('dashboard'),
+                    icon: <LayoutDashboard size={18} />,
+                    active: safeCurrent('dashboard'),
+                },
+                {
+                    label: 'Statistiques',
+                    href: safeRoute('dashboard.stats.index'),
+                    icon: <BarChart2 size={18} />,
+                    active: safeCurrent('dashboard.stats.*'),
+                },
             ],
         },
         {
             title: 'Redaction',
             eyebrow: '02',
             items: [
-                                { label: 'Articles', href: safeRoute('dashboard.articles.index'), icon: <FileText size={18} />, active: safeCurrent('dashboard.articles.*') },
-                { label: 'Categories', href: safeRoute('dashboard.categories.index'), icon: <Layout size={18} />, active: safeCurrent('dashboard.categories.*') },
-                { label: 'Parutions', href: safeRoute('dashboard.press-papers.index'), icon: <FileText size={18} />, active: safeCurrent('dashboard.press-papers.*') },
-                { label: 'Commentaires', href: safeRoute('dashboard.comments.index'), icon: <MessageSquare size={18} />, active: safeCurrent('dashboard.comments.*') },
-                { label: 'Sondages', href: safeRoute('dashboard.polls.index'), icon: <BarChart2 size={18} />, active: safeCurrent('dashboard.polls.*') },
-                { label: 'Annonces', href: safeRoute('dashboard.announcements.index'), icon: <Megaphone size={18} />, active: safeCurrent('dashboard.announcements.*') },
-                { label: 'Pages statiques', href: safeRoute('dashboard.static-pages.index'), icon: <File size={18} />, active: safeCurrent('dashboard.static-pages.*') },
+                {
+                    label: 'Articles',
+                    href: safeRoute('dashboard.articles.index'),
+                    icon: <FileText size={18} />,
+                    active: safeCurrent('dashboard.articles.*'),
+                },
+                {
+                    label: 'Categories',
+                    href: safeRoute('dashboard.categories.index'),
+                    icon: <Layout size={18} />,
+                    active: safeCurrent('dashboard.categories.*'),
+                },
+                {
+                    label: 'Parutions',
+                    href: safeRoute('dashboard.press-papers.index'),
+                    icon: <FileText size={18} />,
+                    active: safeCurrent('dashboard.press-papers.*'),
+                },
+                {
+                    label: 'Commentaires',
+                    href: safeRoute('dashboard.comments.index'),
+                    icon: <MessageSquare size={18} />,
+                    active: safeCurrent('dashboard.comments.*'),
+                },
+                {
+                    label: 'Sondages',
+                    href: safeRoute('dashboard.polls.index'),
+                    icon: <BarChart2 size={18} />,
+                    active: safeCurrent('dashboard.polls.*'),
+                },
+                {
+                    label: 'Annonces',
+                    href: safeRoute('dashboard.announcements.index'),
+                    icon: <Megaphone size={18} />,
+                    active: safeCurrent('dashboard.announcements.*'),
+                },
+                {
+                    label: 'Pages statiques',
+                    href: safeRoute('dashboard.static-pages.index'),
+                    icon: <File size={18} />,
+                    active: safeCurrent('dashboard.static-pages.*'),
+                },
+            ],
+        },
+        {
+            title: 'SAFEB 2026',
+            eyebrow: '03',
+            items: [
+                {
+                    label: 'Inscriptions',
+                    href: safeRoute('dashboard.safeb-registrations.index'),
+                    icon: <CalendarCheck size={18} />,
+                    active: safeCurrent('dashboard.safeb-registrations.*'),
+                },
+                {
+                    label: 'Contenu de la page',
+                    href: safeRoute('dashboard.safeb-settings.index'),
+                    icon: <Layout size={18} />,
+                    active: safeCurrent('dashboard.safeb-settings.*'),
+                },
             ],
         },
         {
             title: 'Medias et diffusion',
-            eyebrow: '03',
+            eyebrow: '04',
             items: [
-                { label: 'Emissions', href: safeRoute('dashboard.emissions.index'), icon: <Newspaper size={18} />, active: safeCurrent('dashboard.emissions.*') },
-                { label: 'Web TV / YouTube', href: safeRoute('dashboard.web-tv.index'), icon: <Newspaper size={18} />, active: safeCurrent('dashboard.web-tv.*') },
-                { label: 'Prix des marches', href: safeRoute('dashboard.commodity-prices.index'), icon: <DollarSign size={18} />, active: safeCurrent('dashboard.commodity-prices.*') },
-                { label: 'Agenda', href: safeRoute('dashboard.agendas.index'), icon: <Clock size={18} />, active: safeCurrent('dashboard.agendas.*') },
-                { label: 'SAFEB 2026', href: safeRoute('dashboard.safeb-registrations.index'), icon: <CalendarCheck size={18} />, active: safeCurrent('dashboard.safeb-registrations.*') },
-                { label: 'Publicites', href: safeRoute('dashboard.advertisements.index'), icon: <Megaphone size={18} />, active: safeCurrent('dashboard.advertisements.*') },
-                { label: 'Partenaires', href: safeRoute('dashboard.partners.index'), icon: <Share2 size={18} />, active: safeCurrent('dashboard.partners.*') },
-                { label: 'Lives', href: safeRoute('dashboard.live-streams.index'), icon: <Radio size={18} />, active: safeCurrent('dashboard.live-streams.*') },
-                { label: 'Media', href: safeRoute('dashboard.media.index'), icon: <FileImage size={18} />, active: safeCurrent('dashboard.media.*') },
+                {
+                    label: 'Emissions',
+                    href: safeRoute('dashboard.emissions.index'),
+                    icon: <Newspaper size={18} />,
+                    active: safeCurrent('dashboard.emissions.*'),
+                },
+                {
+                    label: 'Web TV / YouTube',
+                    href: safeRoute('dashboard.web-tv.index'),
+                    icon: <Newspaper size={18} />,
+                    active: safeCurrent('dashboard.web-tv.*'),
+                },
+                {
+                    label: 'Prix des marches',
+                    href: safeRoute('dashboard.commodity-prices.index'),
+                    icon: <DollarSign size={18} />,
+                    active: safeCurrent('dashboard.commodity-prices.*'),
+                },
+                {
+                    label: 'Agenda',
+                    href: safeRoute('dashboard.agendas.index'),
+                    icon: <Clock size={18} />,
+                    active: safeCurrent('dashboard.agendas.*'),
+                },
+                {
+                    label: 'Publicites',
+                    href: safeRoute('dashboard.advertisements.index'),
+                    icon: <Megaphone size={18} />,
+                    active: safeCurrent('dashboard.advertisements.*'),
+                },
+                {
+                    label: 'Partenaires',
+                    href: safeRoute('dashboard.partners.index'),
+                    icon: <Share2 size={18} />,
+                    active: safeCurrent('dashboard.partners.*'),
+                },
+                {
+                    label: 'Lives',
+                    href: safeRoute('dashboard.live-streams.index'),
+                    icon: <Radio size={18} />,
+                    active: safeCurrent('dashboard.live-streams.*'),
+                },
+                {
+                    label: 'Media',
+                    href: safeRoute('dashboard.media.index'),
+                    icon: <FileImage size={18} />,
+                    active: safeCurrent('dashboard.media.*'),
+                },
             ],
         },
         {
             title: 'Commerce',
-            eyebrow: '04',
+            eyebrow: '05',
             items: [
-                { label: "Plans d'abonnement", href: safeRoute('dashboard.subscription-plans.index'), icon: <Percent size={18} />, active: safeCurrent('dashboard.subscription-plans.*') },
-                { label: 'Souscriptions', href: safeRoute('dashboard.subscriptions.index'), icon: <ShoppingBag size={18} />, active: safeCurrent('dashboard.subscriptions.*') },
-                { label: 'Paiements', href: safeRoute('dashboard.payments.index'), icon: <DollarSign size={18} />, active: safeCurrent('dashboard.payments.*') },
-                                { label: 'Moyens de paiement', href: safeRoute('dashboard.settings.payment'), icon: <CreditCard size={18} />, active: safeCurrent('dashboard.settings.payment*') },
-                { label: 'Codes promo', href: safeRoute('dashboard.promo-codes.index'), icon: <Percent size={18} />, active: safeCurrent('dashboard.promo-codes.*') },
+                {
+                    label: "Plans d'abonnement",
+                    href: safeRoute('dashboard.subscription-plans.index'),
+                    icon: <Percent size={18} />,
+                    active: safeCurrent('dashboard.subscription-plans.*'),
+                },
+                {
+                    label: 'Souscriptions',
+                    href: safeRoute('dashboard.subscriptions.index'),
+                    icon: <ShoppingBag size={18} />,
+                    active: safeCurrent('dashboard.subscriptions.*'),
+                },
+                {
+                    label: 'Paiements',
+                    href: safeRoute('dashboard.payments.index'),
+                    icon: <DollarSign size={18} />,
+                    active: safeCurrent('dashboard.payments.*'),
+                },
+                {
+                    label: 'Moyens de paiement',
+                    href: safeRoute('dashboard.settings.payment'),
+                    icon: <CreditCard size={18} />,
+                    active: safeCurrent('dashboard.settings.payment*'),
+                },
+                {
+                    label: 'Codes promo',
+                    href: safeRoute('dashboard.promo-codes.index'),
+                    icon: <Percent size={18} />,
+                    active: safeCurrent('dashboard.promo-codes.*'),
+                },
             ],
         },
         {
             title: 'Configuration',
-            eyebrow: '05',
+            eyebrow: '06',
             items: [
-                { label: 'Utilisateurs', href: safeRoute('dashboard.users.index'), icon: <Users size={18} />, active: safeCurrent('dashboard.users.*') },
-                { label: 'Widgets', href: safeRoute('dashboard.widgets.index'), icon: <Layout size={18} />, active: safeCurrent('dashboard.widgets.*') },
-                { label: 'Reseaux sociaux', href: safeRoute('dashboard.settings.socials'), icon: <Share2 size={18} />, active: safeCurrent('dashboard.settings.socials*') },
-                { label: 'WhatsApp flottant', href: safeRoute('dashboard.settings.whatsapp'), icon: <MessageSquare size={18} />, active: safeCurrent('dashboard.settings.whatsapp*') },
-                { label: 'Tracking & pixels', href: safeRoute('dashboard.settings.integrations'), icon: <Globe size={18} />, active: safeCurrent('dashboard.settings.integrations*') },
-                { label: 'Pied de page', href: safeRoute('dashboard.footer.index'), icon: <Globe size={18} />, active: safeCurrent('dashboard.footer.*') },
-                { label: 'Mon profil', href: safeRoute('profile.edit'), icon: <Settings size={18} />, active: safeCurrent('profile.edit') },
+                {
+                    label: 'Utilisateurs',
+                    href: safeRoute('dashboard.users.index'),
+                    icon: <Users size={18} />,
+                    active: safeCurrent('dashboard.users.*'),
+                },
+                {
+                    label: 'Widgets',
+                    href: safeRoute('dashboard.widgets.index'),
+                    icon: <Layout size={18} />,
+                    active: safeCurrent('dashboard.widgets.*'),
+                },
+                {
+                    label: 'Reseaux sociaux',
+                    href: safeRoute('dashboard.settings.socials'),
+                    icon: <Share2 size={18} />,
+                    active: safeCurrent('dashboard.settings.socials*'),
+                },
+                {
+                    label: 'WhatsApp flottant',
+                    href: safeRoute('dashboard.settings.whatsapp'),
+                    icon: <MessageSquare size={18} />,
+                    active: safeCurrent('dashboard.settings.whatsapp*'),
+                },
+                {
+                    label: 'Tracking & pixels',
+                    href: safeRoute('dashboard.settings.integrations'),
+                    icon: <Globe size={18} />,
+                    active: safeCurrent('dashboard.settings.integrations*'),
+                },
+                {
+                    label: 'Pied de page',
+                    href: safeRoute('dashboard.footer.index'),
+                    icon: <Globe size={18} />,
+                    active: safeCurrent('dashboard.footer.*'),
+                },
+                {
+                    label: 'Mon profil',
+                    href: safeRoute('profile.edit'),
+                    icon: <Settings size={18} />,
+                    active: safeCurrent('profile.edit'),
+                },
             ],
         },
     ];
@@ -144,15 +306,30 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
             title: 'Redaction',
             eyebrow: '01',
             items: [
-                { label: "Tableau de bord", href: safeRoute('dashboard'), icon: <LayoutDashboard size={18} />, active: safeCurrent('dashboard') },
-                { label: 'Mes articles', href: safeRoute('dashboard.articles.index'), icon: <FileText size={18} />, active: safeCurrent('dashboard.articles.*') },
+                {
+                    label: 'Tableau de bord',
+                    href: safeRoute('dashboard'),
+                    icon: <LayoutDashboard size={18} />,
+                    active: safeCurrent('dashboard'),
+                },
+                {
+                    label: 'Mes articles',
+                    href: safeRoute('dashboard.articles.index'),
+                    icon: <FileText size={18} />,
+                    active: safeCurrent('dashboard.articles.*'),
+                },
             ],
         },
         {
             title: 'Compte',
             eyebrow: '02',
             items: [
-                { label: 'Mon profil', href: safeRoute('profile.edit'), icon: <Settings size={18} />, active: safeCurrent('profile.edit') },
+                {
+                    label: 'Mon profil',
+                    href: safeRoute('profile.edit'),
+                    icon: <Settings size={18} />,
+                    active: safeCurrent('profile.edit'),
+                },
             ],
         },
     ];
@@ -162,44 +339,84 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
             title: 'Mon espace',
             eyebrow: '01',
             items: [
-                { label: 'Accueil', href: safeRoute('dashboard'), icon: <LayoutDashboard size={18} />, active: safeCurrent('dashboard') },
+                {
+                    label: 'Accueil',
+                    href: safeRoute('dashboard'),
+                    icon: <LayoutDashboard size={18} />,
+                    active: safeCurrent('dashboard'),
+                },
             ],
         },
         {
             title: 'Achats & abonnements',
             eyebrow: '02',
             items: [
-                { label: 'Mes abonnements', href: safeRoute('user.subscription'), icon: <CreditCard size={18} />, active: safeCurrent('user.subscription') },
-                { label: "Historique d'achats", href: safeRoute('user.purchases'), icon: <ShoppingBag size={18} />, active: safeCurrent('user.purchases') },
+                {
+                    label: 'Mes abonnements',
+                    href: safeRoute('user.subscription'),
+                    icon: <CreditCard size={18} />,
+                    active: safeCurrent('user.subscription'),
+                },
+                {
+                    label: "Historique d'achats",
+                    href: safeRoute('user.purchases'),
+                    icon: <ShoppingBag size={18} />,
+                    active: safeCurrent('user.purchases'),
+                },
             ],
         },
         {
             title: 'Favoris',
             eyebrow: '03',
             items: [
-                { label: 'Articles sauvegardes', href: safeRoute('user.saved-articles'), icon: <Bookmark size={18} />, active: safeCurrent('user.saved-articles') },
+                {
+                    label: 'Articles sauvegardes',
+                    href: safeRoute('user.saved-articles'),
+                    icon: <Bookmark size={18} />,
+                    active: safeCurrent('user.saved-articles'),
+                },
             ],
         },
         {
             title: 'Compte',
             eyebrow: '04',
             items: [
-                { label: 'Parametres', href: safeRoute('profile.edit'), icon: <Settings size={18} />, active: safeCurrent('profile.edit') },
+                {
+                    label: 'Parametres',
+                    href: safeRoute('profile.edit'),
+                    icon: <Settings size={18} />,
+                    active: safeCurrent('profile.edit'),
+                },
             ],
         },
     ];
 
-    const groups = role === 'admin' ? adminGroups : canWriteArticles ? editorGroups : userGroups;
-    const roleLabel = role === 'admin' ? 'Administration' : canWriteArticles ? 'Redaction' : 'Abonne';
+    const groups =
+        role === 'admin'
+            ? adminGroups
+            : canWriteArticles
+              ? editorGroups
+              : userGroups;
+    const roleLabel =
+        role === 'admin'
+            ? 'Administration'
+            : canWriteArticles
+              ? 'Redaction'
+              : 'Abonne';
 
     useEffect(() => {
         const container = navRef.current;
         if (!container) return;
 
-        const active = container.querySelector<HTMLElement>('[data-active=\"true\"]');
+        const active = container.querySelector<HTMLElement>(
+            '[data-active=\"true\"]',
+        );
         if (!active) return;
 
-        const targetTop = active.offsetTop - container.clientHeight / 2 + active.clientHeight / 2;
+        const targetTop =
+            active.offsetTop -
+            container.clientHeight / 2 +
+            active.clientHeight / 2;
         container.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
     }, [isOpen, role]);
 
@@ -222,14 +439,24 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
                 <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 opacity-[0.05]"
-                    style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)', backgroundSize: '24px 24px' }}
+                    style={{
+                        backgroundImage:
+                            'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)',
+                        backgroundSize: '24px 24px',
+                    }}
                 />
-                <div aria-hidden="true" className="pointer-events-none absolute -top-32 -right-10 h-48 w-48 rounded-full bg-primary/25 blur-3xl" />
-                <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-10 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" />
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-10 -top-32 h-48 w-48 rounded-full bg-primary/25 blur-3xl"
+                />
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -bottom-32 -left-10 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl"
+                />
 
                 <div className="relative flex h-full flex-col">
                     {/* Brand rail header */}
-                    <div className="flex h-20 items-center justify-between border-b border-white/10 px-6 shrink-0">
+                    <div className="flex h-20 shrink-0 items-center justify-between border-b border-white/10 px-6">
                         <Link href="/" className="flex flex-col gap-0.5">
                             <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.28em] text-primary">
                                 <span className="relative flex h-2 w-2">
@@ -238,7 +465,7 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
                                 </span>
                                 <span>LE RURAL</span>
                             </div>
-                            <span className="font-heading text-xl font-black uppercase tracking-tight text-white leading-none">
+                            <span className="font-heading text-xl font-black uppercase leading-none tracking-tight text-white">
                                 {roleLabel}
                             </span>
                         </Link>
@@ -253,9 +480,12 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
                     </div>
 
                     {/* User profile card */}
-                    <div className="px-4 py-5 shrink-0">
+                    <div className="shrink-0 px-4 py-5">
                         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                            <div aria-hidden="true" className="pointer-events-none absolute -top-8 -right-8 h-20 w-20 rounded-full bg-primary/20 blur-2xl" />
+                            <div
+                                aria-hidden="true"
+                                className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-primary/20 blur-2xl"
+                            />
                             <div className="relative flex items-center gap-3">
                                 {user.avatar ? (
                                     <img
@@ -269,7 +499,9 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
                                     </div>
                                 )}
                                 <div className="min-w-0 flex-1">
-                                    <div className="truncate text-sm font-bold text-white">{user.name}</div>
+                                    <div className="truncate text-sm font-bold text-white">
+                                        {user.name}
+                                    </div>
                                     <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.18em] text-primary">
                                         <Sparkles className="h-2.5 w-2.5" />
                                         {roleLabel}
@@ -280,14 +512,17 @@ export default function Sidebar({ user, isOpen, setIsOpen }: SidebarProps) {
                     </div>
 
                     {/* Navigation */}
-                    <nav ref={navRef} className="custom-scrollbar flex-1 overflow-y-auto px-3 pb-4">
+                    <nav
+                        ref={navRef}
+                        className="custom-scrollbar flex-1 overflow-y-auto px-3 pb-4"
+                    >
                         {groups.map((group) => (
                             <MenuGroupBlock key={group.title} group={group} />
                         ))}
                     </nav>
 
                     {/* Footer logout */}
-                    <div className="border-t border-white/10 p-4 shrink-0">
+                    <div className="shrink-0 border-t border-white/10 p-4">
                         <Link
                             href={safeRoute('logout')}
                             method="post"
@@ -308,7 +543,9 @@ function MenuGroupBlock({ group }: { group: MenuGroup }) {
     return (
         <div className="mb-6">
             <div className="mb-2 flex items-center gap-2 px-3 text-[9px] font-black uppercase tracking-[0.28em] text-white/40">
-                <span className="tabular-nums text-primary">{group.eyebrow}</span>
+                <span className="tabular-nums text-primary">
+                    {group.eyebrow}
+                </span>
                 <span className="h-px w-4 bg-white/10" />
                 <span>{group.title}</span>
             </div>
@@ -325,7 +562,7 @@ function MenuItem({ href, icon, label, active = false }: MenuLink) {
     return (
         <Link
             href={href}
-            data-active={active ? "true" : "false"}
+            data-active={active ? 'true' : 'false'}
             className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
                 active
                     ? 'bg-gradient-to-r from-primary/25 via-primary/15 to-transparent text-white'
@@ -333,7 +570,10 @@ function MenuItem({ href, icon, label, active = false }: MenuLink) {
             }`}
         >
             {active && (
-                <span aria-hidden="true" className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary" />
+                <span
+                    aria-hidden="true"
+                    className="absolute bottom-1.5 left-0 top-1.5 w-1 rounded-r-full bg-primary"
+                />
             )}
             <span
                 className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-all ${
@@ -345,12 +585,12 @@ function MenuItem({ href, icon, label, active = false }: MenuLink) {
                 {icon}
             </span>
             <span className="flex-1 truncate">{label}</span>
-            {active && <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />}
+            {active && (
+                <span
+                    aria-hidden="true"
+                    className="inline-block h-1.5 w-1.5 rounded-full bg-primary"
+                />
+            )}
         </Link>
     );
 }
-
-
-
-
-

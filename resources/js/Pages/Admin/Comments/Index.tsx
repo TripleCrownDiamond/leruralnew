@@ -1,5 +1,11 @@
-import AdminCard, { AdminEmptyState, AdminStatusPill } from '@/Components/Dashboard/AdminCard';
-import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
+import {
+    AdminButton,
+    AdminLinkButton,
+} from '@/Components/Dashboard/AdminButton';
+import AdminCard, {
+    AdminEmptyState,
+    AdminStatusPill,
+} from '@/Components/Dashboard/AdminCard';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import AdminPagination from '@/Components/Dashboard/AdminPagination';
 import AdminSearchBar from '@/Components/Dashboard/AdminSearchBar';
@@ -7,9 +13,19 @@ import Notifications from '@/Components/Notifications';
 import { Checkbox } from '@/Components/ui/checkbox';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, router } from '@inertiajs/react';
-import { AlertTriangle, CheckCircle2, Clock3, MessageSquare, Settings, ShieldAlert, Trash2, XCircle } from 'lucide-react';
+import {
+    AlertTriangle,
+    CheckCircle2,
+    Clock3,
+    MessageSquare,
+    Reply,
+    Settings,
+    ShieldAlert,
+    Trash2,
+    XCircle,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 
 interface User {
     id: number;
@@ -58,7 +74,9 @@ type ModerationFilter = 'all' | 'flagged' | 'clean';
 export default function Index({ comments, redFlags, filters = {} }: Props) {
     const [selectedComments, setSelectedComments] = useState<number[]>([]);
     const [search, setSearch] = useState(filters.search || '');
-    const [statusFilter, setStatusFilter] = useState<StatusFilter>((filters.status as StatusFilter) || 'all');
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+        (filters.status as StatusFilter) || 'all',
+    );
     const [moderationFilter, setModerationFilter] = useState<ModerationFilter>(
         (filters.auto_moderation as ModerationFilter) || 'all',
     );
@@ -67,7 +85,8 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
         if (
             search === (filters.search || '') &&
             statusFilter === ((filters.status as StatusFilter) || 'all') &&
-            moderationFilter === ((filters.auto_moderation as ModerationFilter) || 'all')
+            moderationFilter ===
+                ((filters.auto_moderation as ModerationFilter) || 'all')
         ) {
             return;
         }
@@ -77,7 +96,10 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                 data: {
                     search: search || undefined,
                     status: statusFilter !== 'all' ? statusFilter : undefined,
-                    auto_moderation: moderationFilter !== 'all' ? moderationFilter : undefined,
+                    auto_moderation:
+                        moderationFilter !== 'all'
+                            ? moderationFilter
+                            : undefined,
                 },
                 preserveState: true,
                 preserveScroll: true,
@@ -105,16 +127,54 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
         );
     };
 
+    const [replyingTo, setReplyingTo] = useState<number | null>(null);
+    const [replyText, setReplyText] = useState('');
+    const [replySending, setReplySending] = useState(false);
+
+    const openReply = (commentId: number) => {
+        setReplyingTo((current) => (current === commentId ? null : commentId));
+        setReplyText('');
+    };
+
+    const handleReply = (commentId: number) => {
+        const content = replyText.trim();
+
+        if (!content) return;
+
+        setReplySending(true);
+
+        router.post(
+            route('dashboard.comments.reply', commentId),
+            { content },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setReplyingTo(null);
+                    setReplyText('');
+                },
+                onFinish: () => setReplySending(false),
+            },
+        );
+    };
+
     const handleApprove = (comment: Comment) => {
         if (comment.is_approved) return;
 
-        router.post(route('dashboard.comments.approve', comment.id), {}, { preserveScroll: true });
+        router.post(
+            route('dashboard.comments.approve', comment.id),
+            {},
+            { preserveScroll: true },
+        );
     };
 
     const handleReject = (comment: Comment) => {
         if (!comment.is_approved) return;
 
-        router.post(route('dashboard.comments.reject', comment.id), {}, { preserveScroll: true });
+        router.post(
+            route('dashboard.comments.reject', comment.id),
+            {},
+            { preserveScroll: true },
+        );
     };
 
     const handleDelete = (commentId: number) => {
@@ -122,13 +182,20 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
 
         router.delete(route('dashboard.comments.destroy', commentId), {
             preserveScroll: true,
-            onSuccess: () => setSelectedComments((current) => current.filter((id) => id !== commentId)),
+            onSuccess: () =>
+                setSelectedComments((current) =>
+                    current.filter((id) => id !== commentId),
+                ),
         });
     };
 
     const handleBulkApprove = () => {
         const commentIds = comments.data
-            .filter((comment) => selectedComments.includes(comment.id) && !comment.is_approved)
+            .filter(
+                (comment) =>
+                    selectedComments.includes(comment.id) &&
+                    !comment.is_approved,
+            )
             .map((comment) => comment.id);
 
         if (!commentIds.length) return;
@@ -147,7 +214,11 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
 
     const handleBulkReject = () => {
         const commentIds = comments.data
-            .filter((comment) => selectedComments.includes(comment.id) && comment.is_approved)
+            .filter(
+                (comment) =>
+                    selectedComments.includes(comment.id) &&
+                    comment.is_approved,
+            )
             .map((comment) => comment.id);
 
         if (!commentIds.length) return;
@@ -190,12 +261,24 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
         });
     };
 
-    const from = comments.total === 0 ? 0 : (comments.current_page - 1) * comments.per_page + 1;
-    const to = comments.total === 0 ? 0 : Math.min(comments.current_page * comments.per_page, comments.total);
+    const from =
+        comments.total === 0
+            ? 0
+            : (comments.current_page - 1) * comments.per_page + 1;
+    const to =
+        comments.total === 0
+            ? 0
+            : Math.min(
+                  comments.current_page * comments.per_page,
+                  comments.total,
+              );
     const commentsSettingsHref = (() => {
         try {
             const routeHelper = route();
-            if (typeof routeHelper?.has === 'function' && routeHelper.has('dashboard.comments.settings')) {
+            if (
+                typeof routeHelper?.has === 'function' &&
+                routeHelper.has('dashboard.comments.settings')
+            ) {
                 return route('dashboard.comments.settings');
             }
         } catch {
@@ -206,20 +289,36 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
     })();
 
     const stats = useMemo(() => {
-        const approved = comments.data.filter((comment) => comment.is_approved).length;
-        const flagged = comments.data.filter((comment) => comment.auto_flagged).length;
-        const pending = comments.data.filter((comment) => !comment.is_approved).length;
+        const approved = comments.data.filter(
+            (comment) => comment.is_approved,
+        ).length;
+        const flagged = comments.data.filter(
+            (comment) => comment.auto_flagged,
+        ).length;
+        const pending = comments.data.filter(
+            (comment) => !comment.is_approved,
+        ).length;
 
         return { approved, flagged, pending };
     }, [comments.data]);
 
     const bulkApprovableCount = useMemo(
-        () => comments.data.filter((comment) => selectedComments.includes(comment.id) && !comment.is_approved).length,
+        () =>
+            comments.data.filter(
+                (comment) =>
+                    selectedComments.includes(comment.id) &&
+                    !comment.is_approved,
+            ).length,
         [comments.data, selectedComments],
     );
 
     const bulkRejectableCount = useMemo(
-        () => comments.data.filter((comment) => selectedComments.includes(comment.id) && comment.is_approved).length,
+        () =>
+            comments.data.filter(
+                (comment) =>
+                    selectedComments.includes(comment.id) &&
+                    comment.is_approved,
+            ).length,
         [comments.data, selectedComments],
     );
 
@@ -242,7 +341,9 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                         type="button"
                                         variant="secondary"
                                         size="sm"
-                                        icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                                        icon={
+                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                        }
                                         onClick={handleBulkApprove}
                                         disabled={bulkApprovableCount === 0}
                                     >
@@ -252,7 +353,9 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                         type="button"
                                         variant="secondary"
                                         size="sm"
-                                        icon={<XCircle className="h-3.5 w-3.5" />}
+                                        icon={
+                                            <XCircle className="h-3.5 w-3.5" />
+                                        }
                                         onClick={handleBulkReject}
                                         disabled={bulkRejectableCount === 0}
                                     >
@@ -262,7 +365,9 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                         type="button"
                                         variant="danger"
                                         size="sm"
-                                        icon={<Trash2 className="h-3.5 w-3.5" />}
+                                        icon={
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        }
                                         onClick={handleBulkDelete}
                                     >
                                         Supprimer ({selectedComments.length})
@@ -282,9 +387,24 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                 />
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <StatCard icon={<CheckCircle2 className="h-4 w-4" />} label="Approuves (page)" value={stats.approved} tone="success" />
-                    <StatCard icon={<Clock3 className="h-4 w-4" />} label="En attente (page)" value={stats.pending} tone="warning" />
-                    <StatCard icon={<ShieldAlert className="h-4 w-4" />} label="Signales (page)" value={stats.flagged} tone="danger" />
+                    <StatCard
+                        icon={<CheckCircle2 className="h-4 w-4" />}
+                        label="Approuves (page)"
+                        value={stats.approved}
+                        tone="success"
+                    />
+                    <StatCard
+                        icon={<Clock3 className="h-4 w-4" />}
+                        label="En attente (page)"
+                        value={stats.pending}
+                        tone="warning"
+                    />
+                    <StatCard
+                        icon={<ShieldAlert className="h-4 w-4" />}
+                        label="Signales (page)"
+                        value={stats.flagged}
+                        tone="danger"
+                    />
                 </div>
 
                 <AdminSearchBar
@@ -301,7 +421,9 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                 <button
                                     key={opt.key}
                                     type="button"
-                                    onClick={() => setStatusFilter(opt.key as StatusFilter)}
+                                    onClick={() =>
+                                        setStatusFilter(opt.key as StatusFilter)
+                                    }
                                     className={`rounded-full px-3 py-1.5 transition-colors ${
                                         statusFilter === opt.key
                                             ? 'bg-gradient-to-br from-primary to-emerald-700 text-white shadow-sm'
@@ -315,7 +437,14 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                     }
                     trailing={
                         <div className="flex flex-wrap items-center gap-2">
-                            <FilterSelect value={moderationFilter} onChange={(value) => setModerationFilter(value as ModerationFilter)}>
+                            <FilterSelect
+                                value={moderationFilter}
+                                onChange={(value) =>
+                                    setModerationFilter(
+                                        value as ModerationFilter,
+                                    )
+                                }
+                            >
                                 <option value="all">Moderation: tout</option>
                                 <option value="flagged">Signales auto</option>
                                 <option value="clean">Sans signalement</option>
@@ -348,92 +477,267 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                         <tr>
                                             <th className="w-12 px-4 py-3 text-left">
                                                 <Checkbox
-                                                    checked={comments.data.length > 0 && selectedComments.length === comments.data.length}
-                                                    onCheckedChange={toggleSelectAll}
+                                                    checked={
+                                                        comments.data.length >
+                                                            0 &&
+                                                        selectedComments.length ===
+                                                            comments.data.length
+                                                    }
+                                                    onCheckedChange={
+                                                        toggleSelectAll
+                                                    }
                                                 />
                                             </th>
-                                            <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">Commentaire</th>
-                                            <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">Auteur</th>
-                                            <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">Article</th>
-                                            <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">Date</th>
-                                            <th className="px-5 py-3 text-right text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">Actions</th>
+                                            <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">
+                                                Commentaire
+                                            </th>
+                                            <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">
+                                                Auteur
+                                            </th>
+                                            <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">
+                                                Article
+                                            </th>
+                                            <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">
+                                                Date
+                                            </th>
+                                            <th className="px-5 py-3 text-right text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 dark:text-white/50">
+                                                Actions
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {comments.data.map((comment) => {
-                                            const authorName = comment.user?.name || comment.author_name || 'Anonyme';
-                                            const authorEmail = comment.user?.email || comment.author_email || '-';
-                                            const articleTitle = comment.article?.title_fr || 'Article supprime';
-                                            const canApprove = !comment.is_approved;
-                                            const canReject = comment.is_approved;
+                                            const authorName =
+                                                comment.user?.name ||
+                                                comment.author_name ||
+                                                'Anonyme';
+                                            const authorEmail =
+                                                comment.user?.email ||
+                                                comment.author_email ||
+                                                '-';
+                                            const articleTitle =
+                                                comment.article?.title_fr ||
+                                                'Article supprime';
+                                            const canApprove =
+                                                !comment.is_approved;
+                                            const canReject =
+                                                comment.is_approved;
 
                                             return (
-                                                <tr
-                                                    key={comment.id}
-                                                    className="border-b border-gray-100 transition-colors hover:bg-primary/[0.035] dark:border-white/5 dark:hover:bg-white/[0.03]"
-                                                >
-                                                    <td className="px-4 py-4">
-                                                        <Checkbox
-                                                            checked={selectedComments.includes(comment.id)}
-                                                            onCheckedChange={() => toggleSelect(comment.id)}
-                                                        />
-                                                    </td>
-                                                    <td className="px-5 py-4">
-                                                        <div className="max-w-xl space-y-2">
-                                                            <p className="line-clamp-2 text-sm text-gray-700 dark:text-white/80">{comment.content}</p>
-                                                            <CommentStatusPill comment={comment} />
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-5 py-4">
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{authorName}</p>
-                                                            <p className="text-xs text-gray-500 dark:text-white/50">{authorEmail}</p>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-5 py-4">
-                                                        <p className="max-w-[260px] truncate text-sm text-gray-700 dark:text-white/70">{articleTitle}</p>
-                                                    </td>
-                                                    <td className="px-5 py-4">
-                                                        <p className="text-sm text-gray-600 dark:text-white/60">{formatDate(comment.created_at)}</p>
-                                                    </td>
-                                                    <td className="px-5 py-4">
-                                                        <div className="flex items-center justify-end gap-2">
-                                                                                                                        <AdminButton
-                                                                type="button"
-                                                                variant="secondary"
-                                                                size="icon"
-                                                                icon={<CheckCircle2 className="h-4 w-4" />}
-                                                                onClick={() => handleApprove(comment)}
-                                                                disabled={!canApprove}
-                                                                title={canApprove ? "Approuver" : "Deja approuve"}
+                                                <Fragment key={comment.id}>
+                                                    <tr className="border-b border-gray-100 transition-colors hover:bg-primary/[0.035] dark:border-white/5 dark:hover:bg-white/[0.03]">
+                                                        <td className="px-4 py-4">
+                                                            <Checkbox
+                                                                checked={selectedComments.includes(
+                                                                    comment.id,
+                                                                )}
+                                                                onCheckedChange={() =>
+                                                                    toggleSelect(
+                                                                        comment.id,
+                                                                    )
+                                                                }
                                                             />
-                                                            <AdminButton
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                icon={<XCircle className="h-4 w-4" />}
-                                                                onClick={() => handleReject(comment)}
-                                                                disabled={!canReject}
-                                                                title={canReject ? "Rejeter" : "Deja en attente"}
-                                                            />
-                                                            <AdminButton
-                                                                type="button"
-                                                                variant="danger"
-                                                                size="icon"
-                                                                icon={<Trash2 className="h-4 w-4" />}
-                                                                onClick={() => handleDelete(comment.id)}
-                                                                title="Supprimer"
-                                                            />
-                                                        </div>
-                                                    </td>
-                                                </tr>
+                                                        </td>
+                                                        <td className="px-5 py-4">
+                                                            <div className="max-w-xl space-y-2">
+                                                                <p className="line-clamp-2 text-sm text-gray-700 dark:text-white/80">
+                                                                    {
+                                                                        comment.content
+                                                                    }
+                                                                </p>
+                                                                <CommentStatusPill
+                                                                    comment={
+                                                                        comment
+                                                                    }
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-5 py-4">
+                                                            <div>
+                                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                                    {authorName}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 dark:text-white/50">
+                                                                    {
+                                                                        authorEmail
+                                                                    }
+                                                                </p>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-5 py-4">
+                                                            <p className="max-w-[260px] truncate text-sm text-gray-700 dark:text-white/70">
+                                                                {articleTitle}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-5 py-4">
+                                                            <p className="text-sm text-gray-600 dark:text-white/60">
+                                                                {formatDate(
+                                                                    comment.created_at,
+                                                                )}
+                                                            </p>
+                                                        </td>
+                                                        <td className="px-5 py-4">
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <AdminButton
+                                                                    type="button"
+                                                                    variant="secondary"
+                                                                    size="icon"
+                                                                    icon={
+                                                                        <CheckCircle2 className="h-4 w-4" />
+                                                                    }
+                                                                    onClick={() =>
+                                                                        handleApprove(
+                                                                            comment,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        !canApprove
+                                                                    }
+                                                                    title={
+                                                                        canApprove
+                                                                            ? 'Approuver'
+                                                                            : 'Deja approuve'
+                                                                    }
+                                                                />
+                                                                <AdminButton
+                                                                    type="button"
+                                                                    variant="secondary"
+                                                                    size="icon"
+                                                                    icon={
+                                                                        <Reply className="h-4 w-4" />
+                                                                    }
+                                                                    onClick={() =>
+                                                                        openReply(
+                                                                            comment.id,
+                                                                        )
+                                                                    }
+                                                                    title="Repondre"
+                                                                />
+                                                                <AdminButton
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    icon={
+                                                                        <XCircle className="h-4 w-4" />
+                                                                    }
+                                                                    onClick={() =>
+                                                                        handleReject(
+                                                                            comment,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        !canReject
+                                                                    }
+                                                                    title={
+                                                                        canReject
+                                                                            ? 'Rejeter'
+                                                                            : 'Deja en attente'
+                                                                    }
+                                                                />
+                                                                <AdminButton
+                                                                    type="button"
+                                                                    variant="danger"
+                                                                    size="icon"
+                                                                    icon={
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    }
+                                                                    onClick={() =>
+                                                                        handleDelete(
+                                                                            comment.id,
+                                                                        )
+                                                                    }
+                                                                    title="Supprimer"
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    {replyingTo ===
+                                                        comment.id && (
+                                                        <tr className="bg-gray-50/70 dark:bg-white/[0.02]">
+                                                            <td
+                                                                colSpan={6}
+                                                                className="px-5 py-4"
+                                                            >
+                                                                <label
+                                                                    htmlFor={`reponse-${comment.id}`}
+                                                                    className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:text-white/50"
+                                                                >
+                                                                    Reponse
+                                                                    publique de
+                                                                    la redaction
+                                                                </label>
+                                                                <textarea
+                                                                    id={`reponse-${comment.id}`}
+                                                                    value={
+                                                                        replyText
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setReplyText(
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    rows={3}
+                                                                    maxLength={
+                                                                        2000
+                                                                    }
+                                                                    autoFocus
+                                                                    placeholder="Ecrivez votre reponse..."
+                                                                    className="w-full rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-white/10 dark:bg-gray-900 dark:text-white"
+                                                                />
+                                                                <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                                                                    <AdminButton
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        onClick={() =>
+                                                                            setReplyingTo(
+                                                                                null,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Annuler
+                                                                    </AdminButton>
+                                                                    <AdminButton
+                                                                        type="button"
+                                                                        variant="primary"
+                                                                        icon={
+                                                                            <Reply className="h-4 w-4" />
+                                                                        }
+                                                                        onClick={() =>
+                                                                            handleReply(
+                                                                                comment.id,
+                                                                            )
+                                                                        }
+                                                                        disabled={
+                                                                            replySending ||
+                                                                            replyText.trim() ===
+                                                                                ''
+                                                                        }
+                                                                    >
+                                                                        {replySending
+                                                                            ? 'Envoi...'
+                                                                            : 'Publier la reponse'}
+                                                                    </AdminButton>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </Fragment>
                                             );
                                         })}
                                     </tbody>
                                 </table>
                             </div>
 
-                            <AdminPagination links={comments.links} from={from} to={to} total={comments.total} />
+                            <AdminPagination
+                                links={comments.links}
+                                from={from}
+                                to={to}
+                                total={comments.total}
+                            />
                         </>
                     )}
                 </AdminCard>
@@ -441,9 +745,12 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                 <AdminCard padded>
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                            <h3 className="text-sm font-black uppercase tracking-[0.14em] text-gray-900 dark:text-white">Mots signales actifs</h3>
+                            <h3 className="text-sm font-black uppercase tracking-[0.14em] text-gray-900 dark:text-white">
+                                Mots signales actifs
+                            </h3>
                             <p className="mt-1 text-sm text-gray-500 dark:text-white/60">
-                                Ces termes alimentent la moderation automatique des commentaires.
+                                Ces termes alimentent la moderation automatique
+                                des commentaires.
                             </p>
                         </div>
                         <AdminLinkButton
@@ -468,7 +775,9 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
                                 </span>
                             ))
                         ) : (
-                            <p className="text-sm text-gray-500 dark:text-white/60">Aucun mot signale actif.</p>
+                            <p className="text-sm text-gray-500 dark:text-white/60">
+                                Aucun mot signale actif.
+                            </p>
                         )}
                     </div>
                 </AdminCard>
@@ -479,17 +788,33 @@ export default function Index({ comments, redFlags, filters = {} }: Props) {
     );
 }
 
-function StatCard({ icon, label, value, tone }: { icon: ReactNode; label: string; value: number; tone: 'success' | 'warning' | 'danger' }) {
+function StatCard({
+    icon,
+    label,
+    value,
+    tone,
+}: {
+    icon: ReactNode;
+    label: string;
+    value: number;
+    tone: 'success' | 'warning' | 'danger';
+}) {
     const tones: Record<'success' | 'warning' | 'danger', string> = {
-        success: 'from-emerald-500/15 to-emerald-500/5 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
-        warning: 'from-amber-500/15 to-amber-500/5 text-amber-700 ring-amber-500/20 dark:text-amber-300',
+        success:
+            'from-emerald-500/15 to-emerald-500/5 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300',
+        warning:
+            'from-amber-500/15 to-amber-500/5 text-amber-700 ring-amber-500/20 dark:text-amber-300',
         danger: 'from-red-500/15 to-red-500/5 text-red-700 ring-red-500/20 dark:text-red-300',
     };
 
     return (
-        <div className={`rounded-2xl bg-gradient-to-br p-4 ring-1 ring-inset ${tones[tone]}`}>
+        <div
+            className={`rounded-2xl bg-gradient-to-br p-4 ring-1 ring-inset ${tones[tone]}`}
+        >
             <div className="flex items-center justify-between">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em]">{label}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.14em]">
+                    {label}
+                </p>
                 {icon}
             </div>
             <p className="mt-2 text-2xl font-black leading-none">{value}</p>
@@ -497,7 +822,15 @@ function StatCard({ icon, label, value, tone }: { icon: ReactNode; label: string
     );
 }
 
-function FilterSelect({ value, onChange, children }: { value: string; onChange: (value: string) => void; children: ReactNode }) {
+function FilterSelect({
+    value,
+    onChange,
+    children,
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    children: ReactNode;
+}) {
     return (
         <select
             value={value}
@@ -536,6 +869,3 @@ function formatDate(value: string) {
         minute: '2-digit',
     }).format(date);
 }
-
-
-
