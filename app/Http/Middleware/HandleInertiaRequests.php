@@ -111,6 +111,21 @@ class HandleInertiaRequests extends Middleware
             // Identifiant de la visite en cours : le navigateur s'en sert pour
             // renvoyer le temps passe sur la page au moment de la quitter.
             'page_view_id' => fn () => $request->attributes->get('page_view_id'),
+
+            // Travaux d'administration restant a declencher. Calcule uniquement
+            // pour un administrateur : une visite publique ne doit rien couter.
+            'admin_pending' => function () use ($request) {
+                $user = $request->user();
+
+                if (! $user || ($user->role ?? null) !== 'admin') {
+                    return null;
+                }
+
+                return [
+                    'migrations' => $this->migrationsEnAttente(),
+                    'verifications' => \App\Models\User::whereNull('email_verified_at')->count(),
+                ];
+            },
             'categories' => fn () => CacheService::categories(),
             'settings' => fn () => CacheService::settings(),
             'promo_offer' => fn () => CacheService::featuredPromo(),
@@ -143,5 +158,24 @@ class HandleInertiaRequests extends Middleware
                 }
             },
         ]);
+    }
+
+    /**
+     * Migrations presentes sur le disque mais absentes de la table migrations.
+     * Signale qu'une mise a jour du schema reste a appliquer, faute d'acces SSH.
+     */
+    private function migrationsEnAttente(): int
+    {
+        try {
+            $appliquees = \Illuminate\Support\Facades\DB::table('migrations')->pluck('migration')->all();
+
+            return collect(glob(database_path('migrations/*.php')) ?: [])
+                ->map(fn (string $chemin) => basename($chemin, '.php'))
+                ->diff($appliquees)
+                ->count();
+        } catch (\Throwable $e) {
+            // Base injoignable : ne jamais casser le rendu pour un indicateur.
+            return 0;
+        }
     }
 }

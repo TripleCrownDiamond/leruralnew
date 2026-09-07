@@ -5,6 +5,7 @@ import Header from '@/Components/Dashboard/Header';
 import Notifications from '@/Components/Notifications';
 import PendingPurchaseChecker from '@/Components/PendingPurchaseChecker';
 import PendingPurchaseBanner from '@/Components/PendingPurchaseBanner';
+import PendingActionsBanner from '@/Components/Dashboard/PendingActionsBanner';
 import { User } from '@/types';
 
 interface DashboardLayoutProps {
@@ -41,6 +42,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
                 <main className="relative flex-1 overflow-y-auto overflow-x-hidden">
                     <div className="mx-auto max-w-7xl p-4 md:p-6 lg:p-8">
                         <PendingPurchaseBanner />
+                        <PendingActionsBanner />
                         {children}
                     </div>
                 </main>
