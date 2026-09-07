@@ -264,6 +264,44 @@ export default function ArticleShow({
 
     return (
         <MainLayout title={article.title}>
+            {/* Donnees structurees : le site n'en emettait aucune, ce qui le
+                privait des resultats enrichis. JSON-LD est valide dans le corps
+                de page autant que dans l'en-tete. */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        '@context': 'https://schema.org',
+                        '@type': 'NewsArticle',
+                        headline: article.title,
+                        description: shareDescription,
+                        image: shareImage ? [shareImage] : undefined,
+                        datePublished: article.published_at ?? undefined,
+                        dateModified:
+                            (article as any).updated_at ??
+                            article.published_at ??
+                            undefined,
+                        author: {
+                            '@type': 'Person',
+                            name: article.author || 'LE RURAL',
+                        },
+                        publisher: {
+                            '@type': 'Organization',
+                            name: 'LE RURAL',
+                            logo: {
+                                '@type': 'ImageObject',
+                                url: 'https://lerural.bj/logos/logo.png',
+                            },
+                        },
+                        mainEntityOfPage: {
+                            '@type': 'WebPage',
+                            '@id': shareUrl,
+                        },
+                        inLanguage: 'fr',
+                    }),
+                }}
+            />
+
             <Head>
                 <title>{article.title}</title>
                 <meta

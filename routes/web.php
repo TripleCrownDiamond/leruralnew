@@ -151,6 +151,10 @@ Route::get('/direct', fn () => Inertia::render('Live/Index'))->name('live.index'
 Route::get('/live', fn () => redirect()->route('live.index', [], 301));
 Route::get('/streaming', fn () => redirect()->route('live.index', [], 301));
 Route::get('/public-media/{path}', [\App\Http\Controllers\PublicMediaController::class, 'show'])->where('path', '.*')->name('media.public');
+// Sitemap genere a la demande : le fichier statique datait de mai et ignorait
+// des centaines d'articles parus depuis, faute de cron sur cet hebergement.
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
+
 // Temps passe sur une page, renvoye par le navigateur en quittant celle-ci.
 // Le prefixe api/ est deja exclu du suivi, l'appel ne cree donc pas de visite.
 Route::post('/api/page-time', [\App\Http\Controllers\PageTimeController::class, 'store'])->name('page-time.store');
