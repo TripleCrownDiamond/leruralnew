@@ -112,8 +112,12 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <link rel="icon" type="image/png" href="/logos/logo.png">
-        <link rel="apple-touch-icon" href="/logos/logo.png">
+        {{-- Le logo horizontal servait de favicon : illisible une fois reduit a 32px.
+             Ces icones carrees reprennent le monogramme R de la marque. --}}
+        <link rel="icon" href="/favicon.ico" sizes="any">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
         <!-- Scripts -->
         @routes

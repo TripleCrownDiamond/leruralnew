@@ -240,6 +240,58 @@ class UserController extends AdminController
         return back()->with('success', count($userIds) . ' utilisateur(s) supprime(s) avec succes.');
     }
 
+    /**
+     * Renvoyer le lien de verification a un compte donne.
+     */
+    public function resendVerification(User $user)
+    {
+        if ($user->hasVerifiedEmail()) {
+            return back()->with('error', 'Ce compte est deja verifie.');
+        }
+
+        try {
+            $user->sendEmailVerificationNotification();
+
+            return back()->with('success', 'Lien de verification envoye a ' . $user->email . '.');
+        } catch (\Throwable $e) {
+            \Log::error('Echec envoi verification: ' . $e->getMessage());
+
+            return back()->with('error', "Echec de l'envoi : " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Renvoyer le lien de verification a tous les comptes non verifies.
+     * Les echecs sont comptes plutot que fatals : une adresse refusee par le
+     * serveur SMTP ne doit pas interrompre le reste du lot.
+     */
+    public function bulkResendVerification()
+    {
+        $pending = User::whereNull('email_verified_at')->get();
+
+        if ($pending->isEmpty()) {
+            return back()->with('success', 'Aucun compte en attente de verification.');
+        }
+
+        $sent = 0;
+        $failed = 0;
+
+        foreach ($pending as $user) {
+            try {
+                $user->sendEmailVerificationNotification();
+                $sent++;
+            } catch (\Throwable $e) {
+                $failed++;
+                \Log::error('Echec envoi verification a ' . $user->email . ' : ' . $e->getMessage());
+            }
+        }
+
+        $message = $sent . ' lien(s) de verification envoye(s)';
+        $message .= $failed > 0 ? ', ' . $failed . ' echec(s) - voir les logs.' : '.';
+
+        return back()->with($failed > 0 ? 'error' : 'success', $message);
+    }
+
     public function resendInvitation(User $user)
     {
         if ($user->status !== 'invited') {

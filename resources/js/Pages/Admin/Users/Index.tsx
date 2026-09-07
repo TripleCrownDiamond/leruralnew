@@ -1,7 +1,7 @@
 ﻿import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import { Edit, Eye, Mail, Shield, Trash2, UserPlus, Users } from 'lucide-react';
+import { Edit, Eye, Mail, MailCheck, Shield, Trash2, UserPlus, Users } from 'lucide-react';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import AdminSearchBar from '@/Components/Dashboard/AdminSearchBar';
 import AdminCard, { AdminEmptyState, AdminStatusPill } from '@/Components/Dashboard/AdminCard';
@@ -115,6 +115,27 @@ export default function Index({ users, filters = {}, roles }: Props) {
         });
     };
 
+    // Comptes en attente de verification, sur la page courante.
+    const unverifiedCount = users.data.filter(
+        (user) => !user.email_verified_at,
+    ).length;
+
+    const handleBulkResendVerification = () => {
+        if (
+            !confirm(
+                "Envoyer un lien de verification a tous les comptes non verifies du site ?\n\nChaque personne concernee recevra un e-mail.",
+            )
+        ) {
+            return;
+        }
+
+        router.post(
+            route('dashboard.users.bulk-resend-verification'),
+            {},
+            { preserveScroll: true },
+        );
+    };
+
     const handleBulkDelete = () => {
         if (selectedUsers.length === 0) return;
         if (!confirm(`Supprimer ${selectedUsers.length} utilisateur(s) ?`)) return;
@@ -158,6 +179,16 @@ export default function Index({ users, filters = {}, roles }: Props) {
                     meta={`${users.total} comptes`}
                     actions={
                         <div className="flex items-center gap-2">
+                            {unverifiedCount > 0 && (
+                                <AdminButton
+                                    variant="secondary"
+                                    size="sm"
+                                    icon={<MailCheck className="h-3.5 w-3.5" />}
+                                    onClick={handleBulkResendVerification}
+                                >
+                                    Renvoyer la verification ({unverifiedCount})
+                                </AdminButton>
+                            )}
                             {selectedUsers.length > 0 && (
                                 <AdminButton
                                     variant="danger"

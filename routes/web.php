@@ -105,7 +105,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('dashboard')->name
 
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->names('users');
     Route::delete('users/bulk-delete', [\App\Http\Controllers\Admin\UserController::class, 'bulkDelete'])->name('users.bulk-delete');
+    Route::post('users/bulk-resend-verification', [\App\Http\Controllers\Admin\UserController::class, 'bulkResendVerification'])->name('users.bulk-resend-verification');
     Route::post('users/{user}/resend-invitation', [\App\Http\Controllers\Admin\UserController::class, 'resendInvitation'])->name('users.resend-invitation');
+    Route::post('users/{user}/resend-verification', [\App\Http\Controllers\Admin\UserController::class, 'resendVerification'])->name('users.resend-verification');
     Route::patch('users/{user}/update-status', [\App\Http\Controllers\Admin\UserController::class, 'updateStatus'])->name('users.update-status');
 });
 
