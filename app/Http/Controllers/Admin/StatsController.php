@@ -115,6 +115,7 @@ class StatsController extends Controller
             'lifetime' => $lifetime,
             'safeb' => $this->safebStats($period, $range),
             'health' => $this->healthChecks(),
+            'temps' => $this->tempsDeLecture($range),
         ]);
     }
 
@@ -395,6 +396,94 @@ class StatsController extends Controller
                 'fallback' => $featuredActive === 0,
             ],
         ];
+    }
+
+    /**
+     * Temps passe sur le site : moyenne globale, par type de page et par article.
+     * Seules les visites reellement mesurees comptent ; celles anterieures a la
+     * mise en place du suivi n'ont pas de duree et sont ecartees.
+     */
+    private function tempsDeLecture(?array $range): array
+    {
+        $base = PageView::query()
+            ->whereNotNull('duration_seconds')
+            ->when($range, fn ($q) => $q->where('created_at', '>=', $range['start'])
+                ->when($range['end'], fn ($q2) => $q2->where('created_at', '<=', $range['end'])));
+
+        $mesurees = (int) (clone $base)->count();
+
+        if ($mesurees === 0) {
+            return [
+                'mesurees' => 0,
+                'moyenne' => null,
+                'par_type' => [],
+                'articles' => [],
+            ];
+        }
+
+        // Regroupement par chemin, puis par famille de page cote PHP : la
+        // classification par prefixe est illisible en SQL portable.
+        $parType = [];
+
+        foreach ((clone $base)->selectRaw('path, count(*) as n, sum(duration_seconds) as total')->groupBy('path')->get() as $ligne) {
+            $type = $this->typeDePage((string) $ligne->path);
+            $parType[$type]['visites'] = ($parType[$type]['visites'] ?? 0) + (int) $ligne->n;
+            $parType[$type]['cumul'] = ($parType[$type]['cumul'] ?? 0) + (int) $ligne->total;
+        }
+
+        $types = collect($parType)
+            ->map(fn (array $v, string $type) => [
+                'type' => $type,
+                'visites' => $v['visites'],
+                'moyenne' => (int) round($v['cumul'] / max($v['visites'], 1)),
+            ])
+            ->sortByDesc('visites')
+            ->values()
+            ->all();
+
+        // Articles les plus lus en duree. Un minimum de visites evite qu'une
+        // mesure isolee ne prenne la premiere place.
+        $lignes = (clone $base)
+            ->whereNotNull('article_id')
+            ->selectRaw('article_id, count(*) as n, avg(duration_seconds) as moyenne')
+            ->groupBy('article_id')
+            ->havingRaw('count(*) >= 3')
+            ->orderByDesc('moyenne')
+            ->take(10)
+            ->get();
+
+        $titres = Article::query()
+            ->whereIn('id', $lignes->pluck('article_id')->all())
+            ->pluck('title_fr', 'id');
+
+        return [
+            'mesurees' => $mesurees,
+            'moyenne' => (int) round((float) (clone $base)->avg('duration_seconds')),
+            'par_type' => $types,
+            'articles' => $lignes->map(fn ($l) => [
+                'id' => (int) $l->article_id,
+                'titre' => $titres[$l->article_id] ?? 'Article supprime',
+                'visites' => (int) $l->n,
+                'moyenne' => (int) round((float) $l->moyenne),
+            ])->all(),
+        ];
+    }
+
+    /**
+     * Famille de page deduite de l'URL.
+     */
+    private function typeDePage(string $path): string
+    {
+        return match (true) {
+            $path === '/' || $path === '/en' => 'Accueil',
+            str_starts_with($path, '/article/') => 'Articles',
+            str_starts_with($path, '/safeb') => 'SAFEB',
+            str_starts_with($path, '/categorie/'), str_starts_with($path, '/category/') => 'Rubriques',
+            str_starts_with($path, '/direct'), str_starts_with($path, '/live') => 'Direct',
+            str_starts_with($path, '/search') => 'Recherche',
+            str_starts_with($path, '/parutions'), str_starts_with($path, '/press') => 'Parutions',
+            default => 'Autres pages',
+        };
     }
 
     /**

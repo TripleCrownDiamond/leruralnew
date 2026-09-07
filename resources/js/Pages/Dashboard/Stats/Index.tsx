@@ -7,6 +7,7 @@ import {
     BarChart3,
     CalendarRange,
     CheckCircle2,
+    Clock3,
     Download,
     Eye,
     FileText,
@@ -116,6 +117,17 @@ interface Props {
         ad_slots_missing: string[];
         featured: { active: number; expired: number; fallback: boolean };
     };
+    temps: {
+        mesurees: number;
+        moyenne: number | null;
+        par_type: Array<{ type: string; visites: number; moyenne: number }>;
+        articles: Array<{
+            id: number;
+            titre: string;
+            visites: number;
+            moyenne: number;
+        }>;
+    };
 }
 
 const PERIODS: { key: Period; label: string }[] = [
@@ -143,6 +155,7 @@ const SECTIONS: { id: string; label: string; icon: React.ReactNode }[] = [
         icon: <Newspaper className="h-3.5 w-3.5" />,
     },
     { id: 'safeb', label: 'SAFEB', icon: <UserPlus className="h-3.5 w-3.5" /> },
+    { id: 'temps', label: 'Temps', icon: <Clock3 className="h-3.5 w-3.5" /> },
     {
         id: 'controles',
         label: 'Publicites',
@@ -160,6 +173,17 @@ const CHART_COLORS = {
 
 function formatNumber(value: number): string {
     return new Intl.NumberFormat('fr-FR').format(value || 0);
+}
+
+/** Duree en secondes -> "3 min 20 s", lisible d'un coup d'oeil. */
+function formatDuree(secondes: number | null): string {
+    if (secondes === null || secondes <= 0) return '—';
+    if (secondes < 60) return `${secondes} s`;
+
+    const minutes = Math.floor(secondes / 60);
+    const reste = secondes % 60;
+
+    return reste === 0 ? `${minutes} min` : `${minutes} min ${reste} s`;
 }
 
 function safeRoute(name: string, params?: any): string {
@@ -212,6 +236,7 @@ export default function StatsIndex({
     lifetime,
     safeb,
     health,
+    temps,
 }: Props) {
     const hasData = totals.views > 0;
     const totalSeries = series.reduce(
@@ -999,6 +1024,101 @@ export default function StatsIndex({
                             <EmptyBlock text="Aucune page SAFEB visitee sur cette periode." />
                         )}
                     </ChartCard>
+                </section>
+
+                {/* Temps de lecture */}
+                <section id="temps" className="scroll-mt-24 space-y-6">
+                    <SectionHeader
+                        eyebrow="Engagement"
+                        title="Temps passe sur le site"
+                    />
+
+                    {temps.mesurees === 0 ? (
+                        <EmptyBlock text="Aucune duree mesuree sur cette periode. La mesure demarre a la premiere visite suivant la mise en ligne du suivi." />
+                    ) : (
+                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                            <ChartCard
+                                eyebrow="Par type de page"
+                                title="Duree moyenne"
+                                subtitle={`${formatNumber(temps.mesurees)} visite(s) mesuree(s) — moyenne generale ${formatDuree(temps.moyenne)}`}
+                                icon={<Clock3 className="h-5 w-5" />}
+                            >
+                                <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[420px] text-left text-sm">
+                                        <thead>
+                                            <tr className="border-b border-gray-200 text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:border-white/10 dark:text-white/50">
+                                                <th className="py-2 pr-4">
+                                                    Type de page
+                                                </th>
+                                                <th className="py-2 pr-4 text-right">
+                                                    Visites
+                                                </th>
+                                                <th className="py-2 text-right">
+                                                    Duree moyenne
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="tabular-nums">
+                                            {temps.par_type.map((ligne) => (
+                                                <tr
+                                                    key={ligne.type}
+                                                    className="border-b border-gray-100 last:border-0 dark:border-white/5"
+                                                >
+                                                    <td className="py-2.5 pr-4 font-bold text-gray-900 dark:text-white">
+                                                        {ligne.type}
+                                                    </td>
+                                                    <td className="py-2.5 pr-4 text-right text-gray-600 dark:text-white/70">
+                                                        {formatNumber(
+                                                            ligne.visites,
+                                                        )}
+                                                    </td>
+                                                    <td className="py-2.5 text-right font-bold text-gray-900 dark:text-white">
+                                                        {formatDuree(
+                                                            ligne.moyenne,
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </ChartCard>
+
+                            <ChartCard
+                                eyebrow="Articles"
+                                title="Les plus lus en duree"
+                                subtitle="Articles totalisant au moins 3 visites mesurees"
+                                icon={<Newspaper className="h-5 w-5" />}
+                            >
+                                {temps.articles.length > 0 ? (
+                                    <ul className="space-y-2">
+                                        {temps.articles.map((article) => (
+                                            <li
+                                                key={article.id}
+                                                className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 px-4 py-2.5 dark:border-white/5"
+                                            >
+                                                <span className="line-clamp-2 text-sm text-gray-700 dark:text-white/75">
+                                                    {article.titre}
+                                                </span>
+                                                <span className="shrink-0 text-right">
+                                                    <span className="block text-sm font-black tabular-nums text-gray-900 dark:text-white">
+                                                        {formatDuree(
+                                                            article.moyenne,
+                                                        )}
+                                                    </span>
+                                                    <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-white/40">
+                                                        {article.visites} visites
+                                                    </span>
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <EmptyBlock text="Pas encore assez de visites mesurees par article." />
+                                )}
+                            </ChartCard>
+                        </div>
+                    )}
                 </section>
 
                 {/* Controles de sante : emplacements publicitaires et articles a la une */}

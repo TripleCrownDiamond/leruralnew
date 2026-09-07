@@ -108,6 +108,9 @@ class HandleInertiaRequests extends Middleware
                     'agenda' => CacheService::upcomingAgenda(),
                                 ];
             },
+            // Identifiant de la visite en cours : le navigateur s'en sert pour
+            // renvoyer le temps passe sur la page au moment de la quitter.
+            'page_view_id' => fn () => $request->attributes->get('page_view_id'),
             'categories' => fn () => CacheService::categories(),
             'settings' => fn () => CacheService::settings(),
             'promo_offer' => fn () => CacheService::featuredPromo(),

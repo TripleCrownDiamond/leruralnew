@@ -148,6 +148,9 @@ Route::get('/direct', fn () => Inertia::render('Live/Index'))->name('live.index'
 Route::get('/live', fn () => redirect()->route('live.index', [], 301));
 Route::get('/streaming', fn () => redirect()->route('live.index', [], 301));
 Route::get('/public-media/{path}', [\App\Http\Controllers\PublicMediaController::class, 'show'])->where('path', '.*')->name('media.public');
+// Temps passe sur une page, renvoye par le navigateur en quittant celle-ci.
+// Le prefixe api/ est deja exclu du suivi, l'appel ne cree donc pas de visite.
+Route::post('/api/page-time', [\App\Http\Controllers\PageTimeController::class, 'store'])->name('page-time.store');
 Route::get('/public-advertisements/{advertisement}/view', [\App\Http\Controllers\AdvertisementTrackingController::class, 'view'])->name('public-advertisements.view');
 Route::get('/public-advertisements/{advertisement}/click', [\App\Http\Controllers\AdvertisementTrackingController::class, 'click'])->name('public-advertisements.click');
 

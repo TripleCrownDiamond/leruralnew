@@ -14,6 +14,7 @@ class PageView extends Model
         'ip_hash',
         'user_agent',
         'referer',
+        'duration_seconds',
     ];
 
     public function article(): BelongsTo

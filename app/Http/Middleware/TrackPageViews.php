@@ -11,10 +11,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class TrackPageViews
 {
+    /**
+     * Le suivi a lieu AVANT la reponse : l'identifiant de la visite doit etre
+     * disponible au moment ou Inertia assemble ses props, pour que le navigateur
+     * puisse ensuite y rattacher le temps passe sur la page.
+     */
     public function handle(Request $request, Closure $next): Response
     {
-        $response = $next($request);
-
         try {
             $this->track($request);
         } catch (\Throwable $e) {
@@ -22,7 +25,7 @@ class TrackPageViews
             report($e);
         }
 
-        return $response;
+        return $next($request);
     }
 
     private const BOT_PATTERN = '/(bot|crawl|spider|slurp|curl|wget|python-requests|headless|googlebot|bingbot|duckduckbot|yandex|baiduspider|facebookexternalhit|twitterbot|whatsapp|telegrambot|semrush|ahrefs|mj12|petalbot)/i';
@@ -60,7 +63,7 @@ class TrackPageViews
                 ->value('id');
         }
 
-        PageView::create([
+        $view = PageView::create([
             'path' => '/' . ltrim($path, '/'),
             'article_id' => $articleId,
             'user_id' => $user?->id,
@@ -68,5 +71,9 @@ class TrackPageViews
             'user_agent' => Str::limit((string) $request->userAgent(), 480),
             'referer' => $request->headers->get('referer') ? Str::limit((string) $request->headers->get('referer'), 480) : null,
         ]);
+
+        // Repris par HandleInertiaRequests : le navigateur renverra le temps
+        // passe sur cette visite precise.
+        $request->attributes->set('page_view_id', $view->id);
     }
 }

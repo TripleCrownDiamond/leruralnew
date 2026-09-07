@@ -3,7 +3,8 @@ import './bootstrap';
 
 import { ThemeProvider } from '@/Components/ThemeProvider';
 import { AdvertisementProvider } from '@/Components/AdSpace';
-import { createInertiaApp } from '@inertiajs/react';
+import { startPageTimeTracking } from '@/lib/pageTime';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
@@ -45,6 +46,22 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.tsx'),
         ),
     setup({ el, App, props }) {
+        // Expose l'identifiant de la visite pour la mesure du temps de lecture.
+        // Cet ecouteur est enregistre AVANT startPageTimeTracking : les
+        // gestionnaires se declenchent dans l'ordre d'inscription, et la mesure
+        // doit lire l'identifiant deja rafraichi.
+        if (!import.meta.env.SSR) {
+            (window as any).__pageViewId =
+                (props.initialPage?.props as any)?.page_view_id ?? null;
+
+            router.on('navigate', (event: any) => {
+                (window as any).__pageViewId =
+                    event?.detail?.page?.props?.page_view_id ?? null;
+            });
+
+            startPageTimeTracking();
+        }
+
         if (import.meta.env.SSR) {
             hydrateRoot(
                 el,
