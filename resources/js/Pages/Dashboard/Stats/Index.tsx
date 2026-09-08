@@ -8,10 +8,12 @@ import {
     CalendarRange,
     CheckCircle2,
     Clock3,
+    Database,
     Download,
     Eye,
     FileText,
     Globe,
+    Loader2,
     Megaphone,
     MessageSquare,
     Newspaper,
@@ -22,6 +24,7 @@ import {
     UserPlus,
     Users,
 } from 'lucide-react';
+import { useState } from 'react';
 import {
     Area,
     AreaChart,
@@ -1129,11 +1132,41 @@ export default function StatsIndex({
                             eyebrow="Controles"
                             title="Publicites et mise en avant"
                         />
-                        <div className="pb-4">
+                        <div className="flex flex-wrap gap-2 pb-4">
                             <ExportButton
                                 dataset="publicites"
                                 period={period}
                                 label="Publicites"
+                            />
+                            <MaintenanceButton
+                                route="dashboard.maintenance.backup"
+                                label="Sauvegarder"
+                                labelEnCours="Sauvegarde..."
+                                question="Creer un instantane verifie de la base SQLite ?
+
+Aucune donnee existante n est modifiee."
+                            />
+                            <MaintenanceButton
+                                route="dashboard.maintenance.mysql-prepare"
+                                label="MySQL : schema"
+                                labelEnCours="Creation..."
+                                question="Creer les tables dans MySQL ?
+
+SQLite n est pas touchee et continue de servir le site."
+                            />
+                            <MaintenanceButton
+                                route="dashboard.maintenance.mysql-copier"
+                                label="MySQL : copier"
+                                labelEnCours="Copie..."
+                                question="Copier les donnees vers MySQL ?
+
+L operation avance par lots : relancez jusqu a ce qu elle annonce la fin."
+                            />
+                            <MaintenanceButton
+                                route="dashboard.maintenance.mysql-parite"
+                                label="MySQL : parite"
+                                labelEnCours="Controle..."
+                                question="Comparer SQLite et MySQL table par table ?"
                             />
                         </div>
                     </div>
@@ -1435,6 +1468,58 @@ function ChartCard({
             </div>
             <div className="p-5 sm:p-6">{children}</div>
         </div>
+    );
+}
+
+/**
+ * Action de maintenance declenchee cote serveur.
+ * L'hebergement n'offre pas de SSH : ces operations passent par l'admin.
+ */
+function MaintenanceButton({
+    route: nom,
+    label,
+    labelEnCours,
+    question,
+}: {
+    route: string;
+    label: string;
+    labelEnCours: string;
+    question: string;
+}) {
+    const [enCours, setEnCours] = useState(false);
+
+    return (
+        <button
+            type="button"
+            disabled={enCours}
+            onClick={() => {
+                const url = safeRoute(nom);
+
+                if (url === '#') {
+                    alert(
+                        "Action indisponible : route inconnue du navigateur. Le fichier de routes doit etre redeploye.",
+                    );
+                    return;
+                }
+
+                if (!confirm(question)) return;
+
+                setEnCours(true);
+                router.post(
+                    url,
+                    {},
+                    { preserveScroll: true, onFinish: () => setEnCours(false) },
+                );
+            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-black uppercase tracking-tight text-gray-700 transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/70 dark:hover:text-white"
+        >
+            {enCours ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+                <Database className="h-3.5 w-3.5" />
+            )}
+            {enCours ? labelEnCours : label}
+        </button>
     );
 }
 

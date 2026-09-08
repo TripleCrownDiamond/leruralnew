@@ -1,5 +1,11 @@
-import AdminCard, { AdminEmptyState, AdminStatusPill } from '@/Components/Dashboard/AdminCard';
-import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
+import {
+    AdminButton,
+    AdminLinkButton,
+} from '@/Components/Dashboard/AdminButton';
+import AdminCard, {
+    AdminEmptyState,
+    AdminStatusPill,
+} from '@/Components/Dashboard/AdminCard';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
 import AdminPagination from '@/Components/Dashboard/AdminPagination';
 import AdminSearchBar from '@/Components/Dashboard/AdminSearchBar';
@@ -17,7 +23,19 @@ import {
 } from '@/Components/ui/dialog';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Download, Edit, Eye, FileText, Globe, Plus, Star, Trash2, Upload, Copy, Check } from 'lucide-react';
+import {
+    Check,
+    Copy,
+    Download,
+    Edit,
+    Eye,
+    FileText,
+    Globe,
+    Plus,
+    Star,
+    Trash2,
+    Upload,
+} from 'lucide-react';
 import type { FormEventHandler, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
@@ -70,18 +88,23 @@ interface Props {
 
 export default function Index({ articles, filters = {}, categories }: Props) {
     const { props } = usePage<any>();
-    const csrfToken = typeof document !== 'undefined'
-        ? document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
-        : '';
+    const csrfToken =
+        typeof document !== 'undefined'
+            ? (document
+                  .querySelector('meta[name="csrf-token"]')
+                  ?.getAttribute('content') ?? '')
+            : '';
     const user = props.auth.user;
     const canTransferArticles = user?.role === 'admin';
     const [selectedArticles, setSelectedArticles] = useState<number[]>([]);
     const [search, setSearch] = useState(filters.search || '');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'scheduled' | 'draft'>(
-        (filters.status as 'all' | 'published' | 'scheduled' | 'draft') || 'all',
-    );
+    const [statusFilter, setStatusFilter] = useState<
+        'all' | 'published' | 'scheduled' | 'draft'
+    >((filters.status as 'all' | 'published' | 'scheduled' | 'draft') || 'all');
     const [typeFilter, setTypeFilter] = useState(filters.type || 'all');
-    const [categoryFilter, setCategoryFilter] = useState(filters.category || 'all');
+    const [categoryFilter, setCategoryFilter] = useState(
+        filters.category || 'all',
+    );
     const [siteImportOpen, setSiteImportOpen] = useState(false);
     const [wordpressImportOpen, setWordpressImportOpen] = useState(false);
     const [copiedArticleId, setCopiedArticleId] = useState<number | null>(null);
@@ -100,7 +123,12 @@ export default function Index({ articles, filters = {}, categories }: Props) {
     useEffect(() => {
         if (
             search === (filters.search || '') &&
-            statusFilter === ((filters.status as 'all' | 'published' | 'scheduled' | 'draft') || 'all') &&
+            statusFilter ===
+                ((filters.status as
+                    | 'all'
+                    | 'published'
+                    | 'scheduled'
+                    | 'draft') || 'all') &&
             typeFilter === (filters.type || 'all') &&
             categoryFilter === (filters.category || 'all')
         ) {
@@ -113,7 +141,8 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                     search,
                     status: statusFilter !== 'all' ? statusFilter : undefined,
                     type: typeFilter !== 'all' ? typeFilter : undefined,
-                    category: categoryFilter !== 'all' ? categoryFilter : undefined,
+                    category:
+                        categoryFilter !== 'all' ? categoryFilter : undefined,
                 },
                 preserveState: true,
                 preserveScroll: true,
@@ -135,7 +164,9 @@ export default function Index({ articles, filters = {}, categories }: Props) {
 
     const toggleSelect = (id: number) => {
         setSelectedArticles((current) =>
-            current.includes(id) ? current.filter((articleId) => articleId !== id) : [...current, id],
+            current.includes(id)
+                ? current.filter((articleId) => articleId !== id)
+                : [...current, id],
         );
     };
 
@@ -169,7 +200,13 @@ export default function Index({ articles, filters = {}, categories }: Props) {
         try {
             await navigator.clipboard.writeText(url);
             setCopiedArticleId(id);
-            window.setTimeout(() => setCopiedArticleId((current) => (current === id ? null : current)), 1600);
+            window.setTimeout(
+                () =>
+                    setCopiedArticleId((current) =>
+                        current === id ? null : current,
+                    ),
+                1600,
+            );
         } catch {
             // noop
         }
@@ -191,12 +228,15 @@ export default function Index({ articles, filters = {}, categories }: Props) {
         const params = new URLSearchParams();
 
         if (selectedArticles.length > 0) {
-            selectedArticles.forEach((id) => params.append('ids[]', String(id)));
+            selectedArticles.forEach((id) =>
+                params.append('ids[]', String(id)),
+            );
         } else {
             if (search) params.set('search', search);
             if (statusFilter !== 'all') params.set('status', statusFilter);
             if (typeFilter !== 'all') params.set('type', typeFilter);
-            if (categoryFilter !== 'all') params.set('category', categoryFilter);
+            if (categoryFilter !== 'all')
+                params.set('category', categoryFilter);
         }
 
         const queryString = params.toString();
@@ -229,8 +269,17 @@ export default function Index({ articles, filters = {}, categories }: Props) {
         });
     };
 
-    const from = articles.total === 0 ? 0 : (articles.current_page - 1) * articles.per_page + 1;
-    const to = articles.total === 0 ? 0 : Math.min(articles.current_page * articles.per_page, articles.total);
+    const from =
+        articles.total === 0
+            ? 0
+            : (articles.current_page - 1) * articles.per_page + 1;
+    const to =
+        articles.total === 0
+            ? 0
+            : Math.min(
+                  articles.current_page * articles.per_page,
+                  articles.total,
+              );
 
     return (
         <DashboardLayout title="Articles">
@@ -252,17 +301,23 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                         variant="ghost"
                                         size="sm"
                                         className="border border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                                        icon={<Download className="h-3.5 w-3.5" />}
+                                        icon={
+                                            <Download className="h-3.5 w-3.5" />
+                                        }
                                         onClick={handleExport}
                                     >
-                                        {selectedArticles.length > 0 ? `Exporter (${selectedArticles.length})` : 'Exporter JSON'}
+                                        {selectedArticles.length > 0
+                                            ? `Exporter (${selectedArticles.length})`
+                                            : 'Exporter JSON'}
                                     </AdminButton>
                                     <AdminButton
                                         type="button"
                                         variant="ghost"
                                         size="sm"
                                         className="border border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                                        icon={<Upload className="h-3.5 w-3.5" />}
+                                        icon={
+                                            <Upload className="h-3.5 w-3.5" />
+                                        }
                                         onClick={() => setSiteImportOpen(true)}
                                     >
                                         Import JSON
@@ -273,7 +328,9 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                         size="sm"
                                         className="border border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
                                         icon={<Globe className="h-3.5 w-3.5" />}
-                                        onClick={() => setWordpressImportOpen(true)}
+                                        onClick={() =>
+                                            setWordpressImportOpen(true)
+                                        }
                                     >
                                         Import WordPress
                                     </AdminButton>
@@ -314,7 +371,15 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                 <button
                                     key={opt.key}
                                     type="button"
-                                    onClick={() => setStatusFilter(opt.key as 'all' | 'published' | 'scheduled' | 'draft')}
+                                    onClick={() =>
+                                        setStatusFilter(
+                                            opt.key as
+                                                | 'all'
+                                                | 'published'
+                                                | 'scheduled'
+                                                | 'draft',
+                                        )
+                                    }
                                     className={`rounded-full px-3 py-1.5 transition-colors ${
                                         statusFilter === opt.key
                                             ? 'bg-gradient-to-br from-primary to-emerald-700 text-white shadow-sm'
@@ -328,16 +393,25 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                     }
                     trailing={
                         <div className="flex flex-wrap items-center gap-2">
-                            <FilterSelect value={typeFilter} onChange={setTypeFilter}>
+                            <FilterSelect
+                                value={typeFilter}
+                                onChange={setTypeFilter}
+                            >
                                 <option value="all">Acces: tous</option>
                                 <option value="free">Gratuit</option>
                                 <option value="premium">Premium</option>
                             </FilterSelect>
 
-                            <FilterSelect value={categoryFilter} onChange={setCategoryFilter}>
+                            <FilterSelect
+                                value={categoryFilter}
+                                onChange={setCategoryFilter}
+                            >
                                 <option value="all">Rubriques: toutes</option>
                                 {categories.map((category) => (
-                                    <option key={category.id} value={String(category.id)}>
+                                    <option
+                                        key={category.id}
+                                        value={String(category.id)}
+                                    >
                                         {category.name_fr}
                                     </option>
                                 ))}
@@ -377,21 +451,37 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                 <table className="w-full text-left text-sm">
                                     <thead className="border-b border-gray-100 bg-gray-50/60 text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:border-white/5 dark:bg-white/[0.02] dark:text-white/50">
                                         <tr>
-                                            <th className="px-5 py-3 w-10">
+                                            <th className="w-10 px-5 py-3">
                                                 <Checkbox
                                                     checked={
-                                                        selectedArticles.length === articles.data.length &&
+                                                        selectedArticles.length ===
+                                                            articles.data
+                                                                .length &&
                                                         articles.data.length > 0
                                                     }
-                                                    onCheckedChange={toggleSelectAll}
+                                                    onCheckedChange={
+                                                        toggleSelectAll
+                                                    }
                                                 />
                                             </th>
-                                            <th className="px-5 py-3">Article</th>
-                                            <th className="px-5 py-3 hidden lg:table-cell">Rubrique</th>
-                                            <th className="px-5 py-3 hidden md:table-cell">Statut</th>
-                                            <th className="px-5 py-3 hidden xl:table-cell">Acces</th>
-                                            <th className="px-5 py-3 hidden xl:table-cell">Vues</th>
-                                            <th className="px-5 py-3 text-right">Actions</th>
+                                            <th className="px-5 py-3">
+                                                Article
+                                            </th>
+                                            <th className="hidden px-5 py-3 lg:table-cell">
+                                                Rubrique
+                                            </th>
+                                            <th className="hidden px-5 py-3 md:table-cell">
+                                                Statut
+                                            </th>
+                                            <th className="hidden px-5 py-3 xl:table-cell">
+                                                Acces
+                                            </th>
+                                            <th className="hidden px-5 py-3 xl:table-cell">
+                                                Vues
+                                            </th>
+                                            <th className="px-5 py-3 text-right">
+                                                Actions
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-white/5">
@@ -399,20 +489,38 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                             <tr
                                                 key={article.id}
                                                 className="cursor-pointer transition-colors hover:bg-primary/[0.03] dark:hover:bg-white/[0.02]"
-                                                onClick={() => handleRowClick(article.id)}
+                                                onClick={() =>
+                                                    handleRowClick(article.id)
+                                                }
                                             >
-                                                <td className="px-5 py-4" onClick={(event) => event.stopPropagation()}>
+                                                <td
+                                                    className="px-5 py-4"
+                                                    onClick={(event) =>
+                                                        event.stopPropagation()
+                                                    }
+                                                >
                                                     <Checkbox
-                                                        checked={selectedArticles.includes(article.id)}
-                                                        onCheckedChange={() => toggleSelect(article.id)}
+                                                        checked={selectedArticles.includes(
+                                                            article.id,
+                                                        )}
+                                                        onCheckedChange={() =>
+                                                            toggleSelect(
+                                                                article.id,
+                                                            )
+                                                        }
                                                     />
                                                 </td>
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center gap-4">
                                                         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gray-100 ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/10">
                                                             <ImageWithFallback
-                                                                src={article.image || undefined}
-                                                                alt={article.title}
+                                                                src={
+                                                                    article.image ||
+                                                                    undefined
+                                                                }
+                                                                alt={
+                                                                    article.title
+                                                                }
                                                                 className="h-full w-full object-cover"
                                                             />
                                                             {article.is_featured && (
@@ -426,13 +534,25 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                                                 {article.title}
                                                             </div>
                                                             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-white/50">
-                                                                <span>{article.author}</span>
+                                                                <span>
+                                                                    {
+                                                                        article.author
+                                                                    }
+                                                                </span>
                                                                 <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-white/20" />
-                                                                <span>{article.published_at}</span>
+                                                                <span>
+                                                                    {
+                                                                        article.published_at
+                                                                    }
+                                                                </span>
                                                                 {article.seo && (
                                                                     <>
                                                                         <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-white/20" />
-                                                                        <SeoBadge seo={article.seo} />
+                                                                        <SeoBadge
+                                                                            seo={
+                                                                                article.seo
+                                                                            }
+                                                                        />
                                                                     </>
                                                                 )}
                                                             </div>
@@ -445,48 +565,97 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                                                     </span>
                                                 </td>
                                                 <td className="hidden px-5 py-4 md:table-cell">
-                                                    <StatusBadge status={article.status} />
+                                                    <StatusBadge
+                                                        status={article.status}
+                                                    />
                                                 </td>
                                                 <td className="hidden px-5 py-4 xl:table-cell">
-                                                    <AccessBadge premium={article.is_premium} price={article.price} />
+                                                    <AccessBadge
+                                                        premium={
+                                                            article.is_premium
+                                                        }
+                                                        price={article.price}
+                                                    />
                                                 </td>
                                                 <td className="hidden px-5 py-4 xl:table-cell">
-                                                    <span className="tabular-nums font-bold text-gray-900 dark:text-white">
-                                                        {new Intl.NumberFormat('fr-FR').format(article.views_count)}
+                                                    <span className="font-bold tabular-nums text-gray-900 dark:text-white">
+                                                        {new Intl.NumberFormat(
+                                                            'fr-FR',
+                                                        ).format(
+                                                            article.views_count,
+                                                        )}
                                                     </span>
                                                 </td>
-                                                <td className="px-5 py-4" onClick={(event) => event.stopPropagation()}>
+                                                <td
+                                                    className="px-5 py-4"
+                                                    onClick={(event) =>
+                                                        event.stopPropagation()
+                                                    }
+                                                >
                                                     <div className="flex items-center justify-end gap-2">
-                                                                                                                <AdminLinkButton
-                                                            href={route('dashboard.articles.edit', article.id)}
+                                                        <AdminLinkButton
+                                                            href={route(
+                                                                'dashboard.articles.edit',
+                                                                article.id,
+                                                            )}
                                                             variant="secondary"
                                                             size="icon"
-                                                            icon={<Edit className="h-4 w-4" />}
+                                                            icon={
+                                                                <Edit className="h-4 w-4" />
+                                                            }
                                                             title="Modifier"
                                                         />
                                                         <AdminButton
                                                             type="button"
                                                             variant="ghost"
                                                             size="icon"
-                                                            icon={copiedArticleId === article.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                                                            onClick={() => copyArticleLink(article.slug, article.id)}
-                                                            title={copiedArticleId === article.id ? 'Lien copie' : 'Copier le lien'}
+                                                            icon={
+                                                                copiedArticleId ===
+                                                                article.id ? (
+                                                                    <Check className="h-4 w-4 text-green-500" />
+                                                                ) : (
+                                                                    <Copy className="h-4 w-4" />
+                                                                )
+                                                            }
+                                                            onClick={() =>
+                                                                copyArticleLink(
+                                                                    article.slug,
+                                                                    article.id,
+                                                                )
+                                                            }
+                                                            title={
+                                                                copiedArticleId ===
+                                                                article.id
+                                                                    ? 'Lien copie'
+                                                                    : 'Copier le lien'
+                                                            }
                                                         />
                                                         <AdminLinkButton
-                                                            href={route('article.show', article.slug)}
+                                                            href={route(
+                                                                'article.show',
+                                                                article.slug,
+                                                            )}
                                                             as="a"
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             variant="ghost"
                                                             size="icon"
-                                                            icon={<Eye className="h-4 w-4" />}
+                                                            icon={
+                                                                <Eye className="h-4 w-4" />
+                                                            }
                                                             title="Voir l'article"
                                                         />
                                                         <AdminButton
                                                             variant="danger"
                                                             size="icon"
-                                                            icon={<Trash2 className="h-4 w-4" />}
-                                                            onClick={() => handleDelete(article.id)}
+                                                            icon={
+                                                                <Trash2 className="h-4 w-4" />
+                                                            }
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    article.id,
+                                                                )
+                                                            }
                                                             title="Supprimer"
                                                         />
                                                     </div>
@@ -513,7 +682,9 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                     <DialogHeader>
                         <DialogTitle>Importer un export LE RURAL</DialogTitle>
                         <DialogDescription>
-                            Importez un fichier JSON natif du site. Vous pouvez conserver le statut source ou forcer brouillon/publie.
+                            Importez un fichier JSON natif du site. Vous pouvez
+                            conserver le statut source ou forcer
+                            brouillon/publie.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -532,57 +703,99 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-bold text-gray-900 dark:text-white">Fichier JSON</label>
+                            <label className="mb-2 block text-sm font-bold text-gray-900 dark:text-white">
+                                Fichier JSON
+                            </label>
                             <input
                                 type="file"
                                 accept=".json,application/json,text/plain"
-                                onChange={(event) => siteImportForm.setData('file', event.target.files?.[0] ?? null)}
+                                onChange={(event) =>
+                                    siteImportForm.setData(
+                                        'file',
+                                        event.target.files?.[0] ?? null,
+                                    )
+                                }
                                 className="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-xs file:font-black file:uppercase file:tracking-[0.16em] file:text-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
                             />
-                            <InputError message={siteImportForm.errors.file} className="mt-2" />
+                            <InputError
+                                message={siteImportForm.errors.file}
+                                className="mt-2"
+                            />
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-bold text-gray-900 dark:text-white">Statut de publication</label>
+                            <label className="mb-2 block text-sm font-bold text-gray-900 dark:text-white">
+                                Statut de publication
+                            </label>
                             <select
                                 value={siteImportForm.data.publication_mode}
                                 onChange={(event) =>
                                     siteImportForm.setData(
                                         'publication_mode',
-                                        event.target.value as 'preserve' | 'draft' | 'published',
+                                        event.target.value as
+                                            | 'preserve'
+                                            | 'draft'
+                                            | 'published',
                                     )
                                 }
                                 className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-900 outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-gray-950"
                             >
-                                <option value="preserve">Conserver le statut source</option>
-                                <option value="draft">Tout importer en brouillon</option>
-                                <option value="published">Tout publier immediatement</option>
+                                <option value="preserve">
+                                    Conserver le statut source
+                                </option>
+                                <option value="draft">
+                                    Tout importer en brouillon
+                                </option>
+                                <option value="published">
+                                    Tout publier immediatement
+                                </option>
                             </select>
-                            <InputError message={siteImportForm.errors.publication_mode} className="mt-2" />
+                            <InputError
+                                message={siteImportForm.errors.publication_mode}
+                                className="mt-2"
+                            />
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setSiteImportOpen(false)}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setSiteImportOpen(false)}
+                            >
                                 Annuler
                             </Button>
-                            <Button type="submit" disabled={siteImportForm.processing}>
-                                {siteImportForm.processing ? 'Import en cours...' : "Lancer l'import JSON"}
+                            <Button
+                                type="submit"
+                                disabled={siteImportForm.processing}
+                            >
+                                {siteImportForm.processing
+                                    ? 'Import en cours...'
+                                    : "Lancer l'import JSON"}
                             </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={wordpressImportOpen} onOpenChange={setWordpressImportOpen}>
+            <Dialog
+                open={wordpressImportOpen}
+                onOpenChange={setWordpressImportOpen}
+            >
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle>Importer des articles WordPress</DialogTitle>
+                        <DialogTitle>
+                            Importer des articles WordPress
+                        </DialogTitle>
                         <DialogDescription>
-                            Importez un export XML WordPress. Les articles seront convertis dans le format editorial du site.
+                            Importez un export XML WordPress. Les articles
+                            seront convertis dans le format editorial du site.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <form onSubmit={submitWordpressImport} className="space-y-5">
+                    <form
+                        onSubmit={submitWordpressImport}
+                        className="space-y-5"
+                    >
                         <div className="grid gap-4 md:grid-cols-2">
                             <ImportHintCard
                                 icon={<Globe className="h-5 w-5" />}
@@ -597,40 +810,74 @@ export default function Index({ articles, filters = {}, categories }: Props) {
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-bold text-gray-900 dark:text-white">Fichier XML WordPress</label>
+                            <label className="mb-2 block text-sm font-bold text-gray-900 dark:text-white">
+                                Fichier XML WordPress
+                            </label>
                             <input
                                 type="file"
                                 accept=".xml,text/xml,application/xml,text/plain"
-                                onChange={(event) => wordpressImportForm.setData('file', event.target.files?.[0] ?? null)}
+                                onChange={(event) =>
+                                    wordpressImportForm.setData(
+                                        'file',
+                                        event.target.files?.[0] ?? null,
+                                    )
+                                }
                                 className="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-xs file:font-black file:uppercase file:tracking-[0.16em] file:text-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
                             />
-                            <InputError message={wordpressImportForm.errors.file} className="mt-2" />
+                            <InputError
+                                message={wordpressImportForm.errors.file}
+                                className="mt-2"
+                            />
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-bold text-gray-900 dark:text-white">Statut apres import</label>
+                            <label className="mb-2 block text-sm font-bold text-gray-900 dark:text-white">
+                                Statut apres import
+                            </label>
                             <select
-                                value={wordpressImportForm.data.publication_mode}
+                                value={
+                                    wordpressImportForm.data.publication_mode
+                                }
                                 onChange={(event) =>
                                     wordpressImportForm.setData(
                                         'publication_mode',
-                                        event.target.value as 'draft' | 'published',
+                                        event.target.value as
+                                            | 'draft'
+                                            | 'published',
                                     )
                                 }
                                 className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-900 outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-gray-950"
                             >
-                                <option value="draft">Importer en brouillon</option>
-                                <option value="published">Importer en publie</option>
+                                <option value="draft">
+                                    Importer en brouillon
+                                </option>
+                                <option value="published">
+                                    Importer en publie
+                                </option>
                             </select>
-                            <InputError message={wordpressImportForm.errors.publication_mode} className="mt-2" />
+                            <InputError
+                                message={
+                                    wordpressImportForm.errors.publication_mode
+                                }
+                                className="mt-2"
+                            />
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setWordpressImportOpen(false)}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setWordpressImportOpen(false)}
+                            >
                                 Annuler
                             </Button>
-                            <Button type="submit" disabled={wordpressImportForm.processing}>
-                                {wordpressImportForm.processing ? 'Import en cours...' : "Lancer l'import WordPress"}
+                            <Button
+                                type="submit"
+                                disabled={wordpressImportForm.processing}
+                            >
+                                {wordpressImportForm.processing
+                                    ? 'Import en cours...'
+                                    : "Lancer l'import WordPress"}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -640,14 +887,26 @@ export default function Index({ articles, filters = {}, categories }: Props) {
     );
 }
 
-function ImportHintCard({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
+function ImportHintCard({
+    icon,
+    title,
+    description,
+}: {
+    icon: ReactNode;
+    title: string;
+    description: string;
+}) {
     return (
         <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
             <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 {icon}
             </div>
-            <div className="text-sm font-black uppercase tracking-[0.16em] text-gray-900 dark:text-white">{title}</div>
-            <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{description}</p>
+            <div className="text-sm font-black uppercase tracking-[0.16em] text-gray-900 dark:text-white">
+                {title}
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                {description}
+            </p>
         </div>
     );
 }
@@ -719,15 +978,22 @@ function StatusBadge({ status }: { status: string }) {
     return <AdminStatusPill tone="warning">Brouillon</AdminStatusPill>;
 }
 
-function AccessBadge({ premium, price }: { premium: boolean; price?: number | null }) {
+function AccessBadge({
+    premium,
+    price,
+}: {
+    premium: boolean;
+    price?: number | null;
+}) {
     if (!premium) {
         return <AdminStatusPill tone="neutral">Gratuit</AdminStatusPill>;
     }
 
     return (
         <AdminStatusPill tone="info">
-            {price ? `${Number(price).toLocaleString('fr-FR')} FCFA` : 'Premium'}
+            {price
+                ? `${Number(price).toLocaleString('fr-FR')} FCFA`
+                : 'Premium'}
         </AdminStatusPill>
     );
 }
-

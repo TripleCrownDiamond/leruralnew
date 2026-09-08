@@ -43,6 +43,30 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
+        /*
+         * Cible de la migration SQLite -> MySQL.
+         *
+         * Connexion distincte et non 'mysql' : cette derniere lit DB_DATABASE,
+         * qui designe aujourd'hui le fichier SQLite. Les deux bases doivent
+         * pouvoir etre ouvertes en meme temps pendant la copie et le controle
+         * de parite.
+         */
+        'mysql_target' => [
+            'driver' => 'mysql',
+            'host' => env('MYSQL_TARGET_HOST', '127.0.0.1'),
+            'port' => env('MYSQL_TARGET_PORT', '3306'),
+            'database' => env('MYSQL_TARGET_DATABASE', ''),
+            'username' => env('MYSQL_TARGET_USERNAME', ''),
+            'password' => env('MYSQL_TARGET_PASSWORD', ''),
+            'unix_socket' => env('MYSQL_TARGET_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),

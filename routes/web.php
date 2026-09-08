@@ -98,6 +98,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('dashboard')->name
 
     // Pas de SSH sur cet hebergement : les migrations se declenchent d'ici.
     Route::post('maintenance/migrate', [\App\Http\Controllers\Admin\MaintenanceController::class, 'migrate'])->name('maintenance.migrate');
+    Route::post('maintenance/backup', [\App\Http\Controllers\Admin\MaintenanceController::class, 'backup'])->name('maintenance.backup');
+    Route::post('maintenance/mysql/prepare', [\App\Http\Controllers\Admin\MaintenanceController::class, 'mysqlPrepare'])->name('maintenance.mysql-prepare');
+    Route::post('maintenance/mysql/copier', [\App\Http\Controllers\Admin\MaintenanceController::class, 'mysqlCopier'])->name('maintenance.mysql-copier');
+    Route::post('maintenance/mysql/parite', [\App\Http\Controllers\Admin\MaintenanceController::class, 'mysqlParite'])->name('maintenance.mysql-parite');
 
     Route::get('stats', [\App\Http\Controllers\Admin\StatsController::class, 'index'])->name('stats.index');
     Route::get('stats/export/{dataset}', [\App\Http\Controllers\Admin\StatsController::class, 'exportCsv'])->name('stats.export');
