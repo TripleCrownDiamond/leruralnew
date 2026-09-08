@@ -1,8 +1,8 @@
 import '../css/app.css';
 import './bootstrap';
 
-import { ThemeProvider } from '@/Components/ThemeProvider';
 import { AdvertisementProvider } from '@/Components/AdSpace';
+import { ThemeProvider } from '@/Components/ThemeProvider';
 import { startPageTimeTracking } from '@/lib/pageTime';
 import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -82,7 +82,14 @@ createInertiaApp({
             </ThemeProvider>,
         );
     },
+    // Barre de progression visible sur chaque navigation et chaque envoi de
+    // formulaire, cote public comme cote administration. Le gris d'origine
+    // etait indiscernable du theme : rien ne signalait qu'il se passait
+    // quelque chose. Vert de marque, avec le spinner.
     progress: {
-        color: '#4B5563',
+        color: '#2f6a11',
+        delay: 120,
+        includeCSS: true,
+        showSpinner: true,
     },
 });

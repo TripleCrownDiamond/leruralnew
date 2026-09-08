@@ -30,6 +30,19 @@ class AppServiceProvider extends ServiceProvider
      */
         public function boot(): void
     {
+        // Toute URL generee part de l'hote canonique, quel que soit l'hote de
+        // la requete. Sans cela, un lien de verification cree depuis
+        // lerural.com etait signe pour ce domaine puis redirige vers
+        // lerural.bj : la signature ne correspondait plus et le destinataire
+        // recevait un 403 en cliquant.
+        if (filled(config('app.url'))) {
+            \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
+
+            if (str_starts_with((string) config('app.url'), 'https://')) {
+                \Illuminate\Support\Facades\URL::forceScheme('https');
+            }
+        }
+
         Vite::prefetch(concurrency: 3);
 
                 // Register cache invalidation observers
