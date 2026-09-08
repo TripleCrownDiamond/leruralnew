@@ -1,5 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
-import { AlertTriangle, Database, MailCheck } from 'lucide-react';
+import { AlertTriangle, Database, Loader2, MailCheck } from 'lucide-react';
+import { useState } from 'react';
 
 /**
  * Actions d'administration restant a declencher.
@@ -10,7 +11,8 @@ import { AlertTriangle, Database, MailCheck } from 'lucide-react';
 
 function safeRoute(name: string): string {
     try {
-        if (typeof route === 'function' && route().has(name)) return route(name);
+        if (typeof route === 'function' && route().has(name))
+            return route(name);
         return '#';
     } catch {
         return '#';
@@ -19,21 +21,44 @@ function safeRoute(name: string): string {
 
 export default function PendingActionsBanner() {
     const { props } = usePage<any>();
+
+    // Les hooks passent avant tout retour anticipe : le bandeau apparait et
+    // disparait selon l'etat du site, et React exige un nombre de hooks stable.
+    const [enCours, setEnCours] = useState<string | null>(null);
+
     const pending = props.admin_pending as
         | { migrations: number; verifications: number }
         | undefined;
 
-    if (!pending) return null;
+    const migrations = Number(pending?.migrations ?? 0);
+    const verifications = Number(pending?.verifications ?? 0);
 
-    const migrations = Number(pending.migrations ?? 0);
-    const verifications = Number(pending.verifications ?? 0);
-
-    if (migrations < 1 && verifications < 1) return null;
+    if (!pending || (migrations < 1 && verifications < 1)) return null;
 
     const lancer = (nom: string, question: string) => {
-        if (!confirm(question)) return;
+        if (enCours || !confirm(question)) return;
 
-        router.post(safeRoute(nom), {}, { preserveScroll: true });
+        const url = safeRoute(nom);
+
+        // Une route absente du fichier Ziggy renvoie '#' : sans ce garde-fou,
+        // le clic ne produisait rien et restait inexplicable.
+        if (url === '#') {
+            alert(
+                "Action indisponible : la route n'est pas connue du navigateur. Rechargez la page ; si cela persiste, le fichier de routes doit etre redeploye.",
+            );
+            return;
+        }
+
+        setEnCours(nom);
+
+        router.post(
+            url,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setEnCours(null),
+            },
+        );
     };
 
     return (
@@ -63,10 +88,17 @@ export default function PendingActionsBanner() {
                                             'Appliquer les mises a jour de la base ?\n\nSans effet si elles sont deja passees.',
                                         )
                                     }
-                                    className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition hover:bg-amber-600"
+                                    disabled={enCours !== null}
+                                    className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    <Database className="h-3.5 w-3.5" />
-                                    Appliquer
+                                    {enCours === 'dashboard.maintenance.migrate' ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <Database className="h-3.5 w-3.5" />
+                                    )}
+                                    {enCours === 'dashboard.maintenance.migrate'
+                                        ? 'Application...'
+                                        : 'Appliquer'}
                                 </button>
                             </div>
                         )}
@@ -88,10 +120,19 @@ export default function PendingActionsBanner() {
                                             'Envoyer un lien de verification a tous les comptes non verifies ?\n\nChaque personne concernee recevra un e-mail.',
                                         )
                                     }
-                                    className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition hover:bg-amber-600"
+                                    disabled={enCours !== null}
+                                    className="inline-flex shrink-0 items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    <MailCheck className="h-3.5 w-3.5" />
-                                    Renvoyer
+                                    {enCours ===
+                                    'dashboard.users.bulk-resend-verification' ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <MailCheck className="h-3.5 w-3.5" />
+                                    )}
+                                    {enCours ===
+                                    'dashboard.users.bulk-resend-verification'
+                                        ? 'Envoi en cours...'
+                                        : 'Renvoyer'}
                                 </button>
                             </div>
                         )}

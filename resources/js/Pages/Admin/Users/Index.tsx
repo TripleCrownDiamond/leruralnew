@@ -1,13 +1,29 @@
-﻿import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head, router } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
-import { Edit, Eye, Mail, MailCheck, Shield, Trash2, UserPlus, Users } from 'lucide-react';
+﻿import {
+    AdminButton,
+    AdminLinkButton,
+} from '@/Components/Dashboard/AdminButton';
+import AdminCard, {
+    AdminEmptyState,
+    AdminStatusPill,
+} from '@/Components/Dashboard/AdminCard';
 import AdminPageHeader from '@/Components/Dashboard/AdminPageHeader';
-import AdminSearchBar from '@/Components/Dashboard/AdminSearchBar';
-import AdminCard, { AdminEmptyState, AdminStatusPill } from '@/Components/Dashboard/AdminCard';
 import AdminPagination from '@/Components/Dashboard/AdminPagination';
-import { AdminButton, AdminLinkButton } from '@/Components/Dashboard/AdminButton';
+import AdminSearchBar from '@/Components/Dashboard/AdminSearchBar';
 import { Checkbox } from '@/Components/ui/checkbox';
+import DashboardLayout from '@/Layouts/DashboardLayout';
+import { Head, router } from '@inertiajs/react';
+import {
+    Edit,
+    Eye,
+    Mail,
+    Loader2,
+    MailCheck,
+    Shield,
+    Trash2,
+    UserPlus,
+    Users,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface UserItem {
     id: number;
@@ -72,7 +88,16 @@ export default function Index({ users, filters = {}, roles }: Props) {
         }, 280);
 
         return () => clearTimeout(timeoutId);
-    }, [search, role, status, verified, filters.search, filters.role, filters.status, filters.verified]);
+    }, [
+        search,
+        role,
+        status,
+        verified,
+        filters.search,
+        filters.role,
+        filters.status,
+        filters.verified,
+    ]);
 
     const roleLabelMap = useMemo(
         () => Object.fromEntries(roles.map((item) => [item.value, item.label])),
@@ -103,7 +128,9 @@ export default function Index({ users, filters = {}, roles }: Props) {
 
     const toggleSelect = (id: number) => {
         setSelectedUsers((current) =>
-            current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+            current.includes(id)
+                ? current.filter((item) => item !== id)
+                : [...current, id],
         );
     };
 
@@ -120,25 +147,34 @@ export default function Index({ users, filters = {}, roles }: Props) {
         (user) => !user.email_verified_at,
     ).length;
 
+    const [envoiEnCours, setEnvoiEnCours] = useState(false);
+
     const handleBulkResendVerification = () => {
         if (
+            envoiEnCours ||
             !confirm(
-                "Envoyer un lien de verification a tous les comptes non verifies du site ?\n\nChaque personne concernee recevra un e-mail.",
+                'Envoyer un lien de verification a tous les comptes non verifies du site ?\n\nChaque personne concernee recevra un e-mail.',
             )
         ) {
             return;
         }
 
+        setEnvoiEnCours(true);
+
         router.post(
             route('dashboard.users.bulk-resend-verification'),
             {},
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+                onFinish: () => setEnvoiEnCours(false),
+            },
         );
     };
 
     const handleBulkDelete = () => {
         if (selectedUsers.length === 0) return;
-        if (!confirm(`Supprimer ${selectedUsers.length} utilisateur(s) ?`)) return;
+        if (!confirm(`Supprimer ${selectedUsers.length} utilisateur(s) ?`))
+            return;
 
         router.post(
             route('dashboard.users.bulk-delete'),
@@ -151,7 +187,11 @@ export default function Index({ users, filters = {}, roles }: Props) {
     };
 
     const handleResendInvitation = (id: number) => {
-        router.post(route('dashboard.users.resend-invitation', id), {}, { preserveScroll: true });
+        router.post(
+            route('dashboard.users.resend-invitation', id),
+            {},
+            { preserveScroll: true },
+        );
     };
 
     const handleToggleStatus = (user: UserItem) => {
@@ -163,8 +203,14 @@ export default function Index({ users, filters = {}, roles }: Props) {
         );
     };
 
-    const from = users.from ?? (users.total === 0 ? 0 : (users.current_page - 1) * users.per_page + 1);
-    const to = users.to ?? (users.total === 0 ? 0 : Math.min(users.current_page * users.per_page, users.total));
+    const from =
+        users.from ??
+        (users.total === 0 ? 0 : (users.current_page - 1) * users.per_page + 1);
+    const to =
+        users.to ??
+        (users.total === 0
+            ? 0
+            : Math.min(users.current_page * users.per_page, users.total));
 
     return (
         <DashboardLayout title="Utilisateurs">
@@ -183,10 +229,19 @@ export default function Index({ users, filters = {}, roles }: Props) {
                                 <AdminButton
                                     variant="secondary"
                                     size="sm"
-                                    icon={<MailCheck className="h-3.5 w-3.5" />}
+                                    icon={
+                                        envoiEnCours ? (
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <MailCheck className="h-3.5 w-3.5" />
+                                        )
+                                    }
+                                    disabled={envoiEnCours}
                                     onClick={handleBulkResendVerification}
                                 >
-                                    Renvoyer la verification ({unverifiedCount})
+                                    {envoiEnCours
+                                        ? 'Envoi en cours...'
+                                        : `Renvoyer la verification (${unverifiedCount})`}
                                 </AdminButton>
                             )}
                             {selectedUsers.length > 0 && (
@@ -242,7 +297,9 @@ export default function Index({ users, filters = {}, roles }: Props) {
                         <div className="flex items-center gap-2">
                             <select
                                 value={role}
-                                onChange={(event) => setRole(event.target.value)}
+                                onChange={(event) =>
+                                    setRole(event.target.value)
+                                }
                                 className="h-9 rounded-xl border border-gray-200 bg-gray-50 px-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-700 outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/80"
                             >
                                 <option value="all">Tous les roles</option>
@@ -255,7 +312,9 @@ export default function Index({ users, filters = {}, roles }: Props) {
 
                             <select
                                 value={verified}
-                                onChange={(event) => setVerified(event.target.value)}
+                                onChange={(event) =>
+                                    setVerified(event.target.value)
+                                }
                                 className="h-9 rounded-xl border border-gray-200 bg-gray-50 px-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-700 outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/80"
                             >
                                 <option value="all">Verification</option>
@@ -263,7 +322,12 @@ export default function Index({ users, filters = {}, roles }: Props) {
                                 <option value="unverified">Non verifies</option>
                             </select>
 
-                            <AdminButton type="button" variant="ghost" size="sm" onClick={resetFilters}>
+                            <AdminButton
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={resetFilters}
+                            >
                                 Reinitialiser
                             </AdminButton>
                         </div>
@@ -292,18 +356,36 @@ export default function Index({ users, filters = {}, roles }: Props) {
                                 <table className="w-full text-left text-sm">
                                     <thead className="border-b border-gray-100 bg-gray-50/60 text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 dark:border-white/5 dark:bg-white/[0.02] dark:text-white/50">
                                         <tr>
-                                            <th className="px-5 py-3 w-10">
+                                            <th className="w-10 px-5 py-3">
                                                 <Checkbox
-                                                    checked={selectedUsers.length === users.data.length && users.data.length > 0}
-                                                    onCheckedChange={toggleSelectAll}
+                                                    checked={
+                                                        selectedUsers.length ===
+                                                            users.data.length &&
+                                                        users.data.length > 0
+                                                    }
+                                                    onCheckedChange={
+                                                        toggleSelectAll
+                                                    }
                                                 />
                                             </th>
-                                            <th className="px-5 py-3">Utilisateur</th>
-                                            <th className="px-5 py-3 hidden md:table-cell">Role</th>
-                                            <th className="px-5 py-3">Statut</th>
-                                            <th className="px-5 py-3 hidden lg:table-cell">Verification</th>
-                                            <th className="px-5 py-3 hidden xl:table-cell">Inscription</th>
-                                            <th className="px-5 py-3 text-right">Actions</th>
+                                            <th className="px-5 py-3">
+                                                Utilisateur
+                                            </th>
+                                            <th className="hidden px-5 py-3 md:table-cell">
+                                                Role
+                                            </th>
+                                            <th className="px-5 py-3">
+                                                Statut
+                                            </th>
+                                            <th className="hidden px-5 py-3 lg:table-cell">
+                                                Verification
+                                            </th>
+                                            <th className="hidden px-5 py-3 xl:table-cell">
+                                                Inscription
+                                            </th>
+                                            <th className="px-5 py-3 text-right">
+                                                Actions
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-white/5">
@@ -314,8 +396,14 @@ export default function Index({ users, filters = {}, roles }: Props) {
                                             >
                                                 <td className="px-5 py-4">
                                                     <Checkbox
-                                                        checked={selectedUsers.includes(user.id)}
-                                                        onCheckedChange={() => toggleSelect(user.id)}
+                                                        checked={selectedUsers.includes(
+                                                            user.id,
+                                                        )}
+                                                        onCheckedChange={() =>
+                                                            toggleSelect(
+                                                                user.id,
+                                                            )
+                                                        }
                                                     />
                                                 </td>
                                                 <td className="px-5 py-4">
@@ -330,79 +418,145 @@ export default function Index({ users, filters = {}, roles }: Props) {
                                                 </td>
                                                 <td className="hidden px-5 py-4 md:table-cell">
                                                     <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-gray-600 dark:bg-white/5 dark:text-white/60">
-                                                        {roleLabelMap[user.role] ?? user.role}
+                                                        {roleLabelMap[
+                                                            user.role
+                                                        ] ?? user.role}
                                                     </span>
                                                 </td>
                                                 <td className="px-5 py-4">
                                                     <AdminStatusPill
                                                         tone={
-                                                            user.status === 'active'
+                                                            user.status ===
+                                                            'active'
                                                                 ? 'success'
-                                                                : user.status === 'inactive'
-                                                                ? 'neutral'
-                                                                : user.status === 'invited'
-                                                                ? 'warning'
-                                                                : 'danger'
+                                                                : user.status ===
+                                                                    'inactive'
+                                                                  ? 'neutral'
+                                                                  : user.status ===
+                                                                      'invited'
+                                                                    ? 'warning'
+                                                                    : 'danger'
                                                         }
                                                     >
-                                                        {user.status === 'active'
+                                                        {user.status ===
+                                                        'active'
                                                             ? 'Actif'
-                                                            : user.status === 'inactive'
-                                                            ? 'Inactif'
-                                                            : user.status === 'invited'
-                                                            ? 'Invite'
-                                                            : 'Suspendu'}
+                                                            : user.status ===
+                                                                'inactive'
+                                                              ? 'Inactif'
+                                                              : user.status ===
+                                                                  'invited'
+                                                                ? 'Invite'
+                                                                : 'Suspendu'}
                                                     </AdminStatusPill>
                                                 </td>
                                                 <td className="hidden px-5 py-4 lg:table-cell">
-                                                    <AdminStatusPill tone={user.email_verified_at ? 'success' : 'warning'}>
-                                                        {user.email_verified_at ? 'Verifie' : 'Non verifie'}
+                                                    <AdminStatusPill
+                                                        tone={
+                                                            user.email_verified_at
+                                                                ? 'success'
+                                                                : 'warning'
+                                                        }
+                                                    >
+                                                        {user.email_verified_at
+                                                            ? 'Verifie'
+                                                            : 'Non verifie'}
                                                     </AdminStatusPill>
                                                 </td>
-                                                <td className="hidden px-5 py-4 xl:table-cell text-[11px] text-gray-500 dark:text-white/50">
-                                                    <div>{new Date(user.created_at).toLocaleDateString('fr-FR')}</div>
+                                                <td className="hidden px-5 py-4 text-[11px] text-gray-500 dark:text-white/50 xl:table-cell">
+                                                    <div>
+                                                        {new Date(
+                                                            user.created_at,
+                                                        ).toLocaleDateString(
+                                                            'fr-FR',
+                                                        )}
+                                                    </div>
                                                     {user.last_login_at && (
-                                                        <div>Derniere connexion {new Date(user.last_login_at).toLocaleDateString('fr-FR')}</div>
+                                                        <div>
+                                                            Derniere connexion{' '}
+                                                            {new Date(
+                                                                user.last_login_at,
+                                                            ).toLocaleDateString(
+                                                                'fr-FR',
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </td>
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <AdminLinkButton
-                                                            href={route('dashboard.users.show', user.id)}
+                                                            href={route(
+                                                                'dashboard.users.show',
+                                                                user.id,
+                                                            )}
                                                             variant="ghost"
                                                             size="icon"
-                                                            icon={<Eye className="h-4 w-4" />}
+                                                            icon={
+                                                                <Eye className="h-4 w-4" />
+                                                            }
                                                             title="Voir"
                                                         />
                                                         <AdminLinkButton
-                                                            href={route('dashboard.users.edit', user.id)}
+                                                            href={route(
+                                                                'dashboard.users.edit',
+                                                                user.id,
+                                                            )}
                                                             variant="secondary"
                                                             size="icon"
-                                                            icon={<Edit className="h-4 w-4" />}
+                                                            icon={
+                                                                <Edit className="h-4 w-4" />
+                                                            }
                                                             title="Modifier"
                                                         />
-                                                        {user.status === 'invited' ? (
+                                                        {user.status ===
+                                                        'invited' ? (
                                                             <AdminButton
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                icon={<Mail className="h-4 w-4" />}
-                                                                onClick={() => handleResendInvitation(user.id)}
+                                                                icon={
+                                                                    <Mail className="h-4 w-4" />
+                                                                }
+                                                                onClick={() =>
+                                                                    handleResendInvitation(
+                                                                        user.id,
+                                                                    )
+                                                                }
                                                                 title="Relancer l'invitation"
                                                             />
-                                                        ) : user.status === 'active' || user.status === 'inactive' ? (
+                                                        ) : user.status ===
+                                                              'active' ||
+                                                          user.status ===
+                                                              'inactive' ? (
                                                             <AdminButton
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                icon={<Shield className="h-4 w-4" />}
-                                                                onClick={() => handleToggleStatus(user)}
-                                                                title={user.status === 'active' ? 'Désactiver' : 'Activer'}
+                                                                icon={
+                                                                    <Shield className="h-4 w-4" />
+                                                                }
+                                                                onClick={() =>
+                                                                    handleToggleStatus(
+                                                                        user,
+                                                                    )
+                                                                }
+                                                                title={
+                                                                    user.status ===
+                                                                    'active'
+                                                                        ? 'Désactiver'
+                                                                        : 'Activer'
+                                                                }
                                                             />
                                                         ) : null}
                                                         <AdminButton
                                                             variant="danger"
                                                             size="icon"
-                                                            icon={<Trash2 className="h-4 w-4" />}
-                                                            onClick={() => handleDelete(user.id)}
+                                                            icon={
+                                                                <Trash2 className="h-4 w-4" />
+                                                            }
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    user.id,
+                                                                )
+                                                            }
                                                             title="Supprimer"
                                                         />
                                                     </div>
@@ -413,7 +567,12 @@ export default function Index({ users, filters = {}, roles }: Props) {
                                 </table>
                             </div>
 
-                            <AdminPagination links={users.links} from={from} to={to} total={users.total} />
+                            <AdminPagination
+                                links={users.links}
+                                from={from}
+                                to={to}
+                                total={users.total}
+                            />
                         </>
                     )}
                 </AdminCard>
