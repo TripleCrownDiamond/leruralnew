@@ -37,9 +37,24 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
+
+            /*
+             * Reglages de concurrence.
+             *
+             * Par defaut SQLite verrouille toute la base pendant une ecriture :
+             * sur un site d'actualite qui enregistre une visite a chaque page,
+             * les lectures s'empilent derriere, les processus saturent et
+             * l'hebergeur repond 503 avant meme d'atteindre PHP.
+             *
+             * WAL laisse les lectures se poursuivre pendant l'ecriture.
+             * busy_timeout fait patienter une requete au lieu de la rejeter.
+             * NORMAL est le compromis recommande avec WAL : les donnees restent
+             * sures, seul un arret brutal de la machine pourrait couter la
+             * derniere transaction.
+             */
+            'busy_timeout' => env('DB_BUSY_TIMEOUT', 5000),
+            'journal_mode' => env('DB_JOURNAL_MODE', 'WAL'),
+            'synchronous' => env('DB_SYNCHRONOUS', 'NORMAL'),
             'transaction_mode' => 'DEFERRED',
         ],
 
