@@ -206,19 +206,21 @@ export default function ArticleShow({
     };
     const shareUrl = article.share_url || route('article.show', article.slug);
     const shareDescription = article.share_description || article.excerpt || '';
-    
+
     // S'assurer que l'image de partage est une URL absolue
     const resolveImageUrl = (img: string | null | undefined): string => {
         if (!img) return `${window.location.origin}/logos/logo.png`;
-        if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('//')) {
+        if (
+            img.startsWith('http://') ||
+            img.startsWith('https://') ||
+            img.startsWith('//')
+        ) {
             return img.startsWith('//') ? `https:${img}` : img;
         }
         return `${window.location.origin}${img.startsWith('/') ? '' : '/'}${img}`;
     };
-    
-    const shareImage = resolveImageUrl(
-        article.share_image || article.image
-    );
+
+    const shareImage = resolveImageUrl(article.share_image || article.image);
 
     const resolveLightboxUrl = (src: string): string => {
         if (src.startsWith('http') || src.startsWith('//')) {
@@ -264,44 +266,6 @@ export default function ArticleShow({
 
     return (
         <MainLayout title={article.title}>
-            {/* Donnees structurees : le site n'en emettait aucune, ce qui le
-                privait des resultats enrichis. JSON-LD est valide dans le corps
-                de page autant que dans l'en-tete. */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
-                        '@context': 'https://schema.org',
-                        '@type': 'NewsArticle',
-                        headline: article.title,
-                        description: shareDescription,
-                        image: shareImage ? [shareImage] : undefined,
-                        datePublished: article.published_at ?? undefined,
-                        dateModified:
-                            (article as any).updated_at ??
-                            article.published_at ??
-                            undefined,
-                        author: {
-                            '@type': 'Person',
-                            name: article.author || 'LE RURAL',
-                        },
-                        publisher: {
-                            '@type': 'Organization',
-                            name: 'LE RURAL',
-                            logo: {
-                                '@type': 'ImageObject',
-                                url: 'https://lerural.bj/logos/logo.png',
-                            },
-                        },
-                        mainEntityOfPage: {
-                            '@type': 'WebPage',
-                            '@id': shareUrl,
-                        },
-                        inLanguage: 'fr',
-                    }),
-                }}
-            />
-
             <Head>
                 <title>{article.title}</title>
                 <meta
@@ -544,7 +508,9 @@ export default function ArticleShow({
                                 type="button"
                                 onClick={() =>
                                     article.image &&
-                                    setLightboxSrc(resolveLightboxUrl(article.image))
+                                    setLightboxSrc(
+                                        resolveLightboxUrl(article.image),
+                                    )
                                 }
                                 className={`group relative block aspect-[21/9] w-full cursor-zoom-in overflow-hidden ${article.image ? '' : 'cursor-default'}`}
                                 aria-label="Agrandir l'image"
@@ -750,8 +716,10 @@ export default function ArticleShow({
                                     {!article.can_read && article.premium ? (
                                         <div className="relative">
                                             <div
-                                                className="prose prose-lg max-w-none select-none blur-sm dark:prose-invert prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-xl prose-img:cursor-zoom-in"
-                                                onClick={handleContentImageClick}
+                                                className="prose prose-lg max-w-none select-none blur-sm dark:prose-invert prose-a:text-primary hover:prose-a:text-primary/80 prose-img:cursor-zoom-in prose-img:rounded-xl"
+                                                onClick={
+                                                    handleContentImageClick
+                                                }
                                                 dangerouslySetInnerHTML={{
                                                     __html:
                                                         article.content || '',
@@ -770,7 +738,7 @@ export default function ArticleShow({
                                         </div>
                                     ) : (
                                         <div
-                                            className="prose prose-lg max-w-none dark:prose-invert prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-xl prose-img:cursor-zoom-in"
+                                            className="prose prose-lg max-w-none dark:prose-invert prose-a:text-primary hover:prose-a:text-primary/80 prose-img:cursor-zoom-in prose-img:rounded-xl"
                                             onClick={handleContentImageClick}
                                             dangerouslySetInnerHTML={{
                                                 __html: article.content || '',
@@ -1011,7 +979,7 @@ export default function ArticleShow({
             {/* Lightbox image agrandie */}
             {lightboxSrc && (
                 <div
-                    className="fixed inset-0 z-[150] flex animate-in fade-in items-center justify-center bg-black/95 p-4 backdrop-blur-sm sm:p-10"
+                    className="fixed inset-0 z-[150] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm animate-in fade-in sm:p-10"
                     onClick={() => setLightboxSrc(null)}
                     role="dialog"
                     aria-modal="true"

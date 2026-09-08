@@ -108,6 +108,48 @@
         <meta name="twitter:image:alt" content="{{ $imageAlt }}">
         <link rel="canonical" href="{{ $url }}">
 
+        {{-- Donnees structurees. Elles doivent etre emises ici, cote serveur :
+             le site ne fait pas de rendu serveur de React, un balisage pose
+             dans un composant ne serait vu que des visiteurs, pas des robots. --}}
+        @php
+            $schema = $component === 'Article/Show' && is_array(data_get($pageData, 'article'))
+                ? array_filter([
+                    '@context' => 'https://schema.org',
+                    '@type' => 'NewsArticle',
+                    'headline' => $title,
+                    'description' => $description,
+                    'image' => [$image],
+                    'datePublished' => data_get($pageData, 'article.published_at'),
+                    'dateModified' => data_get($pageData, 'article.updated_at') ?: data_get($pageData, 'article.published_at'),
+                    'author' => ['@type' => 'Person', 'name' => data_get($pageData, 'article.author') ?: $siteName],
+                    'publisher' => [
+                        '@type' => 'Organization',
+                        'name' => $siteName,
+                        'logo' => ['@type' => 'ImageObject', 'url' => url('/logos/logo.png')],
+                    ],
+                    'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $url],
+                    'inLanguage' => $locale,
+                ])
+                : [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebSite',
+                    'name' => $siteName,
+                    'url' => url('/'),
+                    'inLanguage' => $locale,
+                    'publisher' => [
+                        '@type' => 'Organization',
+                        'name' => $siteName,
+                        'logo' => ['@type' => 'ImageObject', 'url' => url('/logos/logo.png')],
+                    ],
+                    'potentialAction' => [
+                        '@type' => 'SearchAction',
+                        'target' => url('/search') . '?q={search_term_string}',
+                        'query-input' => 'required name=search_term_string',
+                    ],
+                ];
+        @endphp
+        <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
