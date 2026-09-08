@@ -1091,12 +1091,12 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
                             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
                                 DESIGNED BY{' '}
                                 <a
-                                    href="https://kijanilab.agency"
+                                    href="https://georgeo-agbahungba.xyz"
                                     target="_blank"
                                     rel="noreferrer"
                                     className="font-extrabold tracking-[0.2em] text-primary transition-all duration-300 [text-shadow:0_0_8px_rgba(34,197,94,0.45)] hover:text-emerald-300 hover:underline hover:[text-shadow:0_0_14px_rgba(74,222,128,0.9)]"
                                 >
-                                    KIJANILAB
+                                    GEORGEO AGBAHUNGBA
                                 </a>
                             </p>
                         </div>
