@@ -5,6 +5,17 @@
 
     RewriteEngine On
 
+    # Domaine canonique : https://lerural.bj, sans www.
+    # lerural.com sert le meme contenu et se declarait canonique de lui-meme :
+    # les moteurs voyaient deux sites identiques et partageaient l'autorite
+    # entre les deux. Tout ce qui n'est pas lerural.bj y est renvoye en 301,
+    # ce qui reporte sur une seule adresse le referencement acquis.
+    # Les hotes locaux sont exclus pour ne pas gener le developpement.
+    RewriteCond %{HTTP_HOST} !^lerural\.bj$ [NC]
+    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
+    RewriteRule ^ https://lerural.bj%{REQUEST_URI} [L,R=301]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
